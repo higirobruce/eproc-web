@@ -9,11 +9,22 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@ant-design/icons": "^4.8.0",
     "@next/font": "13.0.7",
+    "antd": "^5.0.7",
+    "antd-input-tag": "^1.0.14",
     "eslint": "8.30.0",
     "eslint-config-next": "13.0.7",
+    "lodash": "^4.17.21",
+    "moment": "^2.29.4",
     "next": "13.0.7",
     "react": "18.2.0",
-    "react-dom": "18.2.0"
+    "react-dom": "18.2.0",
+    "react-highlight-words": "^0.18.0"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.13",
+    "postcss": "^8.4.20",
+    "tailwindcss": "^3.2.4"
   }
 }
