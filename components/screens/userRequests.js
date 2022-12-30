@@ -167,9 +167,9 @@ export default function UserRequests() {
                 updatingId={updatingId}
               />
             </Col>
-            <Col flex={1}>
+            {/* <Col flex={1}>
               <OverviewWindow />
-            </Col>
+            </Col> */}
           </Row>
 
           <Modal

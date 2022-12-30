@@ -99,7 +99,7 @@ export default function Vendors() {
                 updatingId={updatingId}
               />
             </Col>
-            <Col flex={1}><OverviewWindow/></Col>
+            {/* <Col flex={1}><OverviewWindow/></Col> */}
           </Row>
         </div>
       ) : (
