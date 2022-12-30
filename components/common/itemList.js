@@ -19,7 +19,6 @@ import UploadFiles from "./uploadFiles";
 import TagInput from "./tagInput";
 const ItemList = ({ handleSetValues }) => {
   const onValuesChange = (changedValues, allValues) => {
-    
     handleSetValues(allValues);
   };
 
@@ -55,9 +54,21 @@ const ItemList = ({ handleSetValues }) => {
                   <Form.Item label="Estimated Unit Cost">
                     <Input.Group compact>
                       <Form.Item noStyle name={[name, "currency"]}>
-                        <Select defaultValue="RWF">
-                          <Option value="RWF">RWF</Option>
-                          <Option value="USD">USD</Option>
+                        <Select
+                          defaultValue="RWF"
+                          options={[
+                            {
+                              value: "RWF",
+                              label: "RWF",
+                            },
+                            {
+                              value: "USD",
+                              label: "USD",
+                            },
+                            
+                          ]}
+                        >
+                          
                         </Select>
                       </Form.Item>
                       <Form.Item name={[name, "estimatedUnitCost"]} noStyle>
