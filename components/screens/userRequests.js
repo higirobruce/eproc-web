@@ -8,6 +8,7 @@ import {
   Row,
   Space,
   Typography,
+  message
 } from "antd";
 import Image from "next/image";
 import React, { useState, useEffect, useRef } from "react";
@@ -19,6 +20,7 @@ import UsersRequestsTable from "../userRequestsTable";
 
 export default function UserRequests() {
   const [dataLoaded, setDataLoaded] = useState(false);
+  const [messageApi, contextHolder] = message.useMessage();
   let url = process.env.NEXT_PUBLIC_BKEND_URL;
   let apiUsername = process.env.NEXT_PUBLIC_API_USERNAME;
   let apiPassword = process.env.NEXT_PUBLIC_API_PASSWORD;
@@ -36,6 +38,11 @@ export default function UserRequests() {
       .then((res) => {
         setDataLoaded(true);
         setDataset(res);
+      }).catch((err) => {
+        messageApi.open({
+          type: "error",
+          content: "Something happened! Please try again.",
+        });
       });
   }, []);
 
@@ -72,8 +79,6 @@ export default function UserRequests() {
     })
       .then((res) => res.json())
       .then((res) => {
-        
-        
         loadRequests()
           .then((res) => res.json())
           .then((res) => {
@@ -81,11 +86,15 @@ export default function UserRequests() {
             setDataset(res);
             setConfirmLoading(false);
             setOpen(false);
+          }).catch((err) => {
+            console.log(err)
           });
       })
       .catch((err) => {
-        console.log(err);
-        setConfirmLoading(false);
+        messageApi.open({
+          type: "error",
+          content: "Something happened! Please try again.",
+        });
       });
   };
 
@@ -112,6 +121,11 @@ export default function UserRequests() {
         _data.splice(index, 1, elindex);
 
         setDataset(_data);
+      }).catch((err) => {
+        messageApi.open({
+          type: "error",
+          content: "Something happened! Please try again.",
+        });
       });
   }
   
@@ -138,12 +152,19 @@ export default function UserRequests() {
         _data.splice(index, 1, elindex);
 
         setDataset(_data);
+      }).catch((err) => {
+        messageApi.open({
+          type: "error",
+          content: "Something happened! Please try again.",
+        });
       });
   }
   return (
     <>
+      {contextHolder}
       {dataLoaded ? (
         <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000">
+
           <Row className="flex flex-row justify-between items-center">
             <Typography.Title level={3}>Purchase Requests</Typography.Title>
             <Row className="flex flex-row space-x-5 items-center">

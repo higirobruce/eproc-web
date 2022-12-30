@@ -1,4 +1,4 @@
-import { Grid, Typography,Col, Divider, Row } from "antd";
+import { Grid, Typography,Col, Divider, Row, message } from "antd";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import VendorsTable from "../vendorsTable";
@@ -7,6 +7,7 @@ import _ from "lodash";
 import OverviewWindow from "../common/overviewWindow";
 export default function Vendors() {
   const [dataLoaded, setDataLoaded] = useState(false);
+  const [messageApi, contextHolder] = message.useMessage();
   let url = process.env.NEXT_PUBLIC_BKEND_URL;
   let apiUsername = process.env.NEXT_PUBLIC_API_USERNAME;
   let apiPassword = process.env.NEXT_PUBLIC_API_PASSWORD;
@@ -25,6 +26,11 @@ export default function Vendors() {
       .then((res) => {
         setDataLoaded(true);
         setDataset(res);
+      }).catch((err) => {
+        messageApi.open({
+          type: "error",
+          content: "Something happened! Please try again.",
+        });
       });
   }, []);
 
@@ -56,6 +62,11 @@ export default function Vendors() {
         _data.splice(index, 1, elindex);
 
         setDataset(_data);
+      }).catch((err) => {
+        messageApi.open({
+          type: "error",
+          content: "Something happened! Please try again.",
+        });
       });
   }
 
@@ -82,11 +93,17 @@ export default function Vendors() {
         _data.splice(index, 1, elindex);
 
         setDataset(_data);
+      }).catch((err) => {
+        messageApi.open({
+          type: "error",
+          content: "Something happened! Please try again.",
+        });
       });
   }
 
   return (
     <>
+      {contextHolder}
       {dataLoaded ? (
         <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000">
           <Typography.Title level={3}>Vendors List</Typography.Title>

@@ -139,7 +139,12 @@ const SignupForm = () => {
       .then((res) => {
         console.log(res);
         setDpts(res);
-      });
+      }).catch(err=>{
+        messageApi.open({
+          type: "error",
+          content: "Connection Error!",
+        });
+      })
   }, []);
 
   const prefixSelector = (

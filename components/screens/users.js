@@ -1,11 +1,12 @@
 import Image from "next/image";
 import React, { useState,useEffect } from "react";
 import _ from "lodash";
-import { Typography } from "antd";
+import { Typography, message } from "antd";
 import UsersTable from "../usersTable";
 
 export default function Users() {
   const [dataLoaded, setDataLoaded] = useState(false);
+  const [messageApi, contextHolder] = message.useMessage();
   let url = process.env.NEXT_PUBLIC_BKEND_URL;
   let apiUsername = process.env.NEXT_PUBLIC_API_USERNAME;
   let apiPassword = process.env.NEXT_PUBLIC_API_PASSWORD;
@@ -24,6 +25,11 @@ export default function Users() {
       .then((res) => {
         setDataLoaded(true);
         setDataset(res);
+      }).catch((err) => {
+        messageApi.open({
+          type: "error",
+          content: "Something happened! Please try again.",
+        });
       });
   }, []);
 
@@ -55,6 +61,11 @@ export default function Users() {
         _data.splice(index, 1, elindex);
 
         setDataset(_data);
+      }).catch((err) => {
+        messageApi.open({
+          type: "error",
+          content: "Something happened! Please try again.",
+        });
       });
   }
   
@@ -81,11 +92,17 @@ export default function Users() {
         _data.splice(index, 1, elindex);
 
         setDataset(_data);
+      }).catch((err) => {
+        messageApi.open({
+          type: "error",
+          content: "Something happened! Please try again.",
+        });
       });
   }
 
   return (
     <>
+      {contextHolder}
       {dataLoaded ? (
         <div className="flex flex-col mx-10">
           <Typography.Title level={3}>Internal Users List</Typography.Title>
