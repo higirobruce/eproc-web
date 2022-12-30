@@ -65,11 +65,8 @@ const ItemList = ({ handleSetValues }) => {
                               value: "USD",
                               label: "USD",
                             },
-                            
                           ]}
-                        >
-                          
-                        </Select>
+                        ></Select>
                       </Form.Item>
                       <Form.Item name={[name, "estimatedUnitCost"]} noStyle>
                         <InputNumber />
@@ -77,7 +74,103 @@ const ItemList = ({ handleSetValues }) => {
                     </Input.Group>
                   </Form.Item>
 
-                  <Form.Item
+                  <Form.Item label='Request Category' name={[name, "requestCategory"]}>
+                    <Select
+                      showSearch
+                      filterSort={(optionA, optionB) =>
+                        (optionA?.label ?? '').toLowerCase().localeCompare((optionB?.label ?? '').toLowerCase())
+                      }
+                      // defaultValue="RWF"
+                      options={[
+                        {
+                          value: "RECRUITEMENT",
+                          label: "RECRUITEMENT",
+                        },
+                        {
+                          value: "TEAM BUILDING",
+                          label: "TEAM BUILDING",
+                        },
+                        {
+                          value: "IT SERVICES",
+                          label: "IT SERVICES",
+                        },
+                        {
+                          value: "STATIONERIES SUPPLY",
+                          label: "STATIONERIES SUPPLY",
+                        },
+                        {
+                          value: "REFRESHMENTS SUPPLY",
+                          label: "REFRESHMENTS SUPPLY",
+                        },
+                        {
+                          value: "PROMO MATERIALS SUPPLY",
+                          label: "PROMO MATERIALS SUPPLY",
+                        },
+                        {
+                          value: "PRINTING SERVICES",
+                          label: "PRINTING SERVICES",
+                        },
+                        {
+                          value: "MEDIA SRVICES",
+                          label: "MEDIA SRVICES",
+                        },
+                        {
+                          value: "CLEANING SERVICES",
+                          label: "CLEANING SERVICES",
+                        },
+                        {
+                          value: "MEDICAL INSURANCE SERVICES",
+                          label: "MEDICAL INSURANCE SERVICES",
+                        },
+                        {
+                          value: "GENERAL INSURANCE SERVICES",
+                          label: "GENERAL INSURANCE SERVICES",
+                        },
+                        {
+                          value: "SECURITY SERVICES",
+                          label: "SECURITY SERVICES",
+                        },
+                        {
+                          value: "CATERING SERVICES (RESTAURANTS)",
+                          label: "CATERING SERVICES (RESTAURANTS)",
+                        },
+                        {
+                          value: "HOTELS & CONFERENCES SERVICES",
+                          label: "HOTELS & CONFERENCES SERVICES",
+                        },
+                        {
+                          value: "TRAVEL & TOUR SERVICES",
+                          label: "TRAVEL & TOUR SERVICES",
+                        },
+                        {
+                          value: "DECORATION SERVICES",
+                          label: "DECORATION SERVICES",
+                        },
+                        {
+                          value: "ENTERTAINMENT SERVICES",
+                          label: "ENTERTAINMENT SERVICES",
+                        },
+                        {
+                          value: "TRANSPORT SERVICES",
+                          label: "TRANSPORT SERVICES",
+                        },
+                        {
+                          value: "GARAGE & MAINTENANCE SERVICES",
+                          label: "GARAGE & MAINTENANCE SERVICES",
+                        },
+                        {
+                          value: "GENERAL MAINTENANCE (HOUSING)",
+                          label: "GENERAL MAINTENANCE (HOUSING)",
+                        },
+                        {
+                          value: "INTERNET SERVICES",
+                          label: "INTERNET SERVICES",
+                        },
+                      ]}
+                    ></Select>
+                  </Form.Item>
+
+                  {/* <Form.Item
                     label="Attachements"
                     {...restField}
                     name={[name, "first"]}
@@ -89,7 +182,22 @@ const ItemList = ({ handleSetValues }) => {
                     //   ]}
                   >
                     <UploadFiles />
+                  </Form.Item> */}
+                  <Form.Item
+                    label="Terms of reference"
+                    {...restField}
+                    name={[name, "tors"]}
+                    // rules={[
+                    //   {
+                    //     required: true,
+                    //     message: "Missing last name",
+                    //   },
+                    // ]}
+                  >
+                    <UploadFiles />
+                    {/* <Input.TextArea className="w-96" rows={5} /> */}
                   </Form.Item>
+
                   <Form.Item
                     label="Reference links"
                     {...restField}
@@ -104,21 +212,7 @@ const ItemList = ({ handleSetValues }) => {
                     <Input.TextArea className="w-96" rows={5} />
                   </Form.Item>
 
-                  <Form.Item
-                    label="TORs"
-                    {...restField}
-                    name={[name, "tors"]}
-                    // rules={[
-                    //   {
-                    //     required: true,
-                    //     message: "Missing last name",
-                    //   },
-                    // ]}
-                  >
-                    <Input.TextArea className="w-96" rows={5} />
-                  </Form.Item>
-
-                  <Form.Item label="Tech specs" name={[name, "techSpechs"]}>
+                  <Form.Item label="Technical specs" name={[name, "techSpechs"]}>
                     <Input.TextArea className="w-96" rows={5} />
                   </Form.Item>
 
