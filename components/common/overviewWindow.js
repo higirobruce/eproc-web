@@ -46,7 +46,7 @@ const OverviewWindow = ({ data }) => {
 
               {data.items.map((i, index) => {
                 return (
-                  <div className="mt-5">
+                  <div className="mt-5" key={index}>
                     <div className="text-xs font-semibold ml-3 text-gray-500">
                       <Tag>Item {index + 1}</Tag>
                     </div>
