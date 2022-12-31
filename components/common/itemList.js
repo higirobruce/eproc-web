@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   DeleteOutlined,
   MinusCircleOutlined,
@@ -18,6 +18,24 @@ import {
 import UploadFiles from "./uploadFiles";
 import TagInput from "./tagInput";
 const ItemList = ({ handleSetValues }) => {
+  const [serviceCategories, setServiceCategories] = useState([]);
+  let url = process.env.NEXT_PUBLIC_BKEND_URL;
+  let apiUsername = process.env.NEXT_PUBLIC_API_USERNAME;
+  let apiPassword = process.env.NEXT_PUBLIC_API_PASSWORD;
+
+  useEffect(() => {
+    fetch(`${url}/serviceCategories`, {
+      method: "GET",
+      headers: {
+        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+        "Content-Type": "application/json",
+      },
+    }).then(res=>res.json())
+    .then(res=>{
+      setServiceCategories(res)
+    })
+  }, []);
+
   const onValuesChange = (changedValues, allValues) => {
     handleSetValues(allValues);
   };
@@ -74,99 +92,27 @@ const ItemList = ({ handleSetValues }) => {
                     </Input.Group>
                   </Form.Item>
 
-                  <Form.Item label='Request Category' name={[name, "requestCategory"]}>
+                  <Form.Item
+                    label="Request Category"
+                    name={[name, "serviceCategory"]}
+                  >
                     <Select
                       showSearch
                       filterSort={(optionA, optionB) =>
-                        (optionA?.label ?? '').toLowerCase().localeCompare((optionB?.label ?? '').toLowerCase())
+                        (optionA?.label ?? "")
+                          .toLowerCase()
+                          .localeCompare((optionB?.label ?? "").toLowerCase())
+                      }
+                      filterOption={(inputValue, option) =>
+                        option.label.toLowerCase().includes(inputValue.toLowerCase())
                       }
                       // defaultValue="RWF"
-                      options={[
-                        {
-                          value: "RECRUITEMENT",
-                          label: "RECRUITEMENT",
-                        },
-                        {
-                          value: "TEAM BUILDING",
-                          label: "TEAM BUILDING",
-                        },
-                        {
-                          value: "IT SERVICES",
-                          label: "IT SERVICES",
-                        },
-                        {
-                          value: "STATIONERIES SUPPLY",
-                          label: "STATIONERIES SUPPLY",
-                        },
-                        {
-                          value: "REFRESHMENTS SUPPLY",
-                          label: "REFRESHMENTS SUPPLY",
-                        },
-                        {
-                          value: "PROMO MATERIALS SUPPLY",
-                          label: "PROMO MATERIALS SUPPLY",
-                        },
-                        {
-                          value: "PRINTING SERVICES",
-                          label: "PRINTING SERVICES",
-                        },
-                        {
-                          value: "MEDIA SRVICES",
-                          label: "MEDIA SRVICES",
-                        },
-                        {
-                          value: "CLEANING SERVICES",
-                          label: "CLEANING SERVICES",
-                        },
-                        {
-                          value: "MEDICAL INSURANCE SERVICES",
-                          label: "MEDICAL INSURANCE SERVICES",
-                        },
-                        {
-                          value: "GENERAL INSURANCE SERVICES",
-                          label: "GENERAL INSURANCE SERVICES",
-                        },
-                        {
-                          value: "SECURITY SERVICES",
-                          label: "SECURITY SERVICES",
-                        },
-                        {
-                          value: "CATERING SERVICES (RESTAURANTS)",
-                          label: "CATERING SERVICES (RESTAURANTS)",
-                        },
-                        {
-                          value: "HOTELS & CONFERENCES SERVICES",
-                          label: "HOTELS & CONFERENCES SERVICES",
-                        },
-                        {
-                          value: "TRAVEL & TOUR SERVICES",
-                          label: "TRAVEL & TOUR SERVICES",
-                        },
-                        {
-                          value: "DECORATION SERVICES",
-                          label: "DECORATION SERVICES",
-                        },
-                        {
-                          value: "ENTERTAINMENT SERVICES",
-                          label: "ENTERTAINMENT SERVICES",
-                        },
-                        {
-                          value: "TRANSPORT SERVICES",
-                          label: "TRANSPORT SERVICES",
-                        },
-                        {
-                          value: "GARAGE & MAINTENANCE SERVICES",
-                          label: "GARAGE & MAINTENANCE SERVICES",
-                        },
-                        {
-                          value: "GENERAL MAINTENANCE (HOUSING)",
-                          label: "GENERAL MAINTENANCE (HOUSING)",
-                        },
-                        {
-                          value: "INTERNET SERVICES",
-                          label: "INTERNET SERVICES",
-                        },
-                      ]}
+                      options={serviceCategories.map((s) => {
+                        return {
+                          value: s.description,
+                          label: s.description,
+                        };
+                      })}
                     ></Select>
                   </Form.Item>
 
@@ -212,7 +158,10 @@ const ItemList = ({ handleSetValues }) => {
                     <Input.TextArea className="w-96" rows={5} />
                   </Form.Item>
 
-                  <Form.Item label="Technical specs" name={[name, "techSpechs"]}>
+                  <Form.Item
+                    label="Technical specs"
+                    name={[name, "techSpechs"]}
+                  >
                     <Input.TextArea className="w-96" rows={5} />
                   </Form.Item>
 

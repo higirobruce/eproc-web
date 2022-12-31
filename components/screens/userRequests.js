@@ -8,7 +8,7 @@ import {
   Row,
   Space,
   Typography,
-  message
+  message,
 } from "antd";
 import Image from "next/image";
 import React, { useState, useEffect, useRef } from "react";
@@ -38,7 +38,8 @@ export default function UserRequests() {
       .then((res) => {
         setDataLoaded(true);
         setDataset(res);
-      }).catch((err) => {
+      })
+      .catch((err) => {
         messageApi.open({
           type: "error",
           content: "Something happened! Please try again.",
@@ -86,11 +87,14 @@ export default function UserRequests() {
             setDataset(res);
             setConfirmLoading(false);
             setOpen(false);
-          }).catch((err) => {
-            console.log(err)
+          })
+          .catch((err) => {
+            console.log(err);
           });
       })
       .catch((err) => {
+        setConfirmLoading(false);
+        setOpen(false);
         messageApi.open({
           type: "error",
           content: "Something happened! Please try again.",
@@ -121,14 +125,15 @@ export default function UserRequests() {
         _data.splice(index, 1, elindex);
 
         setDataset(_data);
-      }).catch((err) => {
+      })
+      .catch((err) => {
         messageApi.open({
           type: "error",
           content: "Something happened! Please try again.",
         });
       });
   }
-  
+
   function declineRequest(id) {
     setUpdatingId(id);
     fetch(`${url}/requests/decline/${id}`, {
@@ -152,7 +157,8 @@ export default function UserRequests() {
         _data.splice(index, 1, elindex);
 
         setDataset(_data);
-      }).catch((err) => {
+      })
+      .catch((err) => {
         messageApi.open({
           type: "error",
           content: "Something happened! Please try again.",
@@ -164,7 +170,6 @@ export default function UserRequests() {
       {contextHolder}
       {dataLoaded ? (
         <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000">
-
           <Row className="flex flex-row justify-between items-center">
             <Typography.Title level={3}>Purchase Requests</Typography.Title>
             <Row className="flex flex-row space-x-5 items-center">
@@ -188,9 +193,9 @@ export default function UserRequests() {
                 updatingId={updatingId}
               />
             </Col>
-            {/* <Col flex={1}>
+            <Col flex={1}>
               <OverviewWindow />
-            </Col> */}
+            </Col>
           </Row>
 
           <Modal
@@ -236,6 +241,7 @@ export default function UserRequests() {
           <Image alt="" src="/file_searching.svg" width={600} height={600} />
         </div>
       )}
+
     </>
   );
 }
