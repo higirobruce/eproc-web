@@ -1,11 +1,7 @@
 import React, { useEffect, useState } from "react";
 import {
   Badge,
-  Button,
   Form,
-  Input,
-  InputNumber,
-  Popconfirm,
   Row,
   Space,
   Spin,
@@ -17,8 +13,9 @@ import {
 import {
   CheckOutlined,
   CloseOutlined,
-  DeleteOutlined,
+  EllipsisOutlined,
   LoadingOutlined,
+  MoreOutlined,
 } from "@ant-design/icons";
 import moment from "moment/moment";
 
@@ -27,6 +24,7 @@ const UsersRequestsTable = ({
   handleApproveRequest,
   handleDeclineRequest,
   updatingId,
+  handleSetRow
 }) => {
   const [form] = Form.useForm();
   const [data, setData] = useState(dataSet);
@@ -132,6 +130,10 @@ const UsersRequestsTable = ({
                   onClick={() => decline(record._id)}
                 />
               )}
+              <EllipsisOutlined
+                  className="text-blue-400 cursor-pointer"
+                  onClick={() => {handleSetRow(record)}}
+                />
             </>
           )}
 

@@ -34,7 +34,7 @@ export default function Home() {
             <TopMenu setScreen={setScreen} />
             {screen === "dashboard" && <Dashboard />}
             {screen === "requests" && <UserRequests />}
-            {screen === "rfps" && <RequestToVendors />}
+            {screen === "tenders" && <RequestToVendors />}
             {screen === "contracts" && <Contracts />}
             {screen === "pos" && <PurchaseOrders />}
             {screen === "vendors" && <Vendors />}

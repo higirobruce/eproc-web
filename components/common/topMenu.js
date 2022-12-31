@@ -35,25 +35,25 @@ const TopMenu = ({setScreen}) => {
       },
 
       {
-        label: "User Requests",
+        label: "Requests",
         key: "requests",
         icon: <SolutionOutlined />,
         
       },
 
       {
-        label: "RFPs - RFQs",
-        key: "rfps",
+        label: "Tenders",
+        key: "tenders",
         icon: <MessageOutlined />,
        
       },
 
-      {
-        label: "Contracts",
-        key: "contracts",
-        icon: <FileDoneOutlined />,
+      // {
+      //   label: "Contracts",
+      //   key: "contracts",
+      //   icon: <FileDoneOutlined />,
         
-      },
+      // },
       {
         label: "Purchase Orders",
         key: "pos",

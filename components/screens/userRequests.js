@@ -31,6 +31,7 @@ export default function UserRequests() {
   let [confirmLoading, setConfirmLoading] = useState(false);
   let [values, setValues] = useState([]);
   let [dueDate, setDueDate] = useState(null);
+  let [rowData, setRowData] = useState(null)
 
   useEffect(() => {
     loadRequests()
@@ -165,6 +166,11 @@ export default function UserRequests() {
         });
       });
   }
+
+  function handleSetRow(row){
+    console.log(row)
+    setRowData(row)
+  }
   return (
     <>
       {contextHolder}
@@ -187,6 +193,7 @@ export default function UserRequests() {
           <Row className="flex flex-row space-x-5">
             <Col flex={4}>
               <UsersRequestsTable
+                handleSetRow={handleSetRow}
                 dataSet={dataset}
                 handleApproveRequest={approveRequest}
                 handleDeclineRequest={declineRequest}
@@ -194,7 +201,7 @@ export default function UserRequests() {
               />
             </Col>
             <Col flex={1}>
-              <OverviewWindow />
+              <OverviewWindow data={rowData} />
             </Col>
           </Row>
 
