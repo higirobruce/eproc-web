@@ -122,17 +122,19 @@ const TenderDetails = ({
                         </div>
                       </div>
 
-                      <div className="flex flex-row space-x-1 items-center">
-                        <div className="text-xs font-semibold ml-3 text-gray-500">
-                          Estimated cost:
+                      {user.userType !== "VENDOR" && (
+                        <div className="flex flex-row space-x-1 items-center">
+                          <div className="text-xs font-semibold ml-3 text-gray-500">
+                            Estimated cost:
+                          </div>
+                          <div className="text-sm font-semibold text-gray-600">
+                            {i?.currency}{" "}
+                            {(
+                              i?.estimatedUnitCost * i?.quantity
+                            ).toLocaleString()}
+                          </div>
                         </div>
-                        <div className="text-sm font-semibold text-gray-600">
-                          {i?.currency}{" "}
-                          {(
-                            i?.estimatedUnitCost * i?.quantity
-                          ).toLocaleString()}
-                        </div>
-                      </div>
+                      )}
 
                       <div className="flex flex-row space-x-1 items-center">
                         <div className="text-xs font-semibold ml-3 text-gray-500">
@@ -171,7 +173,7 @@ const TenderDetails = ({
                         <div className="flex flex-row space-x-1 ml-3 mt-5 items-center">
                           <Form.Item>
                             <Button
-                              type="default"
+                              type="primary"
                               htmlType="submit"
                               size="small"
                             >
