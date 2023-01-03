@@ -188,22 +188,26 @@ const TenderDetails = ({
             <Empty />
           )}
         </Tabs.TabPane>
-        <Tabs.TabPane tab="Bidding" key="2">
-          <div className="flex flex-col space-y-5">
-            {buildTabHeader()}
-            <Space>
-              <Tabs tabPosition="left">
-                <Tabs.TabPane tab="All bids" key="1">
-                  All
-                </Tabs.TabPane>
-                <Tabs.TabPane tab="Selected bid" key="2">
-                  Selected
-                </Tabs.TabPane>
-              </Tabs>
-            </Space>
-          </div>
-        </Tabs.TabPane>
-        <Tabs.TabPane tab="Aggrement" key="3"></Tabs.TabPane>
+        {user.userType !== "VENDOR" && (
+          <>
+            <Tabs.TabPane tab="Bidding" key="2">
+              <div className="flex flex-col space-y-5">
+                {buildTabHeader()}
+                <Space>
+                  <Tabs tabPosition="left">
+                    <Tabs.TabPane tab="All bids" key="1">
+                      All
+                    </Tabs.TabPane>
+                    <Tabs.TabPane tab="Selected bid" key="2">
+                      Selected
+                    </Tabs.TabPane>
+                  </Tabs>
+                </Space>
+              </div>
+            </Tabs.TabPane>
+            <Tabs.TabPane tab="Aggrement" key="3"></Tabs.TabPane>
+          </>
+        )}
       </Tabs>
     </div>
   );
@@ -227,7 +231,11 @@ const TenderDetails = ({
             format="DD:HH:mm:ss"
             value={moment(data?.submissionDeadLine)}
           />
-          <Tag color="magenta">{moment().isAfter(moment(data?.submissionDeadLine)) ? 'closed' : data?.status}</Tag>
+          <Tag color="magenta">
+            {moment().isAfter(moment(data?.submissionDeadLine))
+              ? "closed"
+              : data?.status}
+          </Tag>
         </Row>
       </div>
     );
