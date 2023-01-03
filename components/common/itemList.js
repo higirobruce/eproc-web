@@ -45,20 +45,20 @@ const ItemList = ({ handleSetValues }) => {
       name="dynamic_form_nest_item"
       onValuesChange={onValuesChange}
       autoComplete="off"
-      labelCol={{ span: 7 }}
-      wrapperCol={{ span: 16 }}
+      // labelCol={{ span: 9 }}
+      // wrapperCol={{ span: 20 }}
     >
       <Form.List name="items">
         {(fields, { add, remove }) => (
           <>
             {fields.map(({ key, name, ...restField }) => (
-              <Row key={key} className="flex flex-row border-2 mb-5">
+              <Row key={key} className="flex flex-row border-2 mb-5 space-x-10">
                 <Col>
                   <Form.Item label="Title/Description" name={[name, "title"]}>
                     <Input />
                   </Form.Item>
 
-                  <Form.Item label="Quantity" name={[name, "quantity"]}>
+                  <Form.Item label="Quantity" className="w-96" name={[name, "quantity"]}>
                     <InputNumber />
                   </Form.Item>
 
@@ -129,41 +129,7 @@ const ItemList = ({ handleSetValues }) => {
                   >
                     <UploadFiles />
                   </Form.Item> */}
-                  <Form.Item
-                    label="Terms of reference"
-                    {...restField}
-                    name={[name, "tors"]}
-                    // rules={[
-                    //   {
-                    //     required: true,
-                    //     message: "Missing last name",
-                    //   },
-                    // ]}
-                  >
-                    <UploadFiles />
-                    {/* <Input.TextArea className="w-96" rows={5} /> */}
-                  </Form.Item>
-
-                  <Form.Item
-                    label="Reference links"
-                    {...restField}
-                    name={[name, "links"]}
-                    // rules={[
-                    //   {
-                    //     required: true,
-                    //     message: "Missing last name",
-                    //   },
-                    // ]}
-                  >
-                    <Input.TextArea className="w-96" rows={5} />
-                  </Form.Item>
-
-                  <Form.Item
-                    label="Technical specs"
-                    name={[name, "techSpechs"]}
-                  >
-                    <Input.TextArea className="w-96" rows={5} />
-                  </Form.Item>
+                  
 
                   <Divider />
                 </Col>

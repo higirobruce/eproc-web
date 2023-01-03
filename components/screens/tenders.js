@@ -1,9 +1,4 @@
-import {
-  PlusOutlined,
-  ReloadOutlined,
-  SaveOutlined,
-  SettingOutlined,
-} from "@ant-design/icons";
+import { PlusOutlined, SaveOutlined, SettingOutlined } from "@ant-design/icons";
 import {
   Button,
   Col,
@@ -11,19 +6,16 @@ import {
   Form,
   Modal,
   Row,
-  Space,
   Typography,
   message,
 } from "antd";
 import Image from "next/image";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import ItemList from "../common/itemList";
-import RequestDetails from "../common/requestDetails";
-import TagInput from "../common/tagInput";
-import UploadFiles from "../common/uploadFiles";
-import UsersRequestsTable from "../userRequestsTable";
+import TenderDetails from "../common/tenderDetails";
+import TendersTable from "../tendersTable";
 
-export default function UserRequests() {
+export default function Tenders() {
   const [dataLoaded, setDataLoaded] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
   let url = process.env.NEXT_PUBLIC_BKEND_URL;
@@ -40,7 +32,7 @@ export default function UserRequests() {
   let [loadingRowData, setLoadingRowData] = useState(false);
 
   useEffect(() => {
-    loadRequests()
+    loadTenders()
       .then((res) => res.json())
       .then((res) => {
         setDataLoaded(true);
@@ -54,23 +46,8 @@ export default function UserRequests() {
       });
   }, []);
 
-  function refresh(){
-    setDataLoaded(false);
-    loadRequests()
-      .then((res) => res.json())
-      .then((res) => {
-        setDataLoaded(true);
-        setDataset(res);
-      })
-      .catch((err) => {
-        messageApi.open({
-          type: "error",
-          content: "Something happened! Please try again.",
-        });
-      });
-  }
-  async function loadRequests() {
-    return fetch(`${url}/requests/`, {
+  async function loadTenders() {
+    return fetch(`${url}/tenders/`, {
       method: "GET",
       headers: {
         Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
@@ -84,122 +61,50 @@ export default function UserRequests() {
   }, [dataset]);
 
   const save = () => {
-    if (values.items && values.items[0]) {
-      console.log("Received values of form:", values);
-      setConfirmLoading(true);
-      let user = JSON.parse(localStorage.getItem("user"));
-      fetch(`${url}/requests/`, {
-        method: "POST",
-        headers: {
-          Authorization:
-            "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          dueDate,
-          items: values.items,
-          createdBy: user?._id,
-        }),
-      })
-        .then((res) => res.json())
-        .then((res) => {
-          loadRequests()
-            .then((res) => res.json())
-            .then((res) => {
-              setDataLoaded(true);
-              setDataset(res);
-              setConfirmLoading(false);
-              setOpen(false);
-            })
-            .catch((err) => {
-              setConfirmLoading(false);
-              setOpen(false);
-              console.log(err);
-              messageApi.open({
-                type: "error",
-                content: "Something happened! Please try again.",
-              });
-            });
-        })
-        .catch((err) => {
-          setConfirmLoading(false);
-          setOpen(false);
-          messageApi.open({
-            type: "error",
-            content: "Something happened! Please try again.",
+    console.log("Received values of form:", values);
+    setConfirmLoading(true);
+    let user = JSON.parse(localStorage.getItem("user"));
+
+    fetch(`${url}/tenders/`, {
+      method: "POST",
+      headers: {
+        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        dueDate,
+        items: values.items,
+        createdBy: user?._id,
+      }),
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        loadTenders()
+          .then((res) => res.json())
+          .then((res) => {
+            setDataLoaded(true);
+            setDataset(res);
+            setConfirmLoading(false);
+            setOpen(false);
+          })
+          .catch((err) => {
+            console.log(err);
           });
+      })
+      .catch((err) => {
+        setConfirmLoading(false);
+        setOpen(false);
+        messageApi.open({
+          type: "error",
+          content: "Something happened! Please try again.",
         });
-    }
+      });
   };
-
-  function approveRequest(id) {
-    setUpdatingId(id);
-    fetch(`${url}/requests/approve/${id}`, {
-      method: "POST",
-      headers: {
-        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
-        "Content-Type": "application/json",
-      },
-    })
-      .then((res) => res.json())
-      .then((res) => {
-        let _data = [...dataset];
-
-        // Find item index using _.findIndex (thanks @AJ Richardson for comment)
-        var index = _.findIndex(_data, { _id: id });
-        let elindex = _data[index];
-        elindex.status = "approved";
-
-        console.log(_data[index]);
-        // Replace item at index using native splice
-        _data.splice(index, 1, elindex);
-
-        setDataset(_data);
-      })
-      .catch((err) => {
-        messageApi.open({
-          type: "error",
-          content: "Something happened! Please try again.",
-        });
-      });
-  }
-
-  function declineRequest(id) {
-    setUpdatingId(id);
-    fetch(`${url}/requests/decline/${id}`, {
-      method: "POST",
-      headers: {
-        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
-        "Content-Type": "application/json",
-      },
-    })
-      .then((res) => res.json())
-      .then((res) => {
-        let _data = [...dataset];
-
-        // Find item index using _.findIndex (thanks @AJ Richardson for comment)
-        var index = _.findIndex(_data, { _id: id });
-        let elindex = _data[index];
-        elindex.status = "declined";
-
-        console.log(_data[index]);
-        // Replace item at index using native splice
-        _data.splice(index, 1, elindex);
-
-        setDataset(_data);
-      })
-      .catch((err) => {
-        messageApi.open({
-          type: "error",
-          content: "Something happened! Please try again.",
-        });
-      });
-  }
 
   function updateStatus(id, status) {
     setLoadingRowData(true);
     setTimeout(() => {
-      fetch(`${url}/requests/status/${id}`, {
+      fetch(`${url}/tenders/status/${id}`, {
         method: "PUT",
         headers: {
           Authorization:
@@ -212,7 +117,7 @@ export default function UserRequests() {
       })
         .then((res) => res.json())
         .then((res) => {
-          loadRequests()
+          loadTenders()
             .then((res) => res.json())
             .then((res) => {
               setDataset(res);
@@ -241,28 +146,6 @@ export default function UserRequests() {
     }, 2000);
   }
 
-  function createTender(tenderData) {
-    setLoadingRowData(true);
-    fetch(`${url}/tenders`, {
-      method: "POST",
-      headers: {
-        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(tenderData),
-    })
-      .then((res) => res.json())
-      .then((res) => {
-        updateStatus(rowData._id, "converted");
-      })
-      .catch((err) => {
-        console.log(err);
-        messageApi.open({
-          type: "error",
-          content: "Something happened! Please try again.",
-        });
-      });
-  }
 
   function handleSetRow(row) {
     console.log(row);
@@ -276,9 +159,8 @@ export default function UserRequests() {
       {dataLoaded ? (
         <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000">
           <Row className="flex flex-row justify-between items-center">
-            <Typography.Title level={3}>Purchase Requests</Typography.Title>
-            <Row className="flex flex-row space-x-5 items-center">
-              <Button type="text" icon={<ReloadOutlined />} onClick={()=>refresh()}></Button>
+            <Typography.Title level={3}>Tenders</Typography.Title>
+            {/* <Row className="flex flex-row space-x-5 items-center">
               <Button
                 type="text"
                 icon={<PlusOutlined />}
@@ -288,24 +170,23 @@ export default function UserRequests() {
               </Button>
 
               <Button type="text" icon={<SettingOutlined />}></Button>
-            </Row>
+            </Row> */}
           </Row>
           <Row className="flex flex-row space-x-5">
             <Col flex={5}>
-              <UsersRequestsTable
+              <TendersTable
                 handleSetRow={handleSetRow}
                 dataSet={dataset}
-                handleApproveRequest={approveRequest}
-                handleDeclineRequest={declineRequest}
+               
                 updatingId={updatingId}
               />
             </Col>
             <Col flex={2}>
-              <RequestDetails
+              <TenderDetails
                 handleUpdateStatus={updateStatus}
                 loading={loadingRowData}
                 data={rowData}
-                handleCreateTender={createTender}
+                // handleCreateTender={createTender}
               />
             </Col>
           </Row>
@@ -337,6 +218,12 @@ export default function UserRequests() {
                 <Col>
                   <Typography.Title level={4}>Items</Typography.Title>
                   <ItemList handleSetValues={setValues} />
+                </Col>
+
+                <Col>
+                  <Typography.Title level={4}>
+                    Evalutaion Criterion
+                  </Typography.Title>
                 </Col>
               </Row>
             </Form>

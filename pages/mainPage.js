@@ -7,17 +7,20 @@ import Contracts from "../components/screens/contracts";
 import Dashboard from "../components/screens/dashboard";
 import PurchaseOrders from "../components/screens/purchaseOrders";
 import Reports from "../components/screens/reports";
-import RequestToVendors from "../components/screens/rfps";
+import Tenders from "../components/screens/tenders";
 import UserRequests from "../components/screens/userRequests";
 import Users from "../components/screens/users";
 import Vendors from "../components/screens/vendors";
 
 export default function Home() {
   const [screen, setScreen] = useState("dashboard");
-    const [loggedInUser, setLoggedInUser] = useState(null);
+  const [loggedInUser, setLoggedInUser] = useState(null);
 
   useEffect(() => {
-    setLoggedInUser(localStorage.getItem("user"))
+    setLoggedInUser(localStorage.getItem("user"));
+    let user = JSON.parse(localStorage.getItem("user"));
+    if (user.userType !== "VENDOR") setScreen("dashboard");
+    else setScreen("tenders");
   }, []);
   return (
     <>
@@ -31,10 +34,10 @@ export default function Home() {
       <main className="h-screen">
         {loggedInUser && (
           <>
-            <TopMenu setScreen={setScreen} />
+            <TopMenu setScreen={setScreen}  screen={screen}/>
             {screen === "dashboard" && <Dashboard />}
             {screen === "requests" && <UserRequests />}
-            {screen === "tenders" && <RequestToVendors />}
+            {screen === "tenders" && <Tenders />}
             {screen === "contracts" && <Contracts />}
             {screen === "pos" && <PurchaseOrders />}
             {screen === "vendors" && <Vendors />}
@@ -55,9 +58,13 @@ export default function Home() {
               }
             >
               <Col>
-                <Button type="link" onClick={()=> Router.push('/signup') }>Sign up</Button>
+                <Button type="link" onClick={() => Router.push("/signup")}>
+                  Sign up
+                </Button>
                 <Divider plain>Or</Divider>
-                <Button type="link" onClick={()=> Router.push('/') }>Login</Button>
+                <Button type="link" onClick={() => Router.push("/")}>
+                  Login
+                </Button>
               </Col>
             </Empty>
           </div>

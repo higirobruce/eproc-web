@@ -2,9 +2,7 @@ import { Grid, Typography,Col, Divider, Row, message } from "antd";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import VendorsTable from "../vendorsTable";
-import MSteps from "../common/mSteps";
 import _ from "lodash";
-import OverviewWindow from "../common/overviewWindow";
 export default function Vendors() {
   const [dataLoaded, setDataLoaded] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();

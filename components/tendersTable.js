@@ -19,7 +19,7 @@ import {
 } from "@ant-design/icons";
 import moment from "moment/moment";
 
-const UsersRequestsTable = ({
+const TendersTable = ({
   dataSet,
   handleApproveRequest,
   handleDeclineRequest,
@@ -40,7 +40,7 @@ const UsersRequestsTable = ({
 
   const columns = [
     {
-      title: "Req Number",
+      title: "Tender Number",
       dataIndex: "number",
     },
     {
@@ -65,24 +65,24 @@ const UsersRequestsTable = ({
     },
 
     {
-      title: "Due date",
-      key: "dueDate",
+      title: "Deadline date",
+      key: "submissionDeadLine",
       render: (_, record) => (
         <>
           <Row className="felx flex-row items-center justify-between">
             <Typography.Text>
-              {moment(record?.dueDate).format("YYYY-MMM-DD")}{" "}
+              {moment(record?.submissionDeadLine).format("YYYY-MMM-DD")}{" "}
             </Typography.Text>
-            <Typography.Text>
+            {/* <Typography.Text>
               <Tag color="lime">
                 <Statistic.Countdown
                   className="text-xs text-gray-500"
                   valueStyle={{ fontSize: "0.75rem", lineHeight: "1rem" }}
                   format="DD:HH:mm:ss"
-                  value={moment(record?.dueDate)}
+                  value={moment(record?.submissionDeadLine)}
                 />
               </Tag>
-            </Typography.Text>
+            </Typography.Text> */}
           </Row>
         </>
       ),
@@ -167,4 +167,4 @@ const UsersRequestsTable = ({
     </Form>
   );
 };
-export default UsersRequestsTable;
+export default TendersTable;

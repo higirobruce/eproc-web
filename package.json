@@ -13,6 +13,7 @@
     "@next/font": "13.0.7",
     "antd": "^5.0.7",
     "antd-input-tag": "^1.0.14",
+    "dayjs": "^1.11.7",
     "eslint": "8.30.0",
     "eslint-config-next": "13.0.7",
     "lodash": "^4.17.21",
