@@ -274,7 +274,7 @@ export default function UserRequests() {
     <>
       {contextHolder}
       {dataLoaded ? (
-        <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000">
+        <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 flex-1">
           <Row className="flex flex-row justify-between items-center">
             <Typography.Title level={3}>Purchase Requests</Typography.Title>
             <Row className="flex flex-row space-x-5 items-center">
@@ -343,7 +343,7 @@ export default function UserRequests() {
           </Modal>
         </div>
       ) : (
-        <div className="flex items-center justify-center h-screen">
+        <div className="flex items-center justify-center h-screen flex-1">
           <Image alt="" src="/file_searching.svg" width={600} height={600} />
         </div>
       )}

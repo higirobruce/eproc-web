@@ -1,4 +1,4 @@
-import { PlusOutlined, SaveOutlined, SettingOutlined } from "@ant-design/icons";
+import { PlusOutlined, ReloadOutlined, SaveOutlined, SettingOutlined } from "@ant-design/icons";
 import {
   Button,
   Col,
@@ -11,8 +11,10 @@ import {
 } from "antd";
 import Image from "next/image";
 import React, { useState, useEffect } from "react";
+import BidList from "../common/bidList";
 import ItemList from "../common/itemList";
 import TenderDetails from "../common/tenderDetails";
+import TenderStats from "../common/tendersStatistics";
 import TendersTable from "../tendersTable";
 
 export default function Tenders() {
@@ -30,6 +32,8 @@ export default function Tenders() {
   let [dueDate, setDueDate] = useState(null);
   let [rowData, setRowData] = useState(null);
   let [loadingRowData, setLoadingRowData] = useState(false);
+  let [totalTenders, setTotalTenders] = useState(0);
+  let [totalBids, setTotalBids] = useState(0);
 
   useEffect(() => {
     loadTenders()
@@ -46,6 +50,23 @@ export default function Tenders() {
       });
   }, []);
 
+  function refresh() {
+    setDataLoaded(false)
+    setLoadingRowData(true)
+    loadTenders()
+      .then((res) => res.json())
+      .then((res) => {
+        setDataLoaded(true);
+        setLoadingRowData(false)
+        setDataset(res);
+      })
+      .catch((err) => {
+        messageApi.open({
+          type: "error",
+          content: "Something happened! Please try again.",
+        });
+      });
+  }
   async function loadTenders() {
     return fetch(`${url}/tenders/`, {
       method: "GET",
@@ -55,9 +76,10 @@ export default function Tenders() {
       },
     });
   }
+
   useEffect(() => {
     setUpdatingId("");
-    console.log(dataset);
+    loadStats();
   }, [dataset]);
 
   const save = () => {
@@ -146,6 +168,35 @@ export default function Tenders() {
     }, 2000);
   }
 
+  function loadStats() {
+    fetch(`${url}/tenders/stats`, {
+      method: "GET",
+      headers: {
+        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+        "Content-Type": "application/json",
+      },
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        setTotalTenders(res?.total);
+        // setOpen(res?.open)
+        // setClosed(res?.closed)
+      });
+
+    fetch(`${url}/submissions`, {
+      method: "GET",
+      headers: {
+        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+        "Content-Type": "application/json",
+      },
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        setTotalBids(res?.length);
+        // setOpen(res?.open)
+        // setClosed(res?.closed)
+      });
+  }
 
   function handleSetRow(row) {
     console.log(row);
@@ -153,42 +204,87 @@ export default function Tenders() {
     setRowData(row);
     setLoadingRowData(false);
   }
+
+  function createSubmission(data) {
+    console.log(data);
+    setLoadingRowData(true);
+    fetch(`${url}/submissions/`, {
+      method: "POST",
+      headers: {
+        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    })
+      .then((res) => res.json())
+      .then((res1) => {
+        loadTenders()
+          .then((res2) => res2.json())
+          .then((res3) => {
+            setDataset(res3);
+            let r = res3.filter((d) => {
+              return d._id === rowData._id;
+            });
+            console.log("hereeeeeee", r);
+            setRowData(r[0]);
+            setLoadingRowData(false);
+          })
+          .catch((err) => {
+            console.error(err);
+            setLoadingRowData(false);
+            messageApi.open({
+              type: "error",
+              content: JSON.stringify(err),
+            });
+          });
+      })
+      .catch((err) => {
+        console.error(err);
+        setLoadingRowData(false);
+        messageApi.open({
+          type: "error",
+          content: JSON.stringify(err),
+        });
+      });
+  }
   return (
     <>
       {contextHolder}
       {dataLoaded ? (
-        <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000">
+        <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 pt-5 flex-1">
+          <TenderStats totalBids={totalBids} totalTenders={totalTenders} />
           <Row className="flex flex-row justify-between items-center">
             <Typography.Title level={3}>Tenders</Typography.Title>
-            {/* <Row className="flex flex-row space-x-5 items-center">
+            <Row className="flex flex-row space-x-5 items-center">
               <Button
                 type="text"
-                icon={<PlusOutlined />}
-                onClick={() => setOpen(true)}
-              >
-                New request
-              </Button>
+                icon={<ReloadOutlined />}
+                onClick={() => refresh()}
+              ></Button>
 
               <Button type="text" icon={<SettingOutlined />}></Button>
-            </Row> */}
+            </Row>
           </Row>
           <Row className="flex flex-row space-x-5">
             <Col flex={5}>
               <TendersTable
                 handleSetRow={handleSetRow}
                 dataSet={dataset}
-               
                 updatingId={updatingId}
               />
             </Col>
-            <Col flex={2}>
-              <TenderDetails
-                handleUpdateStatus={updateStatus}
-                loading={loadingRowData}
-                data={rowData}
-                // handleCreateTender={createTender}
-              />
-            </Col>
+            {rowData && (
+              <Col flex={2}>
+                <TenderDetails
+                  handleUpdateStatus={updateStatus}
+                  loading={loadingRowData}
+                  data={rowData}
+                  handleCreateSubmission={createSubmission}
+                  handleClose={() => setRowData(null)}
+                  handleRefreshData = {refresh}
+                />
+              </Col>
+            )}
           </Row>
 
           <Modal
@@ -230,7 +326,7 @@ export default function Tenders() {
           </Modal>
         </div>
       ) : (
-        <div className="flex items-center justify-center h-screen">
+        <div className="flex items-center justify-center h-screen flex-1">
           <Image alt="" src="/file_searching.svg" width={600} height={600} />
         </div>
       )}

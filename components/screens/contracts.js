@@ -8,7 +8,7 @@ export default function Contracts() {
       {dataLoaded ? (
         <div>Data</div>
       ) : (
-        <div className="flex items-center justify-center h-screen">
+        <div className="flex items-center justify-center h-screen flex-1">
           <Image alt='' src='/contracts_searching.gif' width={600} height={600}/>
         </div>
       )}

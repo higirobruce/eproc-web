@@ -103,7 +103,7 @@ export default function Vendors() {
     <>
       {contextHolder}
       {dataLoaded ? (
-        <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000">
+        <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 flex-1">
           <Typography.Title level={3}>Vendors List</Typography.Title>
           <Row className="flex flex-row space-x-5">
             <Col flex={4}>
@@ -118,7 +118,7 @@ export default function Vendors() {
           </Row>
         </div>
       ) : (
-        <div className="flex items-center justify-center h-screen transition-opacity ease-in-out duration-300">
+        <div className="flex items-center justify-center h-screen transition-opacity ease-in-out duration-300 flex-1">
           <Image alt="" src="/people_search.svg" width={600} height={600} />
         </div>
       )}

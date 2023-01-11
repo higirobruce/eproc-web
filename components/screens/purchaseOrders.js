@@ -8,7 +8,7 @@ export default function PurchaseOrders() {
       {dataLoaded ? (
         <div>Data</div>
       ) : (
-        <div className="flex items-center justify-center h-screen">
+        <div className="flex items-center justify-center h-screen flex-1">
           <Image alt='' src='/web_search.svg' width={800} height={800}/>
         </div>
       )}

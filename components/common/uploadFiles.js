@@ -7,7 +7,7 @@ const props = {
   previewFile(file) {
     console.log('Your upload file:', file);
     // Your process logic. Here we just mock to the same file
-    return fetch('https://next.json-generator.com/api/json/get/4ytyBoLK8', {
+    return fetch('https://run.mocky.io/v3/a42ee557-1ae7-49d7-878f-dd8599fab9d6', {
       method: 'POST',
       body: file,
     })

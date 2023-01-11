@@ -38,7 +38,7 @@ const TopMenu = ({ setScreen, screen }) => {
           ),
           key: "logo",
           // icon: <LogoutOutlined className="text-red-400" />,
-          // style: { marginLeft: "auto" },
+          // style: { marginBottom: "40px" },
           // onClick: logout,
         },
         {
@@ -76,6 +76,9 @@ const TopMenu = ({ setScreen, screen }) => {
           key: "vendors",
           icon: <UsergroupAddOutlined />,
         },
+        {
+          type: 'divider'
+        },
 
         {
           label: "Internal Users",
@@ -88,9 +91,14 @@ const TopMenu = ({ setScreen, screen }) => {
           icon: <CopyOutlined />,
         },
         {
+          type: 'divider'
+        },
+        {
           key: "logout",
+          label:"Logout",
+          danger:true,
           icon: <LogoutOutlined className="text-red-400" />,
-          style: { marginLeft: "auto" },
+          // style: { marginTop: "480px"},
           // onClick: logout,
         },
       ];
@@ -112,8 +120,10 @@ const TopMenu = ({ setScreen, screen }) => {
         },
         {
           key: "logout",
+          label:"Logout",
+          danger: true,
           icon: <LogoutOutlined className="text-red-400" />,
-          style: { marginLeft: "auto" },
+          // style: { marginTop: "780px", color:"#F97B7B"},
           // onClick: logout,
         },
       ];
@@ -139,7 +149,7 @@ const TopMenu = ({ setScreen, screen }) => {
     <Menu
       onClick={onClick}
       selectedKeys={[current]}
-      mode="horizontal"
+      mode="vertical"
       items={items}
     />
   );

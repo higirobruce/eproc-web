@@ -31,7 +31,7 @@ export default function Home() {
         <link rel="icon" href="/favicon.png" />
       </Head>
 
-      <main className="h-screen">
+      <main className="h-screen flex flex-row">
         {loggedInUser && (
           <>
             <TopMenu setScreen={setScreen}  screen={screen}/>
