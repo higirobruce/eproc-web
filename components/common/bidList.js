@@ -28,7 +28,7 @@ const BidList = ({ tenderId, handleSelectBid, refresh }) => {
       .then((res) => res.json())
       .then((body) => {
         setData(body);
-        if (body?.length > 1) setContainerHeight(340);
+        if (body?.length >= 1) setContainerHeight(340);
         else setContainerHeight(50);
       });
   };
