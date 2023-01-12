@@ -103,7 +103,7 @@ export default function Vendors() {
     <>
       {contextHolder}
       {dataLoaded ? (
-        <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 flex-1">
+        <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 flex-1 px-10">
           <Typography.Title level={3}>Vendors List</Typography.Title>
           <Row className="flex flex-row space-x-5">
             <Col flex={4}>

@@ -104,7 +104,7 @@ export default function Users() {
     <>
       {contextHolder}
       {dataLoaded ? (
-        <div className="flex flex-col mx-10 flex-1">
+        <div className="flex flex-col mx-10 flex-1 px-10">
           <Typography.Title level={3}>Internal Users List</Typography.Title>
           <UsersTable
             dataSet={dataset}

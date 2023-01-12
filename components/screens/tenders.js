@@ -251,7 +251,7 @@ export default function Tenders() {
     <>
       {contextHolder}
       {dataLoaded ? (
-        <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 pt-5 flex-1">
+        <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 pt-5 px-10 flex-1">
           <TenderStats totalBids={totalBids} totalTenders={totalTenders} />
           <Row className="flex flex-row justify-between items-center">
             <Typography.Title level={3}>Tenders</Typography.Title>

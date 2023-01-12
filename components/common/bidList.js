@@ -121,6 +121,7 @@ const BidList = ({ tenderId, handleSelectBid, refresh }) => {
                   </div>
 
                   {item?.status === "pending" && (
+                    
                     <Button
                       size="small"
                       onClick={() => handleSelectBid(item._id)}
