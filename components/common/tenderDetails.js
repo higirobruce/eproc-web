@@ -1,4 +1,8 @@
 import React, { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
+import parse from "html-react-parser";
+const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
+import "react-quill/dist/quill.snow.css";
 import {
   Button,
   DatePicker,
@@ -6,25 +10,33 @@ import {
   Form,
   Input,
   InputNumber,
-  Radio,
   Row,
   Select,
-  Space,
   Spin,
   Statistic,
-  Steps,
   Tabs,
   Tag,
-  TimePicker,
+  message,
+  List,
   Typography,
   Upload,
-  message,
+  Modal,
+  Table,
+  Divider,
+  Popover,
 } from "antd";
 import UploadFiles from "./uploadFiles";
-import { CloseOutlined, LoadingOutlined } from "@ant-design/icons";
+import {
+  CheckOutlined,
+  CloseOutlined,
+  FileTextOutlined,
+  LoadingOutlined,
+  PrinterOutlined,
+} from "@ant-design/icons";
 import moment from "moment";
 import dayjs from "dayjs";
 import BidList from "./bidList";
+import Image from "next/image";
 
 const TenderDetails = ({
   data,
@@ -33,6 +45,7 @@ const TenderDetails = ({
   handleCreateSubmission,
   handleClose,
   handleRefreshData,
+  handleCreatePO,
 }) => {
   let url = process.env.NEXT_PUBLIC_BKEND_URL;
   let apiUsername = process.env.NEXT_PUBLIC_API_USERNAME;
@@ -51,7 +64,19 @@ const TenderDetails = ({
   let [currency, setCurrency] = useState("RWF");
   let [iSubmitted, setISubmitted] = useState(false);
   let [checkingSubmission, setCheckingSubmission] = useState(false);
-  let [refresh, setRefresh] = useState(1)
+  let [refresh, setRefresh] = useState(1);
+  let [bidList, setBidList] = useState(null);
+  let [poCreated, setPoCreated] = useState(false);
+  let [po, setPO] = useState(null);
+  let [openCreatePO, setOpenCreatePO] = useState(false);
+  let [openViewPO, setOpenViewPO] = useState(false);
+  let [vendor, setVendor] = useState("");
+  let [tendor, setTendor] = useState("");
+  let [paymentTerms, setPaymentTerms] = useState("");
+  let [items, setItems] = useState(null);
+  let tot = 0;
+  let [totalVal, setTotVal] = useState(0);
+  let [warrantyDuration, setWarrantyDuration] = useState("months");
   const props = {
     name: "file",
     action: "https://run.mocky.io/v3/a42ee557-1ae7-49d7-878f-dd8599fab9d6",
@@ -69,12 +94,79 @@ const TenderDetails = ({
       }
     },
   };
+  const columns = [
+    {
+      title: "Description",
+      dataIndex: "title",
+      key: "title",
+    },
+    {
+      title: "Quantity",
+      dataIndex: "quantity",
+      key: "quantity",
+      render: (_, item) => <>{(item?.quantity).toLocaleString()}</>,
+    },
+    {
+      title: "Unit Price (RWF)",
+      dataIndex: "estimatedUnitCost",
+      key: "estimatedUnitCost",
+      render: (_, item) => <>{(item?.estimatedUnitCost).toLocaleString()}</>,
+    },
+    {
+      title: "Total Amount (Rwf)",
+      dataIndex: "totalAmount",
+      key: "totalAmount",
+      render: (_, item) => (
+        <>{(item?.quantity * item?.estimatedUnitCost).toLocaleString()}</>
+      ),
+    },
+  ];
   useEffect(() => {
     let statusCode = getRequestStatusCode(data?.status);
     console.log(statusCode);
     setCurrentCode(1);
+    updateBidList();
+    setItems(data?.purchaseRequest?.items);
     if (data) checkSubmission();
   }, [data]);
+
+  useEffect(() => {
+    let t = 0;
+    items?.map((i) => {
+      t = t + i?.quantity * i?.estimatedUnitCost;
+    });
+    setTotVal(t);
+  }, [items]);
+  const updateBidList = () => {
+    fetch(`${url}/submissions/byTender/${data._id}`, {
+      method: "GET",
+      headers: {
+        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+        "Content-Type": "application/json",
+      },
+    })
+      .then((res) => res.json())
+      .then((body) => {
+        setBidList(body);
+        checkPOCreated();
+      });
+  };
+
+  const checkPOCreated = () => {
+    fetch(`${url}/purchaseOrders/byTenderId/${data._id}`, {
+      method: "GET",
+      headers: {
+        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+        "Content-Type": "application/json",
+      },
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        setPO(res[0]);
+        if (res.length >= 1) setPoCreated(true);
+        else setPoCreated(false);
+      });
+  };
 
   function checkSubmission() {
     setCheckingSubmission(true);
@@ -134,31 +226,48 @@ const TenderDetails = ({
       discount,
       status: "pending",
       comment,
-      createdBy: user._id,
+      createdBy: user?._id,
       tender: data._id,
+      warrantyDuration,
     };
     createSubmission(subData);
   }
 
-  function handleSelectBid(bidId){
-    
+  function handleSelectBid(bidId) {
     fetch(`${url}/submissions/select/${bidId}?tenderId=${data._id}`, {
       method: "POST",
       headers: {
         Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
         "Content-Type": "application/json",
       },
-    }).then(res=>res.json())
-    .then(res=>{
-      setRefresh(refresh+1);
     })
+      .then((res) => res.json())
+      .then((res) => {
+        handleUpdateStatus(data._id, "bidSelected");
+        setRefresh(refresh + 1);
+      });
+  }
+
+  function handleAwardBid(bidId) {
+    fetch(`${url}/submissions/award/${bidId}?tenderId=${data._id}`, {
+      method: "POST",
+      headers: {
+        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+        "Content-Type": "application/json",
+      },
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        handleUpdateStatus(data._id, "bidAwarded");
+        setRefresh(refresh + 1);
+      });
   }
 
   return (
-    <div className="flex flex-col h-full ring-1 ring-gray-200 p-3 rounded shadow-md">
+    <div className="flex flex-col ring-1 ring-gray-200 p-3 rounded shadow-md ">
       <contextHolder />
       <div className="flex flex-row justify-between items-start">
-        <div className="flex-1">
+        <div className="flex-1 ">
           <Tabs defaultActiveKey="1" type="card" size={size}>
             <Tabs.TabPane tab="Overview" key="1">
               {data ? (
@@ -166,42 +275,43 @@ const TenderDetails = ({
                   spinning={loading || checkingSubmission}
                   indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />}
                 >
-                  <>
+                  <div className="overflow-x-auto p-3">
                     {/* TItle */}
                     {buildTabHeader()}
 
-                    {data?.items.map((i, index) => {
-                      return (
-                        <div className="mt-5" key={index}>
-                          <div className="text-xs font-semibold ml-3 text-gray-500">
-                            <Tag>Item {index + 1}</Tag>
-                          </div>
-                          <div className="flex flex-row space-x-1 items-center">
-                            <div className="text-xs font-semibold ml-3 text-gray-500">
-                              Description:
-                            </div>
-                            <div className="text-sm font-semibold text-gray-600">
-                              {i?.title}
-                            </div>
-                          </div>
-                          <div className="flex flex-row space-x-1 items-center">
-                            <div className="text-xs font-semibold ml-3 text-gray-500">
-                              Quantity:
-                            </div>
-                            <div className="text-sm font-semibold text-gray-600">
-                              {i?.quantity}
-                            </div>
-                          </div>
-                          <div className="flex flex-row space-x-1 items-center">
-                            <div className="text-xs font-semibold ml-3 text-gray-500">
-                              Service category:
-                            </div>
-                            <div className="text-sm font-semibold text-gray-600">
-                              {i?.serviceCategory}
-                            </div>
-                          </div>
+                    <div className="ml-3 mt-5">
+                      <Typography.Link>
+                        <FileTextOutlined /> Tender document for {data?.number}{" "}
+                      </Typography.Link>
+                    </div>
 
-                          {user.userType !== "VENDOR" && (
+                    {data.items.map((i, index) => {
+                      return (
+                        <div
+                          className="mt-2 flex flex-row justify-between ring-1 ring-gray-200 rounded p-1"
+                          key={index}
+                        >
+                          <div>
+                            <div className="text-xs font-semibold ml-3 text-gray-800">
+                              Item {index + 1}
+                            </div>
+                            <div className="flex flex-row space-x-1 items-center">
+                              <div className="text-xs font-semibold ml-3 text-gray-500">
+                                Description:
+                              </div>
+                              <div className="text-sm font-semibold text-gray-600">
+                                {i?.title}
+                              </div>
+                            </div>
+                            <div className="flex flex-row space-x-1 items-center">
+                              <div className="text-xs font-semibold ml-3 text-gray-500">
+                                Quantity:
+                              </div>
+                              <div className="text-sm font-semibold text-gray-600">
+                                {i?.quantity}
+                              </div>
+                            </div>
+
                             <div className="flex flex-row space-x-1 items-center">
                               <div className="text-xs font-semibold ml-3 text-gray-500">
                                 Estimated cost:
@@ -213,36 +323,57 @@ const TenderDetails = ({
                                 ).toLocaleString()}
                               </div>
                             </div>
-                          )}
 
-                          <div className="flex flex-row space-x-1 items-center">
-                            <div className="text-xs font-semibold ml-3 text-gray-500">
-                              Links:
-                            </div>
-                            <div className="text-sm font-semibold text-gray-600">
-                              <a href={i.links}>
-                                <Typography.Text
-                                  style={{ width: 200 }}
-                                  ellipsis
-                                >
-                                  {i.links}
-                                </Typography.Text>
-                              </a>
-                            </div>
+                            {/* {po &&
+                              buildConfirmDeliveryForm(
+                                po,
+                                handleGetProgress,
+                                handleUpdateProgress,
+                                progress
+                              )} */}
+                          </div>
+
+                          <div className="self-center">
+                            <Popover content="TOR">
+                              <Image
+                                className=" cursor-pointer hover:opacity-60"
+                                width={40}
+                                height={40}
+                                src="/icons/icons8-file-64.png"
+                              />
+                            </Popover>
                           </div>
                         </div>
                       );
                     })}
 
-                    {user.userType === "VENDOR" &&
+                    {user?.userType === "VENDOR" &&
                       moment().isBefore(moment(data?.submissionDeadLine)) &&
+                      data?.status === "open" &&
                       !iSubmitted && (
                         <>
                           <Form size="small" onFinish={submitSubmissionData}>
-                            <div className=" ml-3 mt-5 items-center">
+                            <div className="ml-3 mt-5 items-center">
+                              <Divider></Divider>
+                              <Typography.Title className="pb-4" level={5}>
+                                Submit Proposal
+                              </Typography.Title>
                               <Form.Item
                                 name="proposal"
                                 label="My proposal"
+                                // rules={[
+                                //   {
+                                //     required: true,
+                                //     message: "Please attach the TORs as a document!",
+                                //   },
+                                // ]}
+                              >
+                                <UploadFiles {...props} />
+                              </Form.Item>
+
+                              <Form.Item
+                                name="otherDocs"
+                                label="Other Supporting documents"
                                 // rules={[
                                 //   {
                                 //     required: true,
@@ -261,7 +392,7 @@ const TenderDetails = ({
                                 />
                               </Form.Item>
 
-                              <Form.Item label="Price">
+                              <Form.Item label="Total Bid Amount">
                                 <Input.Group compact>
                                   <Form.Item noStyle name="currency">
                                     <Select
@@ -287,10 +418,39 @@ const TenderDetails = ({
                                 </Input.Group>
                               </Form.Item>
 
-                              <Form.Item name="warranty" label="Warranty (Yrs)">
-                                <InputNumber
-                                  onChange={(value) => setWarranty(value)}
-                                />
+                              <Form.Item
+                                name="warranty"
+                                label="Warranty - where applicable"
+                              >
+                                <Input.Group compact>
+                                  <Form.Item noStyle name="warrantyDuration">
+                                    <Select
+                                      onChange={(value) =>
+                                        setWarrantyDuration(value)
+                                      }
+                                      defaultValue="months"
+                                      options={[
+                                        {
+                                          value: "days",
+                                          label: "Days",
+                                        },
+                                        {
+                                          value: "months",
+                                          label: "Months",
+                                        },
+                                        {
+                                          value: "years",
+                                          label: "Years",
+                                        },
+                                      ]}
+                                    ></Select>
+                                  </Form.Item>
+                                  <Form.Item name="warranty" noStyle>
+                                    <InputNumber
+                                      onChange={(value) => setWarranty(value)}
+                                    />
+                                  </Form.Item>
+                                </Input.Group>
                               </Form.Item>
 
                               <Form.Item name="discount" label="Discount (%)">
@@ -323,21 +483,156 @@ const TenderDetails = ({
                           </Form>
                         </>
                       )}
-                  </>
+                  </div>
                 </Spin>
               ) : (
                 <Empty />
               )}
             </Tabs.TabPane>
-            {user.userType !== "VENDOR" && (
+            {user?.userType !== "VENDOR" && (
               <>
                 <Tabs.TabPane tab="Bidding" key="2">
                   <div className="flex flex-col space-y-5">
                     {buildTabHeader()}
-                    <div><BidList tenderId={data._id} handleSelectBid={handleSelectBid} refresh={refresh} /></div>
+                    <div>
+                      <BidList
+                        tenderId={data._id}
+                        handleSelectBid={handleSelectBid}
+                        handleAwardBid={handleAwardBid}
+                        refresh={refresh}
+                        handleSetBidList={setBidList}
+                      />
+                    </div>
                   </div>
                 </Tabs.TabPane>
-                <Tabs.TabPane tab="Aggrement" key="3"></Tabs.TabPane>
+                <Tabs.TabPane tab="Aggrement" key="3">
+                  <div className="flex flex-col space-y-5">
+                    {buildTabHeader()}
+                    {bidList?.filter((d) => d.status === "awarded").length >=
+                    1 ? (
+                      !poCreated ? (
+                        <div>
+                          {bidList
+                            ?.filter((d) => d.status === "awarded")
+                            ?.map((item) => {
+                              return (
+                                <List size="small">
+                                  <List.Item key={item?.number}>
+                                    <List.Item.Meta
+                                      //   avatar={<Avatar src={item.picture.large} />}
+                                      title={<a href="#">{item.number}</a>}
+                                      description={
+                                        <>
+                                          <div className="text-xs text-gray-400">
+                                            {item?.createdBy?.companyName}
+                                          </div>
+                                          <a href="#">
+                                            <FileTextOutlined />{" "}
+                                          </a>
+                                        </>
+                                      }
+                                    />
+                                    <div className="flex flex-row items-start space-x-10 justify-between">
+                                      <div className="flex flex-row space-x-2">
+                                        <div className="flex flex-col">
+                                          <div className="flex flex-row space-x-2">
+                                            <div className="text-xs font-bold text-gray-500">
+                                              Price:
+                                            </div>
+                                            <div className="text-xs text-gray-400">
+                                              {item?.price.toLocaleString()}
+                                            </div>
+                                          </div>
+
+                                          <div className="flex flex-row space-x-2">
+                                            <div className="text-xs font-bold text-gray-500">
+                                              Discount:
+                                            </div>
+                                            <div className="text-xs text-gray-400">
+                                              {item?.discount}%
+                                            </div>
+                                          </div>
+
+                                          <div className="flex flex-row space-x-2">
+                                            <div className="text-xs font-bold text-gray-500">
+                                              Delivery date:
+                                            </div>
+                                            <div className="text-xs text-gray-400">
+                                              {moment(
+                                                item?.deliveryDate
+                                              ).format("YYYY-MMM-DD")}
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+
+                                      <Form
+                                        size="small"
+                                        className="flex flex-row space-x-1"
+                                      >
+                                        <Form.Item>
+                                          <UploadFiles label="Contract" />
+                                        </Form.Item>
+
+                                        <Form.Item>
+                                          <Button
+                                            size="small"
+                                            type="primary"
+                                            icon={<CheckOutlined />}
+                                            onClick={() => {
+                                              setOpenCreatePO(true);
+                                              setVendor(item?.createdBy);
+                                              setTendor(item?.tender);
+                                            }}
+                                          >
+                                            Create PO
+                                          </Button>
+                                        </Form.Item>
+                                      </Form>
+                                    </div>
+                                  </List.Item>
+                                </List>
+                              );
+                            })}
+                        </div>
+                      ) : (
+                        <div className="mx-3 flex flex-row space-x-5 items-center justify-center">
+                          <div className="flex flex-col items-center justify-center">
+                            <Typography.Title level={5}>
+                              Contract
+                            </Typography.Title>
+                            {/* <Popover content={'PO: '+po?.number}> */}
+                            <Image
+                              // onClick={() => setOpenViewPO(true)}
+                              className=" cursor-pointer hover:opacity-60"
+                              width={40}
+                              height={40}
+                              src="/icons/icons8-file-64.png"
+                            />
+                            {/* </Popover> */}
+                          </div>
+
+                          <div className="flex flex-col items-center justify-center">
+                            <Typography.Title level={5}>
+                              Purchase order
+                            </Typography.Title>
+                            {/* <Popover content={po?.number}> */}
+                            <Image
+                              onClick={() => setOpenViewPO(true)}
+                              className=" cursor-pointer hover:opacity-60"
+                              width={40}
+                              height={40}
+                              src="/icons/icons8-file-64.png"
+                            />
+                            {/* </Popover> */}
+                          </div>
+                        </div>
+                      )
+                    ) : (
+                      <Empty />
+                    )}
+                  </div>
+                </Tabs.TabPane>
               </>
             )}
           </Tabs>
@@ -345,20 +640,349 @@ const TenderDetails = ({
 
         <CloseOutlined className="cursor-pointer" onClick={handleClose} />
       </div>
+
+      {createPOMOdal()}
+      {viewPOMOdal()}
     </div>
   );
+
+  function createPOMOdal() {
+    return (
+      <Modal
+        title="New Purchase Order"
+        centered
+        open={openCreatePO}
+        onOk={() => {
+          setOpenCreatePO(false);
+          handleCreatePO(vendor?._id, tendor?._id, user?._id, paymentTerms);
+        }}
+        okText="Save and Submit"
+        onCancel={() => setOpenCreatePO(false)}
+        width={"80%"}
+        bodyStyle={{ maxHeight: "700px", overflow: "scroll" }}
+      >
+        <div className="space-y-10 px-20 py-5">
+          <Typography.Title level={4}>
+            PURCHASE ORDER: {vendor?.companyName}
+          </Typography.Title>
+          <div className="grid grid-cols-2 gap-5">
+            <div className="flex flex-col ring-1 ring-gray-300 rounded p-5 space-y-3">
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Company Name</div>
+                </Typography.Text>
+                <Typography.Text strong>Irembo ltd</Typography.Text>
+              </div>
+
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Company Address</div>
+                </Typography.Text>
+                <Typography.Text strong>
+                  Irembo Campass Nyarutarama KG 9 Ave
+                </Typography.Text>
+              </div>
+
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Company TIN no.</div>
+                </Typography.Text>
+                <Typography.Text strong>102911562</Typography.Text>
+              </div>
+
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Hereinafter refferd to as</div>
+                </Typography.Text>
+                <Typography.Text strong>Sender</Typography.Text>
+              </div>
+            </div>
+
+            <div className="flex flex-col ring-1 ring-gray-300 rounded p-5 space-y-3">
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Company Name</div>
+                </Typography.Text>
+                <Typography.Text strong>{vendor?.companyName}</Typography.Text>
+              </div>
+
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Company Address</div>
+                </Typography.Text>
+                <Typography.Text strong>
+                  {vendor?.building}-{vendor?.street}-{vendor?.avenue}
+                </Typography.Text>
+              </div>
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Company TIN no.</div>
+                </Typography.Text>
+                <Typography.Text strong>{vendor?.tin}</Typography.Text>
+              </div>
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Hereinafter refferd to as</div>
+                </Typography.Text>
+                <Typography.Text strong>Receiver</Typography.Text>
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-col space-y-5">
+            <Typography.Title level={4}>Details</Typography.Title>
+            <Typography.Title level={5}>
+              Section 1. Payment Terms
+            </Typography.Title>
+            <ReactQuill
+              theme="snow"
+              onChange={(value) => setPaymentTerms(value)}
+            />
+
+            <Table
+              size="small"
+              dataSource={items}
+              columns={columns}
+              pagination={false}
+            />
+            <Typography.Title level={5} className="self-end">
+              Total (Tax Excl.): {totalVal.toLocaleString()} RWF
+            </Typography.Title>
+          </div>
+          <div className="grid grid-cols-3 gap-5">
+            <div className="flex flex-col ring-1 ring-gray-300 rounded p-5 space-y-3">
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">On Behalf of</div>
+                </Typography.Text>
+                <Typography.Text strong>Irembo ltd</Typography.Text>
+              </div>
+
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Representative Title</div>
+                </Typography.Text>
+                <Typography.Text strong>Procurement Manager</Typography.Text>
+              </div>
+
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Company Representative</div>
+                </Typography.Text>
+                <Typography.Text strong>Manirakiza Edouard</Typography.Text>
+              </div>
+
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Email</div>
+                </Typography.Text>
+                <Typography.Text strong>
+                  e.manirakiza@irembo.com
+                </Typography.Text>
+              </div>
+
+              <div className="flex justify-end">
+                <Image
+                  className=" cursor-pointer hover:opacity-75"
+                  width={40}
+                  height={40}
+                  src="/icons/icons8-stamp-64.png"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </Modal>
+    );
+  }
+
+  function viewPOMOdal() {
+    return (
+      <Modal
+        title="Display Purchase Order"
+        centered
+        open={openViewPO}
+        onOk={() => {
+          setOpenViewPO(false);
+        }}
+        onCancel={() => setOpenViewPO(false)}
+        width={"80%"}
+        bodyStyle={{ maxHeight: "700px", overflow: "scroll" }}
+      >
+        <div className="space-y-10 px-20 py-5 overflow-x-scroll">
+          <div className="flex flex-row justify-between items-center">
+            <Typography.Title level={4} className="flex flex-row items-center">
+              PURCHASE ORDER: {po?.vendor?.companyName}{" "}
+              <Image
+                src="/icons/icons8-approval-90.png"
+                width={20}
+                height={20}
+              />
+            </Typography.Title>
+            <Button icon={<PrinterOutlined />}>Print</Button>
+          </div>
+          <div className="grid grid-cols-2 gap-5 ">
+            <div className="flex flex-col ring-1 ring-gray-300 rounded p-5 space-y-3">
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Company Name</div>
+                </Typography.Text>
+                <Typography.Text strong>Irembo ltd</Typography.Text>
+              </div>
+
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Company Address</div>
+                </Typography.Text>
+                <Typography.Text strong>
+                  Irembo Campass Nyarutarama KG 9 Ave
+                </Typography.Text>
+              </div>
+
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Company TIN no.</div>
+                </Typography.Text>
+                <Typography.Text strong>102911562</Typography.Text>
+              </div>
+
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Hereinafter refferd to as</div>
+                </Typography.Text>
+                <Typography.Text strong>Sender</Typography.Text>
+              </div>
+            </div>
+
+            <div className="flex flex-col ring-1 ring-gray-300 rounded p-5 space-y-3">
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Company Name</div>
+                </Typography.Text>
+                <Typography.Text strong>
+                  {po?.vendor?.companyName}
+                </Typography.Text>
+              </div>
+
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Company Address</div>
+                </Typography.Text>
+                <Typography.Text strong>
+                  {po?.vendor?.building}-{po?.vendor?.street}-
+                  {po?.vendor?.avenue}
+                </Typography.Text>
+              </div>
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Company TIN no.</div>
+                </Typography.Text>
+                <Typography.Text strong>{po?.vendor?.tin}</Typography.Text>
+              </div>
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Hereinafter refferd to as</div>
+                </Typography.Text>
+                <Typography.Text strong>Receiver</Typography.Text>
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-col space-y-5">
+            <Typography.Title level={4}>Details</Typography.Title>
+            <Typography.Title level={5}>
+              Section 1. Payment Terms
+            </Typography.Title>
+            {po?.paymentTerms && <div>{parse(po?.paymentTerms)}</div>}
+
+            <Table
+              size="small"
+              dataSource={items}
+              columns={columns}
+              pagination={false}
+            />
+            <Typography.Title level={5} className="self-end">
+              Total (Tax Excl.): {totalVal.toLocaleString()} RWF
+            </Typography.Title>
+          </div>
+
+          <div className="grid grid-cols-3 gap-5">
+            <div className="flex flex-col ring-1 ring-gray-300 rounded p-5 space-y-3">
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">On Behalf of</div>
+                </Typography.Text>
+                <Typography.Text strong>Irembo ltd</Typography.Text>
+              </div>
+
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Representative Title</div>
+                </Typography.Text>
+                <Typography.Text strong>Procurement Manager</Typography.Text>
+              </div>
+
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Company Representative</div>
+                </Typography.Text>
+                <Typography.Text strong>Manirakiza Edouard</Typography.Text>
+              </div>
+
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Email</div>
+                </Typography.Text>
+                <Typography.Text strong>
+                  e.manirakiza@irembo.com
+                </Typography.Text>
+              </div>
+
+              <div className="flex justify-end">
+                <Image
+                  className=" cursor-pointer hover:opacity-75"
+                  width={40}
+                  height={40}
+                  src="/icons/icons8-stamp-64.png"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </Modal>
+    );
+  }
 
   function buildTabHeader() {
     return (
       <div className="flex flex-row justify-between items-center">
-        <div className="flex flex-row space-x-1 items-center">
-          <div className="text-xs font-semibold ml-3 text-gray-500">
-            Tender Number:
+        <div className="flex flex-col">
+          <div className="flex flex-row space-x-1 items-center">
+            <div className="text-xs font-semibold ml-3 text-gray-500">
+              Tender Number:
+            </div>
+            <div className="text-sm font-semibold ml-3 text-gray-600">
+              {data?.number}
+            </div>
           </div>
-          <div className="text-sm font-semibold ml-3 text-gray-600">
-            {data?.number}
+
+          <div className="flex flex-row space-x-1 items-center">
+            <div className="text-xs font-semibold ml-3 text-gray-500">
+              Service category:
+            </div>
+            <div className="text-sm font-semibold ml-3 text-gray-600">
+              {data?.purchaseRequest?.serviceCategory}
+            </div>
+          </div>
+
+          <div className="flex flex-row space-x-1 items-center">
+            <div className="text-xs font-semibold ml-3 text-gray-500">
+              Due date:
+            </div>
+            <div className="text-sm font-semibold ml-3 text-gray-600">
+              {moment(data?.dueDate).format("YYYY-MMM-DD")}
+            </div>
           </div>
         </div>
+
         <Row className="flex flex-row items-center space-x-4">
           <Statistic.Countdown
             title="Deadline (days:hrs:min:sec)"

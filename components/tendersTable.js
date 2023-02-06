@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import {
   Badge,
   Form,
+  Pagination,
   Row,
   Space,
   Spin,
@@ -14,6 +15,7 @@ import {
   CheckOutlined,
   CloseOutlined,
   EllipsisOutlined,
+  FileOutlined,
   LoadingOutlined,
   MoreOutlined,
 } from "@ant-design/icons";
@@ -24,7 +26,7 @@ const TendersTable = ({
   handleApproveRequest,
   handleDeclineRequest,
   updatingId,
-  handleSetRow
+  handleSetRow,
 }) => {
   const [form] = Form.useForm();
   const [data, setData] = useState(dataSet);
@@ -42,13 +44,32 @@ const TendersTable = ({
     {
       title: "Tender Number",
       dataIndex: "number",
-    },
-    {
-      title: "Initiator",
-      key: "initiator",
       render: (_, record) => (
         <>
-          <Typography.Text>{record?.createdBy?.firstName}</Typography.Text>
+          <Tag>
+            <Typography.Link>
+              <div
+                className="font-semibold cursor-pointer space-x-1 flex flex-row items-center"
+                onClick={() => handleSetRow(record)}
+              >
+                <div>
+                  <FileOutlined />
+                </div>
+                <div>{record?.number}</div>
+              </div>
+            </Typography.Link>
+          </Tag>
+        </>
+      ),
+    },
+    {
+      title: "Title",
+      key: "title",
+      render: (_, record) => (
+        <>
+          <Typography.Text>
+            {record?.purchaseRequest?.title}
+          </Typography.Text>
         </>
       ),
     },
@@ -88,29 +109,29 @@ const TendersTable = ({
       ),
     },
 
-    // {
-    //   title: "Status",
-    //   key: "action",
-    //   render: (_, record) => (
-    //     <>
-    //       {(record.status === "created" || record.status === "pending") && (
-    //         <Badge color="yellow" text={record.status} />
-    //       )}
+    {
+      title: "Status",
+      key: "action",
+      render: (_, record) => (
+        <>
+          {(record.status === "open" || record.status === "pending") && (
+            <Tag color='yellow'>OPEN</Tag>
+          )}
 
-    //       {record.status === "approved" && (
-    //         <Badge color="green" text={record.status} />
-    //       )}
+          {record.status === "bidSelected" && (
+            <Tag color='green'>BID SELECTED</Tag>
+          )}
 
-    //       {record.status === "active" && (
-    //         <Badge color="green" text={record.status} />
-    //       )}
+          {record.status === "bidAwarded" && (
+            <Tag color='blue'>BID AWARDED</Tag>
+          )}
 
-    //       {record.status === "declined" && (
-    //         <Badge color="red" text={record.status} />
-    //       )}
-    //     </>
-    //   ),
-    // },
+          {record.status === "closed" && (
+            <Tag color='lime'>CLOSED</Tag>
+          )}
+        </>
+      ),
+    },
     {
       title: "Action",
       key: "action",
@@ -131,9 +152,11 @@ const TendersTable = ({
                 />
               )} */}
               <EllipsisOutlined
-                  className="text-blue-400 cursor-pointer"
-                  onClick={() => {handleSetRow(record)}}
-                />
+                className="text-blue-400 cursor-pointer"
+                onClick={() => {
+                  handleSetRow(record);
+                }}
+              />
             </>
           )}
 
@@ -157,9 +180,12 @@ const TendersTable = ({
     <Form form={form} component={false}>
       <Table
         size="small"
-        bordered
         dataSource={data}
         columns={columns}
+        className="shadow-lg rounded-md"
+        pagination={{
+          total:10
+        }}
         // pagination={{
         //   onChange: cancel,
         // }}

@@ -10,12 +10,12 @@ import {
 const fakeDataUrl =
   "https://randomuser.me/api/?results=20&inc=name,gender,email,nat,picture&noinfo";
 
-const BidList = ({ tenderId, handleSelectBid, refresh }) => {
+const BidList = ({ tenderId, handleSelectBid, refresh, handleAwardBid, handleSetBidList }) => {
   const [data, setData] = useState(null);
   let url = process.env.NEXT_PUBLIC_BKEND_URL;
   let apiUsername = process.env.NEXT_PUBLIC_API_USERNAME;
   let apiPassword = process.env.NEXT_PUBLIC_API_PASSWORD;
-  let [ContainerHeight, setContainerHeight] = useState(50);
+  let [ContainerHeight, setContainerHeight] = useState(0);
 
   const appendData = () => {
     fetch(`${url}/submissions/byTender/${tenderId}`, {
@@ -28,8 +28,10 @@ const BidList = ({ tenderId, handleSelectBid, refresh }) => {
       .then((res) => res.json())
       .then((body) => {
         setData(body);
-        if (body?.length >= 1) setContainerHeight(340);
-        else setContainerHeight(50);
+        handleSetBidList(body)
+        if (body?.length >= 2) setContainerHeight(200);
+        else if(body?.length == 1) setContainerHeight(100);
+        else setContainerHeight(0)
       });
   };
 
@@ -112,8 +114,15 @@ const BidList = ({ tenderId, handleSelectBid, refresh }) => {
                           {item?.status === "selected" && (
                             <Tag color="green">{item?.status}</Tag>
                           )}
-                          {item?.status === "rejected" && (
-                            <Tag color="red">{item?.status}</Tag>
+                          {item?.status === "awarded" && (
+                            <>
+                            <Tag color="green">selected</Tag>
+                            <Tag color="green">{item?.status}</Tag></>
+                          )}
+                          {item?.status === "not awarded" && (
+                            <>
+                            <Tag color="red">not selected</Tag>
+                            <Tag color="red">{item?.status}</Tag></>
                           )}
                         </div>
                       </div>
@@ -121,24 +130,37 @@ const BidList = ({ tenderId, handleSelectBid, refresh }) => {
                   </div>
 
                   {item?.status === "pending" && (
-                    
-                    <Button
-                      size="small"
-                      onClick={() => handleSelectBid(item._id)}
-                    >
-                      Select Bid
-                    </Button>
+                    <>
+                      <Button
+                        size="small"
+                        onClick={() => handleSelectBid(item._id)}
+                      >
+                        Select Bid
+                      </Button>
+                    </>
                   )}
 
-                  {item?.status !== "pending" && (
+                  {item?.status === "selected" && (
+                    <>
+                      <Button
+                        size="small"
+                        type="primary"
+                        onClick={() => handleAwardBid(item._id)}
+                      >
+                        Award Bid
+                      </Button>
+                    </>
+                  )}
+
+                  {/* {(item?.status === "not selected" || item?.status === "not awarded") && (
                     <Button
                       size="small"
                       disabled
-                    //   onClick={() => handleSelectBid(item._id)}
+                      //   onClick={() => handleSelectBid(item._id)}
                     >
                       Select Bid
                     </Button>
-                  )}
+                  )} */}
                 </div>
               </List.Item>
             )}

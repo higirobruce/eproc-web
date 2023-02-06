@@ -8,7 +8,7 @@ export default function Dashboard() {
       {dataLoaded ? (
         <div>Data</div>
       ) : (
-        <div className="flex items-center justify-center h-screen flex-1">
+        <div className="flex items-center justify-center flex-1 overflow-x-scroll">
           <Image alt="" src='/dashboard_loading.gif' width={800} height={800}/>
         </div>
       )}

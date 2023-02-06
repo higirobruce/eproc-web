@@ -86,7 +86,6 @@ const LoginForm = () => {
         console.log(res);
 
         if (res.allowed) {
-          
           if (res.user.status === "approved") {
             messageApi.open({
               type: "success",
@@ -249,9 +248,18 @@ const LoginForm = () => {
               {submitting ? (
                 <Spin indicator={antIcon} />
               ) : (
-                <Button type="default" htmlType="submit">
-                  Login
-                </Button>
+                <div className="flex flex-row items-center justify-between">
+                  <Button type="default" htmlType="submit">
+                    Login
+                  </Button>
+
+                  <div className="flex flex-row items-center justify-center space-x-2">
+                    <Typography.Text level={5}>New User? </Typography.Text>
+                    <Typography.Link onClick={() => Router.push("/signup")}>
+                      Sign up
+                    </Typography.Link>
+                  </div>
+                </div>
               )}
             </Form.Item>
           </Form>

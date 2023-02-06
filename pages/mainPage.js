@@ -1,7 +1,9 @@
-import { Button, Col, Divider, Empty } from "antd";
+import { LoadingOutlined } from "@ant-design/icons";
+import { Button, Col, Divider, Empty, Layout, Spin } from "antd";
 import Head from "next/head";
 import Router from "next/router";
 import { useEffect, useState } from "react";
+import SideMenu from "../components/common/sideMenu";
 import TopMenu from "../components/common/topMenu";
 import Contracts from "../components/screens/contracts";
 import Dashboard from "../components/screens/dashboard";
@@ -13,13 +15,14 @@ import Users from "../components/screens/users";
 import Vendors from "../components/screens/vendors";
 
 export default function Home() {
-  const [screen, setScreen] = useState("dashboard");
-  const [loggedInUser, setLoggedInUser] = useState(null);
+  let [screen, setScreen] = useState("dashboard");
+  let [loggedInUser, setLoggedInUser] = useState(null);
+  let [loggingOut, setLoggingOut] = useState(false);
 
   useEffect(() => {
     setLoggedInUser(localStorage.getItem("user"));
     let user = JSON.parse(localStorage.getItem("user"));
-    if (user.userType !== "VENDOR") setScreen("dashboard");
+    if (user?.userType !== "VENDOR") setScreen("dashboard");
     else setScreen("tenders");
   }, []);
   return (
@@ -31,23 +34,43 @@ export default function Home() {
         <link rel="icon" href="/favicon.png" />
       </Head>
 
-      <main className="h-screen flex flex-row">
+      <main>
         {loggedInUser && (
-          <>
-            <TopMenu setScreen={setScreen}  screen={screen}/>
-            {screen === "dashboard" && <Dashboard />}
-            {screen === "requests" && <UserRequests />}
-            {screen === "tenders" && <Tenders />}
-            {screen === "contracts" && <Contracts />}
-            {screen === "pos" && <PurchaseOrders />}
-            {screen === "vendors" && <Vendors />}
-            {screen === "users" && <Users />}
-            {screen === "reports" && <Reports />}
-          </>
+          <div className="flex flex-col pb-5 h-screen">
+            <TopMenu
+              setScreen={setScreen}
+              screen={screen}
+              handleLogout={(v) => setLoggingOut(v)}
+            />
+            <Layout>
+              <Layout.Sider width={200} >
+                <SideMenu setScreen={setScreen} screen={screen}/>
+              </Layout.Sider>
+              <Layout>
+                <Layout.Content className="bg-white">
+                  <Spin
+                    spinning={loggingOut}
+                    indicator={
+                      <LoadingOutlined style={{ fontSize: 24 }} spin />
+                    }
+                  >
+                    {screen === "dashboard" && <Dashboard />}
+                    {screen === "requests" && <UserRequests />}
+                    {screen === "tenders" && <Tenders />}
+                    {screen === "contracts" && <Contracts />}
+                    {screen === "pos" && <PurchaseOrders />}
+                    {screen === "vendors" && <Vendors />}
+                    {screen === "users" && <Users />}
+                    {screen === "reports" && <Reports />}
+                  </Spin>
+                </Layout.Content>
+              </Layout>
+            </Layout>
+          </div>
         )}
 
         {!loggedInUser && (
-          <div className="flex items-center justify-center h-screen">
+          <div className="flex flex-row items-center justify-center h-screen">
             <Empty
               image="https://gw.alipayobjects.com/zos/antfincdn/ZHrcdLPrvN/empty.svg"
               imageStyle={{

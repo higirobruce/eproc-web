@@ -46,6 +46,15 @@ const UsersTable = ({
       dataIndex: "lastName",
     },
     {
+      title: "Department",
+      dataIndex: "department",
+      render: (_, record) => (
+        <>
+          {record?.department?.description}
+        </>
+      ),
+    },
+    {
       title: "Email",
       dataIndex: "email",
     },
@@ -114,6 +123,7 @@ const UsersTable = ({
     <Form form={form} component={false}>
       <Table
         size="small"
+        className="shadow-lg rounded-md"
         bordered
         dataSource={data}
         columns={columns}

@@ -15,8 +15,12 @@ import {
   Spin,
   Typography,
   message,
+  Upload,
+  Divider,
 } from "antd";
 import Image from "next/image";
+import UploadFiles from "./uploadFiles";
+import Router from "next/router";
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -65,6 +69,7 @@ const SignupForm = () => {
   let [submitting, setSubmitting] = useState(false);
   let [type, setType] = useState("");
   let [dpts, setDpts] = useState([]);
+  let [servCategories, setServCategories] = useState([]);
 
   const [form] = Form.useForm();
 
@@ -79,8 +84,6 @@ const SignupForm = () => {
       },
       body: JSON.stringify({
         userType: values.type,
-        firstName: values.firstName,
-        lastName: values.lastName,
         email: values.email,
         telephone: values.prefix + values.phone,
         experienceDurationInYears: values.experience,
@@ -89,13 +92,18 @@ const SignupForm = () => {
         status: "created",
         password: values.password,
         tin: values.tin,
-        passport: values.passport,
-        nid: values.nid,
         number: values.number,
         companyName: values.companyName,
-        companyEmail: values.companyEmail,
-        notes: values.notes,
-        department: values.dpt
+        department: values.dpt,
+        contactPersonNames: values.contactPersonNames,
+        title: values.title,
+        building: values.building,
+        streetNo: values.streetNo,
+        avenue: values.avenue,
+        city: values.city,
+        country: values.country,
+        passportNid: values.passportNid,
+        services: values.services
       }),
     })
       .then((res) => res.json())
@@ -137,14 +145,33 @@ const SignupForm = () => {
     })
       .then((res) => res.json())
       .then((res) => {
-        console.log(res);
         setDpts(res);
-      }).catch(err=>{
+      })
+      .catch((err) => {
         messageApi.open({
           type: "error",
           content: "Connection Error!",
         });
+      });
+
+      fetch(`${url}/serviceCategories`, {
+        method: "GET",
+        headers: {
+          Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+          "Content-Type": "application/json",
+        },
+      }).then((res) => res.json())
+      .then((res) => {
+        
+        setServCategories(res);
       })
+      .catch((err) => {
+        messageApi.open({
+          type: "error",
+          content: "Connection Error!",
+        });
+      });
+
   }, []);
 
   const prefixSelector = (
@@ -197,10 +224,10 @@ const SignupForm = () => {
   }));
 
   return (
-    <div>
+    <div className="flex h-screen">
       {contextHolder}
       {loaded ? (
-        <div className="flex bg-slate-50 py-2 px-16 rounded-lg shadow-lg">
+        <div className="flex bg-slate-50 pt-2 px-16 rounded-lg shadow-lg h-5/6 mt-20 overflow-x-auto">
           <Form
             {...formItemLayout}
             form={form}
@@ -245,6 +272,9 @@ const SignupForm = () => {
 
             {type === "VENDOR" && (
               <>
+                <Typography.Title className="" level={4}>
+                  General Information
+                </Typography.Title>
                 <Row className="row space-x-4">
                   <Form.Item
                     name="companyName"
@@ -276,41 +306,24 @@ const SignupForm = () => {
                 </Row>
                 <Row className="row space-x-4">
                   <Form.Item
-                    name="firstName"
-                    label="First name"
+                    name="contactPersonNames"
+                    label="Contact Person's Names"
                     rules={[
                       {
                         required: true,
-                        message: "Please input your First Name!",
+                        message: "Please input contact person's names!",
                       },
                     ]}
                   >
                     <Input />
                   </Form.Item>
 
-                  <Form.Item name="lastName" label="Last name">
+                  <Form.Item name="title" label="Contact Person's Title">
                     <Input />
                   </Form.Item>
                 </Row>
 
                 <Row className="row space-x-4">
-                  <Form.Item
-                    name="companyEmail"
-                    label="Company E-mail"
-                    rules={[
-                      {
-                        type: "email",
-                        message: "The input is not valid E-mail!",
-                      },
-                      {
-                        required: true,
-                        message: "Please input your Company E-mail!",
-                      },
-                    ]}
-                  >
-                    <Input />
-                  </Form.Item>
-
                   <Form.Item
                     name="email"
                     label="E-mail"
@@ -326,6 +339,16 @@ const SignupForm = () => {
                     ]}
                   >
                     <Input />
+                  </Form.Item>
+
+                  <Form.Item name="website" label="Website">
+                    <AutoComplete
+                      options={websiteOptions}
+                      onChange={onWebsiteChange}
+                      placeholder="website"
+                    >
+                      <Input />
+                    </AutoComplete>
                   </Form.Item>
                 </Row>
 
@@ -372,64 +395,104 @@ const SignupForm = () => {
                   </Form.Item>
                 </Row>
 
-                <Form.Item
-                  name="phone"
-                  label="Phone Number"
-                  rules={[
-                    {
-                      required: true,
-                      message: "Please input your phone number!",
-                    },
-                  ]}
-                >
-                  <Input
-                    addonBefore={prefixSelector}
-                    style={{ width: "100%" }}
-                  />
-                </Form.Item>
-
-                <Form.Item
-                  name="experience"
-                  label="Experience in Years"
-                  rules={[
-                    {
-                      type: "integer",
-                      message: "The input is not valid Number",
-                    },
-                    
-                  ]}
-                >
-                  <InputNumber />
-                </Form.Item>
-
-                <Form.Item
-                  name="website"
-                  label="Website"
-                >
-                  <AutoComplete
-                    options={websiteOptions}
-                    onChange={onWebsiteChange}
-                    placeholder="website"
-                  >
-                    <Input />
-                  </AutoComplete>
-                </Form.Item>
-
                 <Row className="row space-x-4">
-                  <Form.Item name="passport" label="Passport">
+                  <Form.Item name="passportNid" label="Passport/NID">
+                    <Input />
+                  </Form.Item>
+                  <Form.Item
+                    name="phone"
+                    label="Phone Number"
+                    rules={[
+                      {
+                        required: true,
+                        message: "Please input your phone number!",
+                      },
+                    ]}
+                  >
+                    <Input
+                      addonBefore={prefixSelector}
+                      style={{ width: "100%" }}
+                    />
+                  </Form.Item>
+                </Row>
+
+                <Row className="flex flex-row space-x-4">
+                  <Form.Item name='services' label='We offer' className="w-1/2">
+                    <Select
+                      mode="multiple"
+                      allowClear
+                      style={{ width: "100%" }}
+                      placeholder="Please select"
+
+                    >
+                      {servCategories?.map((s) => {
+                      return (
+                        <Option key={s._id} value={s.description}>
+                          {s.description}
+                        </Option>
+                      );
+                    })}
+                    </Select>
+                  </Form.Item>
+                  <Form.Item
+                    name="experience"
+                    label="Experience in Years"
+                    rules={[
+                      {
+                        type: "integer",
+                        message: "The input is not valid Number",
+                      },
+                    ]}
+                  >
+                    <InputNumber />
+                  </Form.Item>
+                </Row>
+
+                <Typography.Title className="" level={4}>
+                  Address Information
+                </Typography.Title>
+
+                <Row className="space-x-4">
+                  <Form.Item name="building" label="Building">
                     <Input />
                   </Form.Item>
 
-                  <Form.Item name="nid" label="NID">
+                  <Form.Item name="streetNo" label="Street No.">
                     <Input />
                   </Form.Item>
                 </Row>
 
-                <Form.Item
-                  name="notes"
-                  label="Notes"
-                >
-                  <Input.TextArea showCount maxLength={100} />
+                <Row className="space-x-4">
+                  <Form.Item name="avenue" label="Avenue">
+                    <Input />
+                  </Form.Item>
+                  <Form.Item name="city" label="City">
+                    <Input />
+                  </Form.Item>
+
+                  <Form.Item name="country" label="Country">
+                    <Input />
+                  </Form.Item>
+                </Row>
+
+                <Typography.Title className="" level={4}>
+                  Uploads
+                </Typography.Title>
+
+                <Form.Item label="Full RDB Registraction">
+                  <UploadFiles />
+                </Form.Item>
+
+                <Form.Item label="VAT Certificate">
+                  <UploadFiles />
+                </Form.Item>
+
+                <Form.Item label="Reference of Work">
+                  <UploadFiles />
+                </Form.Item>
+
+                <Form.Item label="RSSB Certificate">
+                  <UploadFiles />
                 </Form.Item>
 
                 <Form.Item
@@ -458,6 +521,18 @@ const SignupForm = () => {
                   ) : (
                     <Button type="default" htmlType="submit">
                       Register
+                    </Button>
+                  )}
+                </Form.Item>
+                  
+                <Divider>Or</Divider>
+                  
+                <Form.Item {...tailFormItemLayout} className="pb-10">
+                  {submitting ? (
+                    <Spin indicator={antIcon} />
+                  ) : (
+                    <Button type="link" onClick={()=> Router.push('/')}>
+                      Login
                     </Button>
                   )}
                 </Form.Item>

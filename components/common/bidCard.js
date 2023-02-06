@@ -18,6 +18,7 @@ export default function BidCard() {
         <EditOutlined key="edit" />,
         <EllipsisOutlined key="ellipsis" />,
       ]}
+      className="shadow-lg"
     >
       <Meta
         // avatar={<Avatar src="https://joeschmoe.io/api/v1/random" />}

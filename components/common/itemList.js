@@ -16,7 +16,6 @@ import {
   Space,
 } from "antd";
 import UploadFiles from "./uploadFiles";
-import TagInput from "./tagInput";
 const ItemList = ({ handleSetValues }) => {
   const [serviceCategories, setServiceCategories] = useState([]);
   let url = process.env.NEXT_PUBLIC_BKEND_URL;
@@ -30,10 +29,11 @@ const ItemList = ({ handleSetValues }) => {
         Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
         "Content-Type": "application/json",
       },
-    }).then(res=>res.json())
-    .then(res=>{
-      setServiceCategories(res)
     })
+      .then((res) => res.json())
+      .then((res) => {
+        setServiceCategories(res);
+      });
   }, []);
 
   const onValuesChange = (changedValues, allValues) => {
@@ -45,31 +45,28 @@ const ItemList = ({ handleSetValues }) => {
       name="dynamic_form_nest_item"
       onValuesChange={onValuesChange}
       autoComplete="off"
-      // labelCol={{ span: 9 }}
-      // wrapperCol={{ span: 20 }}
+      labelCol={{ span: 8 }}
+      wrapperCol={{ span: 16 }}
+      // style={{ width: 600 }}
     >
       <Form.List name="items">
         {(fields, { add, remove }) => (
           <>
             {fields.map(({ key, name, ...restField }) => (
-              <Row key={key} className="flex flex-row border-2 mb-5 space-x-10">
-                <Col>
-                  <Form.Item label="Title/Description" name={[name, "title"]}>
+              <Row
+                key={key}
+                className="flex flex-row border-2 mb-5 justify-between w-full"
+              >
+                <Col className="flex-1">
+                  <Form.Item label="Title" name={[name, "title"]}>
                     <Input />
                   </Form.Item>
 
-                  <Form.Item label="Quantity" className="w-96" name={[name, "quantity"]}>
+                  <Form.Item label="Quantity" name={[name, "quantity"]}>
                     <InputNumber />
                   </Form.Item>
 
-                  {/* <Form.Item
-                    label="Estimated Unit Cost"
-                    name={[name, "estimatedUnitCost"]}
-                  >
-                    <InputNumber />
-                  </Form.Item> */}
-
-                  <Form.Item label="Estimated Unit Cost">
+                  <Form.Item label="Cost">
                     <Input.Group compact>
                       <Form.Item noStyle name={[name, "currency"]}>
                         <Select
@@ -91,32 +88,7 @@ const ItemList = ({ handleSetValues }) => {
                       </Form.Item>
                     </Input.Group>
                   </Form.Item>
-
                   <Form.Item
-                    label="Request Category"
-                    name={[name, "serviceCategory"]}
-                  >
-                    <Select
-                      showSearch
-                      filterSort={(optionA, optionB) =>
-                        (optionA?.label ?? "")
-                          .toLowerCase()
-                          .localeCompare((optionB?.label ?? "").toLowerCase())
-                      }
-                      filterOption={(inputValue, option) =>
-                        option.label.toLowerCase().includes(inputValue.toLowerCase())
-                      }
-                      // defaultValue="RWF"
-                      options={serviceCategories.map((s) => {
-                        return {
-                          value: s.description,
-                          label: s.description,
-                        };
-                      })}
-                    ></Select>
-                  </Form.Item>
-
-                  {/* <Form.Item
                     label="Attachements"
                     {...restField}
                     name={[name, "first"]}
@@ -128,8 +100,7 @@ const ItemList = ({ handleSetValues }) => {
                     //   ]}
                   >
                     <UploadFiles />
-                  </Form.Item> */}
-                  
+                  </Form.Item>
 
                   <Divider />
                 </Col>
@@ -141,7 +112,6 @@ const ItemList = ({ handleSetValues }) => {
             ))}
             <Form.Item>
               <Button
-                className="w-full"
                 type="link"
                 onClick={() => add()}
                 block
@@ -153,11 +123,6 @@ const ItemList = ({ handleSetValues }) => {
           </>
         )}
       </Form.List>
-      {/* <Form.Item>
-        <Button type="primary" htmlType="submit">
-          Submit
-        </Button>
-      </Form.Item> */}
     </Form>
   );
 };

@@ -7,7 +7,7 @@ const props = {
   previewFile(file) {
     console.log('Your upload file:', file);
     // Your process logic. Here we just mock to the same file
-    return fetch('https://run.mocky.io/v3/a42ee557-1ae7-49d7-878f-dd8599fab9d6', {
+    return fetch('https://run.mocky.io/v3/41beb3f4-f4b1-46a5-8214-e1ecc5e23139', {
       method: 'POST',
       body: file,
     })
@@ -15,9 +15,9 @@ const props = {
       .then(({ thumbnail }) => thumbnail);
   },
 };
-const UploadFiles = () => (
+const UploadFiles = ({label}) => (
   <Upload {...props}>
-    <Button icon={<UploadOutlined />}>Upload</Button>
+    <Button icon={<UploadOutlined />}>{label?label:'Upload'}</Button>
   </Upload>
 );
 export default UploadFiles;

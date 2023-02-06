@@ -1,4 +1,6 @@
 import {
+  ArrowLeftOutlined,
+  BackwardOutlined,
   PlusOutlined,
   ReloadOutlined,
   SaveOutlined,
@@ -14,16 +16,39 @@ import {
   Space,
   Typography,
   message,
+  Input,
+  Select,
+  Checkbox,
+  Radio,
+  Tabs,
+  Tag,
 } from "antd";
 import Image from "next/image";
 import React, { useState, useEffect, useRef } from "react";
 import ItemList from "../common/itemList";
+import ItemsTable from "../common/itemsTable";
 import RequestDetails from "../common/requestDetails";
-import TagInput from "../common/tagInput";
-import UploadFiles from "../common/uploadFiles";
+import RequestStats from "../common/requestsStatistics";
+import SelectStatuses from "../common/statusSelectTags";
 import UsersRequestsTable from "../userRequestsTable";
 
 export default function UserRequests() {
+  const requestStatuses = [
+    {
+      key: "1",
+      label: `Tab 1`,
+    },
+    {
+      key: "2",
+      label: `Tab 2`,
+    },
+    {
+      key: "3",
+      label: `Tab 3`,
+    },
+  ];
+  const [serviceCategories, setServiceCategories] = useState([]);
+  let [serviceCategory, setServiceCategory] = useState("");
   const [dataLoaded, setDataLoaded] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
   let url = process.env.NEXT_PUBLIC_BKEND_URL;
@@ -34,10 +59,18 @@ export default function UserRequests() {
   const [open, setOpen] = useState(false);
   let [title, setTitle] = useState("");
   let [confirmLoading, setConfirmLoading] = useState(false);
-  let [values, setValues] = useState([]);
+  const [values, setValues] = useState([]);
+
   let [dueDate, setDueDate] = useState(null);
+  let [description, setDescription] = useState("");
   let [rowData, setRowData] = useState(null);
   let [loadingRowData, setLoadingRowData] = useState(false);
+  let [confirmRejectLoading, setConfirmRejectLoading] = useState(false);
+  let [budgeted, setBudgeted] = useState(true);
+  let [budgetLine, setBudgetLine] = useState("");
+  let [reload, setReload] = useState(false)
+
+  let [selectedReqId, setSelectedReqId] = useState(null);
 
   useEffect(() => {
     loadRequests()
@@ -52,15 +85,34 @@ export default function UserRequests() {
           content: "Something happened! Please try again.",
         });
       });
+
+    fetch(`${url}/serviceCategories`, {
+      method: "GET",
+      headers: {
+        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+        "Content-Type": "application/json",
+      },
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        setServiceCategories(res);
+      })
+      .catch((err) => {
+        messageApi.open({
+          type: "error",
+          content: "Something happened! Please try again.",
+        });
+      });
   }, []);
 
-  function refresh(){
+  function refresh() {
     setDataLoaded(false);
     loadRequests()
       .then((res) => res.json())
       .then((res) => {
         setDataLoaded(true);
         setDataset(res);
+        
       })
       .catch((err) => {
         messageApi.open({
@@ -69,6 +121,7 @@ export default function UserRequests() {
         });
       });
   }
+
   async function loadRequests() {
     return fetch(`${url}/requests/`, {
       method: "GET",
@@ -84,7 +137,7 @@ export default function UserRequests() {
   }, [dataset]);
 
   const save = () => {
-    if (values.items && values.items[0]) {
+    if (values && values[0]) {
       console.log("Received values of form:", values);
       setConfirmLoading(true);
       let user = JSON.parse(localStorage.getItem("user"));
@@ -97,8 +150,13 @@ export default function UserRequests() {
         },
         body: JSON.stringify({
           dueDate,
-          items: values.items,
+          description,
+          serviceCategory,
+          items: values,
           createdBy: user?._id,
+          budgeted,
+          budgetLine: budgetLine,
+          title
         }),
       })
         .then((res) => res.json())
@@ -164,10 +222,15 @@ export default function UserRequests() {
       });
   }
 
-  function declineRequest(id) {
+  function declineRequest(id, reason, declinedBy) {
     setUpdatingId(id);
+    setConfirmRejectLoading(true);
     fetch(`${url}/requests/decline/${id}`, {
       method: "POST",
+      body: JSON.stringify({
+        reason,
+        declinedBy,
+      }),
       headers: {
         Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
         "Content-Type": "application/json",
@@ -181,14 +244,18 @@ export default function UserRequests() {
         var index = _.findIndex(_data, { _id: id });
         let elindex = _data[index];
         elindex.status = "declined";
+        elindex.reasonForRejection = reason;
+        elindex.declinedBy = declinedBy;
 
         console.log(_data[index]);
         // Replace item at index using native splice
         _data.splice(index, 1, elindex);
 
         setDataset(_data);
+        setConfirmRejectLoading(false);
       })
       .catch((err) => {
+        setConfirmRejectLoading(false);
         messageApi.open({
           type: "error",
           content: "Something happened! Please try again.",
@@ -253,7 +320,7 @@ export default function UserRequests() {
     })
       .then((res) => res.json())
       .then((res) => {
-        updateStatus(rowData._id, "converted");
+        updateStatus(rowData._id, "completed");
       })
       .catch((err) => {
         console.log(err);
@@ -270,17 +337,48 @@ export default function UserRequests() {
     setRowData(row);
     setLoadingRowData(false);
   }
-  return (
+
+  function updateProgress(poId, progress) {
+    fetch(`${url}/purchaseOrders/progress/${poId}`, {
+      method: "PUT",
+      body: JSON.stringify({
+        deliveryProgress: progress,
+      }),
+      headers: {
+        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+        "Content-Type": "application/json",
+      },
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        let r = rowData;
+        setReload(!reload)
+        refresh();
+      });
+  }
+  return !rowData ? (
     <>
       {contextHolder}
       {dataLoaded ? (
-        <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 px-10 flex-1">
+        <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 px-10 py-5 flex-1 space-y-3">
           <Row className="flex flex-row justify-between items-center">
-            <Typography.Title level={3}>Purchase Requests</Typography.Title>
+            <div className="flex flex-row items-start space-x-5 w-1/4">
+              <div className="text-xl font-semibold">Purchase Requests</div>
+              <div className="flex-1">
+                <SelectStatuses />
+              </div>
+            </div>
             <Row className="flex flex-row space-x-5 items-center">
-              <Button type="text" icon={<ReloadOutlined />} onClick={()=>refresh()}></Button>
+              <div>
+                <Input.Search placeholder="Search requests" />
+              </div>
               <Button
                 type="text"
+                icon={<ReloadOutlined />}
+                onClick={() => refresh()}
+              ></Button>
+              <Button
+                type="primary"
                 icon={<PlusOutlined />}
                 onClick={() => setOpen(true)}
               >
@@ -290,26 +388,14 @@ export default function UserRequests() {
               <Button type="text" icon={<SettingOutlined />}></Button>
             </Row>
           </Row>
-          <Row className="flex flex-row space-x-5">
-            <Col flex={5}>
-              <UsersRequestsTable
-                handleSetRow={handleSetRow}
-                dataSet={dataset}
-                handleApproveRequest={approveRequest}
-                handleDeclineRequest={declineRequest}
-                updatingId={updatingId}
-              />
-            </Col>
-            <Col flex={2}>
-              <RequestDetails
-                handleUpdateStatus={updateStatus}
-                loading={loadingRowData}
-                data={rowData}
-                handleCreateTender={createTender}
-              />
-            </Col>
-          </Row>
-
+          {/* <RequestStats totalRequests={dataset?.length}/> */}
+          <UsersRequestsTable
+            handleSetRow={handleSetRow}
+            dataSet={dataset}
+            handleApproveRequest={approveRequest}
+            handleDeclineRequest={declineRequest}
+            updatingId={updatingId}
+          />
           <Modal
             title="Create a User Purchase request"
             centered
@@ -323,23 +409,86 @@ export default function UserRequests() {
             confirmLoading={confirmLoading}
           >
             <Form
-              // labelCol={{ span: 3 }}
+              labelCol={{ span: 8 }}
+              wrapperCol={{ span: 16 }}
+              style={{ maxWidth: 600 }}
               className="mt-5"
-              // wrapperCol={{ span: 14 }}
               // layout="horizontal"
-              size="small"
+
               onFinish={save}
             >
               <Form.Item label="Due date">
                 <DatePicker onChange={(v, dstr) => setDueDate(dstr)} />
               </Form.Item>
-              <Row className="flex flex-row justify-between">
-                <Col>
-                  <Typography.Title level={4}>Items</Typography.Title>
-                  <ItemList handleSetValues={setValues} />
-                </Col>
-              </Row>
+              <Form.Item label='Request title'>
+                <Input onChange={(e)=>setTitle(e.target.value)} placeholder='How would you name your request?'/>
+              </Form.Item>
+              <Form.Item label="Request Description">
+                <Input.TextArea onChange={(e) => setDescription(e.target.value)} placeholder='Briefly describe your request' showCount maxLength={100}/>
+              </Form.Item>
+              <Form.Item
+                label="Request Category"
+                name={[name, "serviceCategory"]}
+              >
+                <Select
+                  placeholder="Select service category"
+                  showSearch
+                  onChange={(value) => {
+                    setServiceCategory(value);
+                  }}
+                  filterSort={(optionA, optionB) =>
+                    (optionA?.label ?? "")
+                      .toLowerCase()
+                      .localeCompare((optionB?.label ?? "").toLowerCase())
+                  }
+                  filterOption={(inputValue, option) =>
+                    option.label
+                      .toLowerCase()
+                      .includes(inputValue.toLowerCase())
+                  }
+                  // defaultValue="RWF"
+                  options={serviceCategories.map((s) => {
+                    return {
+                      value: s.description,
+                      label: s.description,
+                    };
+                  })}
+                ></Select>
+              </Form.Item>
+
+              <Form.Item
+                name="budgeted"
+                valuePropName="checked"
+                wrapperCol={{ offset: 8, span: 16 }}
+              >
+                <Radio.Group
+                  onChange={(e) => {
+                    setBudgeted(e.target.value);
+                  }}
+                  value={budgeted}
+                >
+                  <Radio value={true}>Budgeted</Radio>
+                  <Radio value={false}>Not Budgeted</Radio>
+                </Radio.Group>
+              </Form.Item>
+
+              {budgeted && (
+                <Form.Item label="Budget Line" name="budgetLine">
+                  <Input
+                    onChange={(e) => {
+                      setBudgetLine(e.target.value);
+                    }}
+                    placeholder=""
+                  />
+                </Form.Item>
+              )}
             </Form>
+
+            <div>
+              <Typography.Title level={4}>Items</Typography.Title>
+              {/* <ItemList handleSetValues={setValues} /> */}
+              <ItemsTable setDataSource={setValues} dataSource={values} />
+            </div>
           </Modal>
         </div>
       ) : (
@@ -348,5 +497,60 @@ export default function UserRequests() {
         </div>
       )}
     </>
+  ) : (
+    buildRequest(
+      rowData,
+      setRowData,
+      updateStatus,
+      loadingRowData,
+      rowData,
+      createTender,
+      declineRequest,
+      setConfirmRejectLoading,
+      confirmRejectLoading,
+      updateProgress,
+      reload
+    )
+  );
+}
+function buildRequest(
+  selectedReqId,
+  setSelectedReqId,
+  updateStatus,
+  loadingRowData,
+  rowData,
+  createTender,
+  declineRequest,
+  setConfirmRejectLoading,
+  confirmRejectLoading,
+  updateProgress,
+  reload
+) {
+  return (
+    <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 px-36 py-5 flex-1 space-y-3">
+      <div className="flex flex-row items-center space-x-5">
+        <Button
+          icon={<ArrowLeftOutlined />}
+          onClick={() => setSelectedReqId(null)}
+        >
+          Back
+        </Button>
+
+        <div className="text-xl font-semibold">
+          {selectedReqId?.title}{" "}
+        </div>
+      </div>
+      <RequestDetails
+        handleUpdateStatus={updateStatus}
+        loading={loadingRowData}
+        data={rowData}
+        handleCreateTender={createTender}
+        handleReject={declineRequest}
+        setConfirmRejectLoading={setConfirmRejectLoading}
+        confirmRejectLoading={confirmRejectLoading}
+        handleUpdateProgress={updateProgress}
+        reload={reload}
+      />
+    </div>
   );
 }

@@ -1,4 +1,10 @@
-import { PlusOutlined, ReloadOutlined, SaveOutlined, SettingOutlined } from "@ant-design/icons";
+import {
+  ArrowLeftOutlined,
+  PlusOutlined,
+  ReloadOutlined,
+  SaveOutlined,
+  SettingOutlined,
+} from "@ant-design/icons";
 import {
   Button,
   Col,
@@ -8,6 +14,7 @@ import {
   Row,
   Typography,
   message,
+  Input,
 } from "antd";
 import Image from "next/image";
 import React, { useState, useEffect } from "react";
@@ -20,6 +27,7 @@ import TendersTable from "../tendersTable";
 export default function Tenders() {
   const [dataLoaded, setDataLoaded] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
+  let user = JSON.parse(localStorage.getItem("user"));
   let url = process.env.NEXT_PUBLIC_BKEND_URL;
   let apiUsername = process.env.NEXT_PUBLIC_API_USERNAME;
   let apiPassword = process.env.NEXT_PUBLIC_API_PASSWORD;
@@ -51,13 +59,13 @@ export default function Tenders() {
   }, []);
 
   function refresh() {
-    setDataLoaded(false)
-    setLoadingRowData(true)
+    setDataLoaded(false);
+    setLoadingRowData(true);
     loadTenders()
       .then((res) => res.json())
       .then((res) => {
         setDataLoaded(true);
-        setLoadingRowData(false)
+        setLoadingRowData(false);
         setDataset(res);
       })
       .catch((err) => {
@@ -247,15 +255,63 @@ export default function Tenders() {
         });
       });
   }
-  return (
+
+  function createPO(vendor, tender, createdBy, paymentTerms) {
+    fetch(`${url}/purchaseOrders/`, {
+      method: "POST",
+      headers: {
+        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        vendor,
+        tender,
+        createdBy,
+        paymentTerms,
+      }),
+    })
+      .then((res) => res.json())
+      .then((res1) => {
+        loadTenders()
+          .then((res2) => res2.json())
+          .then((res3) => {
+            setDataset(res3);
+            let r = res3.filter((d) => {
+              return d._id === rowData._id;
+            });
+            console.log("hereeeeeee", r);
+            setRowData(r[0]);
+            setLoadingRowData(false);
+          })
+          .catch((err) => {
+            console.error(err);
+            setLoadingRowData(false);
+            messageApi.open({
+              type: "error",
+              content: JSON.stringify(err),
+            });
+          });
+      })
+      .catch((err) => {
+        console.error(err);
+        setLoadingRowData(false);
+        messageApi.open({
+          type: "error",
+          content: JSON.stringify(err),
+        });
+      });
+  }
+  return !rowData ? (
     <>
       {contextHolder}
       {dataLoaded ? (
-        <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 pt-5 px-10 flex-1">
-          <TenderStats totalBids={totalBids} totalTenders={totalTenders} />
+        <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 px-10 flex-1">
           <Row className="flex flex-row justify-between items-center">
-            <Typography.Title level={3}>Tenders</Typography.Title>
+            <Typography.Title level={4}>Tenders</Typography.Title>
             <Row className="flex flex-row space-x-5 items-center">
+              <div>
+                <Input.Search placeholder="Search requests" />
+              </div>
               <Button
                 type="text"
                 icon={<ReloadOutlined />}
@@ -265,7 +321,8 @@ export default function Tenders() {
               <Button type="text" icon={<SettingOutlined />}></Button>
             </Row>
           </Row>
-          <Row className="flex flex-row space-x-5">
+
+          <Row className="flex flex-row space-x-5 mt-5 pb-10">
             <Col flex={5}>
               <TendersTable
                 handleSetRow={handleSetRow}
@@ -273,18 +330,6 @@ export default function Tenders() {
                 updatingId={updatingId}
               />
             </Col>
-            {rowData && (
-              <Col flex={2}>
-                <TenderDetails
-                  handleUpdateStatus={updateStatus}
-                  loading={loadingRowData}
-                  data={rowData}
-                  handleCreateSubmission={createSubmission}
-                  handleClose={() => setRowData(null)}
-                  handleRefreshData = {refresh}
-                />
-              </Col>
-            )}
           </Row>
 
           <Modal
@@ -331,5 +376,47 @@ export default function Tenders() {
         </div>
       )}
     </>
+  ) : (
+    buildTender(
+      updateStatus,
+      loadingRowData,
+      rowData,
+      createSubmission,
+      setRowData,
+      refresh,
+      createPO
+    )
+  );
+}
+function buildTender(
+  updateStatus,
+  loadingRowData,
+  rowData,
+  createSubmission,
+  setRowData,
+  refresh,
+  createPO
+) {
+  return (
+    <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 px-36 py-5 flex-1 space-y-3">
+      <div className="flex flex-row items-center space-x-5">
+        <Button icon={<ArrowLeftOutlined />} onClick={() => setRowData(null)}>
+          Back
+        </Button>
+
+        <div className="text-xl font-semibold">
+          {rowData?.purchaseRequest?.title}{" "}
+        </div>
+      </div>
+      <TenderDetails
+        handleUpdateStatus={updateStatus}
+        loading={loadingRowData}
+        data={rowData}
+        handleCreateSubmission={createSubmission}
+        handleClose={() => setRowData(null)}
+        handleRefreshData={refresh}
+        handleCreatePO={createPO}
+      />
+    </div>
   );
 }

@@ -33,12 +33,12 @@ const VendorsTable = ({ dataSet, handleApproveUser,handleDeclineUser, updatingId
 
   const columns = [
     {
-      title: "First Name",
-      dataIndex: "firstName",
+      title: "#",
+      dataIndex: "number",
     },
     {
-      title: "Last Name",
-      dataIndex: "lastName",
+      title: "Company Name",
+      dataIndex: "companyName",
     },
     {
       title: "TIN",
@@ -110,12 +110,13 @@ const VendorsTable = ({ dataSet, handleApproveUser,handleDeclineUser, updatingId
   }
 
   return (
-    <Form form={form} component={false}>
+    <Form form={form} component={false} >
       <Table
         size="small"
-        bordered
+       
         dataSource={data}
         columns={columns}
+        className="shadow-lg rounded-md"
         // pagination={{
         //   onChange: cancel,
         // }}
