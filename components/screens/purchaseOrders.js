@@ -8,6 +8,7 @@ import {
   Modal,
   Table,
   Empty,
+  Popconfirm,
 } from "antd";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
@@ -206,12 +207,6 @@ export default function PurchaseOrders() {
             </div>
           </div>
           <div className="flex flex-col space-y-5">
-            <Typography.Title level={4}>Details</Typography.Title>
-            <Typography.Title level={5}>
-              Section 1. Payment Terms
-            </Typography.Title>
-            {po?.paymentTerms && <div>{parse(po?.paymentTerms)}</div>}
-
             <Table
               size="small"
               dataSource={po?.tender?.items}
@@ -225,48 +220,64 @@ export default function PurchaseOrders() {
               })}{" "}
               {t.toLocaleString()} RWF
             </Typography.Title>
+            <Typography.Title level={3}>Details</Typography.Title>
+            {po?.sections?.map((section) => {
+              return (
+                <>
+                  <Typography.Title level={4}>{section.title}</Typography.Title>
+                  <div>{parse(section?.body)}</div>
+                </>
+              );
+            })}
           </div>
 
           <div className="grid grid-cols-3 gap-5">
-            <div className="flex flex-col ring-1 ring-gray-300 rounded p-5 space-y-3">
-              <div className="flex flex-col">
-                <Typography.Text type="secondary">
-                  <div className="text-xs">On Behalf of</div>
-                </Typography.Text>
-                <Typography.Text strong>Irembo ltd</Typography.Text>
+            <div className="flex flex-col ring-1 ring-gray-300 rounded pt-5 space-y-3">
+              <div className="px-5">
+                <div className="flex flex-col">
+                  <Typography.Text type="secondary">
+                    <div className="text-xs">On Behalf of</div>
+                  </Typography.Text>
+                  <Typography.Text strong>Irembo ltd</Typography.Text>
+                </div>
+
+                <div className="flex flex-col">
+                  <Typography.Text type="secondary">
+                    <div className="text-xs">Representative Title</div>
+                  </Typography.Text>
+                  <Typography.Text strong>Procurement Manager</Typography.Text>
+                </div>
+
+                <div className="flex flex-col">
+                  <Typography.Text type="secondary">
+                    <div className="text-xs">Company Representative</div>
+                  </Typography.Text>
+                  <Typography.Text strong>Manirakiza Edouard</Typography.Text>
+                </div>
+
+                <div className="flex flex-col">
+                  <Typography.Text type="secondary">
+                    <div className="text-xs">Email</div>
+                  </Typography.Text>
+                  <Typography.Text strong>
+                    e.manirakiza@irembo.com
+                  </Typography.Text>
+                </div>
               </div>
 
-              <div className="flex flex-col">
-                <Typography.Text type="secondary">
-                  <div className="text-xs">Representative Title</div>
-                </Typography.Text>
-                <Typography.Text strong>Procurement Manager</Typography.Text>
-              </div>
+              <Popconfirm title="Confirm PO Signature">
+                <div className="flex flex-row justify-center space-x-5 items-center border-t-2 bg-violet-50 p-5 cursor-pointer hover:opacity-75">
+                  <Image
+                    width={40}
+                    height={40}
+                    src="/icons/icons8-stamp-64.png"
+                  />
 
-              <div className="flex flex-col">
-                <Typography.Text type="secondary">
-                  <div className="text-xs">Company Representative</div>
-                </Typography.Text>
-                <Typography.Text strong>Manirakiza Edouard</Typography.Text>
-              </div>
-
-              <div className="flex flex-col">
-                <Typography.Text type="secondary">
-                  <div className="text-xs">Email</div>
-                </Typography.Text>
-                <Typography.Text strong>
-                  e.manirakiza@irembo.com
-                </Typography.Text>
-              </div>
-
-              <div className="flex justify-end">
-                <Image
-                  className=" cursor-pointer hover:opacity-75"
-                  width={40}
-                  height={40}
-                  src="/icons/icons8-stamp-64.png"
-                />
-              </div>
+                  <div className="text-violet-400 text-lg">
+                    Sign with one click
+                  </div>
+                </div>
+              </Popconfirm>
             </div>
           </div>
         </div>
@@ -344,9 +355,13 @@ export default function PurchaseOrders() {
                 return (
                   <div className="grid grid-cols-6 ring-1 ring-gray-200 rounded px-5 py-3 shadow hover:shadow-md m-5">
                     <div className="flex flex-col">
-                      <div className="text-xs text-gray-400">Purchase Order</div>
+                      <div className="text-xs text-gray-400">
+                        Purchase Order
+                      </div>
                       <div className="font-semibold">{po?.number}</div>
-                      <div className="font-semibold text-gray-500">{po?.tender?.purchaseRequest?.description}</div>
+                      <div className="font-semibold text-gray-500">
+                        {po?.tender?.purchaseRequest?.description}
+                      </div>
                     </div>
                     <div className="flex flex-col">
                       <div className="text-xs text-gray-400">Vendor</div>
@@ -406,7 +421,11 @@ export default function PurchaseOrders() {
                           Start delivering
                         </Button>
                       )}
-                      <Progress percent={_.round(po?.deliveryProgress,1)} size="small" status="active" />
+                      <Progress
+                        percent={_.round(po?.deliveryProgress, 1)}
+                        size="small"
+                        status="active"
+                      />
                     </div>
                   </div>
                 );

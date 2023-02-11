@@ -256,7 +256,7 @@ export default function Tenders() {
       });
   }
 
-  function createPO(vendor, tender, createdBy, paymentTerms) {
+  function createPO(vendor, tender, createdBy, sections) {
     fetch(`${url}/purchaseOrders/`, {
       method: "POST",
       headers: {
@@ -267,7 +267,53 @@ export default function Tenders() {
         vendor,
         tender,
         createdBy,
-        paymentTerms,
+        sections,
+      }),
+    })
+      .then((res) => res.json())
+      .then((res1) => {
+        loadTenders()
+          .then((res2) => res2.json())
+          .then((res3) => {
+            setDataset(res3);
+            let r = res3.filter((d) => {
+              return d._id === rowData._id;
+            });
+            console.log("hereeeeeee", r);
+            setRowData(r[0]);
+            setLoadingRowData(false);
+          })
+          .catch((err) => {
+            console.error(err);
+            setLoadingRowData(false);
+            messageApi.open({
+              type: "error",
+              content: JSON.stringify(err),
+            });
+          });
+      })
+      .catch((err) => {
+        console.error(err);
+        setLoadingRowData(false);
+        messageApi.open({
+          type: "error",
+          content: JSON.stringify(err),
+        });
+      });
+  }
+
+  function createContract(vendor, tender, createdBy, sections) {
+    fetch(`${url}/contracts/`, {
+      method: "POST",
+      headers: {
+        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        vendor,
+        tender,
+        createdBy,
+        sections,
       }),
     })
       .then((res) => res.json())
@@ -384,7 +430,8 @@ export default function Tenders() {
       createSubmission,
       setRowData,
       refresh,
-      createPO
+      createPO,
+      createContract
     )
   );
 }
@@ -395,7 +442,8 @@ function buildTender(
   createSubmission,
   setRowData,
   refresh,
-  createPO
+  createPO,
+  createContract
 ) {
   return (
     <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 px-36 py-5 flex-1 space-y-3">
@@ -416,6 +464,7 @@ function buildTender(
         handleClose={() => setRowData(null)}
         handleRefreshData={refresh}
         handleCreatePO={createPO}
+        handleCreateContract={createContract}
       />
     </div>
   );

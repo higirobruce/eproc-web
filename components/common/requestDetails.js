@@ -409,7 +409,7 @@ function buildApprovalFlow(
       </div>
 
       {currentCode === 2 && (
-        <Form size="middle" onFinish={submitTenderData}>
+        <Form onFinish={submitTenderData}>
           <Divider></Divider>
 
           <div className=" ml-3 mt-5 items-center">

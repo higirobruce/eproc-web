@@ -24,19 +24,39 @@ import {
   Table,
   Divider,
   Popover,
+  Popconfirm,
 } from "antd";
 import UploadFiles from "./uploadFiles";
 import {
   CheckOutlined,
   CloseOutlined,
+  FileDoneOutlined,
   FileTextOutlined,
   LoadingOutlined,
+  PlusOutlined,
   PrinterOutlined,
 } from "@ant-design/icons";
 import moment from "moment";
 import dayjs from "dayjs";
 import BidList from "./bidList";
 import Image from "next/image";
+
+let modules = {
+  toolbar: [
+    [{ 'header': [1, 2, false] }],
+    ['bold', 'italic', 'underline','strike', 'blockquote'],
+    [{'list': 'ordered'}, {'list': 'bullet'}, {'indent': '-1'}, {'indent': '+1'}],
+    ['link'],
+    ['clean']
+  ],
+}
+
+let formats = [
+  'header',
+  'bold', 'italic', 'underline', 'strike', 'blockquote',
+  'list', 'bullet', 'indent',
+  'link'
+]
 
 const TenderDetails = ({
   data,
@@ -46,6 +66,7 @@ const TenderDetails = ({
   handleClose,
   handleRefreshData,
   handleCreatePO,
+  handleCreateContract,
 }) => {
   let url = process.env.NEXT_PUBLIC_BKEND_URL;
   let apiUsername = process.env.NEXT_PUBLIC_API_USERNAME;
@@ -67,9 +88,15 @@ const TenderDetails = ({
   let [refresh, setRefresh] = useState(1);
   let [bidList, setBidList] = useState(null);
   let [poCreated, setPoCreated] = useState(false);
+  let [contractCreated, setContractCreated] = useState(false);
   let [po, setPO] = useState(null);
+  let [contract, setContract] = useState(null);
   let [openCreatePO, setOpenCreatePO] = useState(false);
   let [openViewPO, setOpenViewPO] = useState(false);
+
+  let [openCreateContract, setOpenCreateContract] = useState(false);
+  let [openViewContract, setOpenViewContract] = useState(false);
+
   let [vendor, setVendor] = useState("");
   let [tendor, setTendor] = useState("");
   let [paymentTerms, setPaymentTerms] = useState("");
@@ -77,6 +104,10 @@ const TenderDetails = ({
   let tot = 0;
   let [totalVal, setTotVal] = useState(0);
   let [warrantyDuration, setWarrantyDuration] = useState("months");
+  let [sectionTitle, setSectionTitle] = useState("Section 1: ");
+  let [sections, setSections] = useState([
+    { title: "Set section title", body: "" },
+  ]);
   const props = {
     name: "file",
     action: "https://run.mocky.io/v3/a42ee557-1ae7-49d7-878f-dd8599fab9d6",
@@ -137,6 +168,7 @@ const TenderDetails = ({
     });
     setTotVal(t);
   }, [items]);
+
   const updateBidList = () => {
     fetch(`${url}/submissions/byTender/${data._id}`, {
       method: "GET",
@@ -149,6 +181,7 @@ const TenderDetails = ({
       .then((body) => {
         setBidList(body);
         checkPOCreated();
+        checkContractCreated();
       });
   };
 
@@ -165,6 +198,22 @@ const TenderDetails = ({
         setPO(res[0]);
         if (res.length >= 1) setPoCreated(true);
         else setPoCreated(false);
+      });
+  };
+
+  const checkContractCreated = () => {
+    fetch(`${url}/contracts/byTenderId/${data._id}`, {
+      method: "GET",
+      headers: {
+        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+        "Content-Type": "application/json",
+      },
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        setContract(res[0]);
+        if (res.length >= 1) setContractCreated(true);
+        else setContractCreated(false);
       });
   };
 
@@ -352,7 +401,7 @@ const TenderDetails = ({
                       data?.status === "open" &&
                       !iSubmitted && (
                         <>
-                          <Form size="small" onFinish={submitSubmissionData}>
+                          <Form onFinish={submitSubmissionData}>
                             <div className="ml-3 mt-5 items-center">
                               <Divider></Divider>
                               <Typography.Title className="pb-4" level={5}>
@@ -510,7 +559,7 @@ const TenderDetails = ({
                     {buildTabHeader()}
                     {bidList?.filter((d) => d.status === "awarded").length >=
                     1 ? (
-                      !poCreated ? (
+                      !poCreated || !contractCreated ? (
                         <div>
                           {bidList
                             ?.filter((d) => d.status === "awarded")
@@ -567,27 +616,60 @@ const TenderDetails = ({
                                       </div>
 
                                       <Form
-                                        size="small"
+                                        // size="small"
                                         className="flex flex-row space-x-1"
                                       >
-                                        <Form.Item>
+                                        {/* <Form.Item>
                                           <UploadFiles label="Contract" />
-                                        </Form.Item>
+                                        </Form.Item> */}
 
-                                        <Form.Item>
-                                          <Button
-                                            size="small"
-                                            type="primary"
-                                            icon={<CheckOutlined />}
-                                            onClick={() => {
-                                              setOpenCreatePO(true);
-                                              setVendor(item?.createdBy);
-                                              setTendor(item?.tender);
-                                            }}
-                                          >
-                                            Create PO
-                                          </Button>
-                                        </Form.Item>
+                                        {contract ? (
+                                          <Form.Item>
+                                            <Button
+                                              type="default"
+                                              icon={<FileTextOutlined />}
+                                              onClick={() => {
+                                                setOpenViewContract(true);
+                                                setVendor(item?.createdBy);
+                                                setTendor(item?.tender);
+                                              }}
+                                            >
+                                              View Contract
+                                            </Button>
+                                          </Form.Item>
+                                        ) : (
+                                          <Form.Item>
+                                            <Button
+                                              // size="small"
+                                              type="primary"
+                                              icon={<FileDoneOutlined />}
+                                              onClick={() => {
+                                                setOpenCreateContract(true);
+                                                setVendor(item?.createdBy);
+                                                setTendor(item?.tender);
+                                              }}
+                                            >
+                                              Create Contract
+                                            </Button>
+                                          </Form.Item>
+                                        )}
+
+                                        {contractCreated && (
+                                          <Form.Item>
+                                            <Button
+                                              // size="small"
+                                              type="primary"
+                                              icon={<FileDoneOutlined />}
+                                              onClick={() => {
+                                                setOpenCreatePO(true);
+                                                setVendor(item?.createdBy);
+                                                setTendor(item?.tender);
+                                              }}
+                                            >
+                                              Create PO
+                                            </Button>
+                                          </Form.Item>
+                                        )}
                                       </Form>
                                     </div>
                                   </List.Item>
@@ -603,7 +685,7 @@ const TenderDetails = ({
                             </Typography.Title>
                             {/* <Popover content={'PO: '+po?.number}> */}
                             <Image
-                              // onClick={() => setOpenViewPO(true)}
+                              onClick={() => setOpenViewContract(true)}
                               className=" cursor-pointer hover:opacity-60"
                               width={40}
                               height={40}
@@ -643,6 +725,8 @@ const TenderDetails = ({
 
       {createPOMOdal()}
       {viewPOMOdal()}
+      {createContractMOdal()}
+      {viewContractMOdal()}
     </div>
   );
 
@@ -654,7 +738,7 @@ const TenderDetails = ({
         open={openCreatePO}
         onOk={() => {
           setOpenCreatePO(false);
-          handleCreatePO(vendor?._id, tendor?._id, user?._id, paymentTerms);
+          handleCreatePO(vendor?._id, tendor?._id, user?._id, sections);
         }}
         okText="Save and Submit"
         onCancel={() => setOpenCreatePO(false)}
@@ -728,16 +812,8 @@ const TenderDetails = ({
               </div>
             </div>
           </div>
-          <div className="flex flex-col space-y-5">
-            <Typography.Title level={4}>Details</Typography.Title>
-            <Typography.Title level={5}>
-              Section 1. Payment Terms
-            </Typography.Title>
-            <ReactQuill
-              theme="snow"
-              onChange={(value) => setPaymentTerms(value)}
-            />
 
+          <div className="flex flex-col space-y-5">
             <Table
               size="small"
               dataSource={items}
@@ -745,49 +821,110 @@ const TenderDetails = ({
               pagination={false}
             />
             <Typography.Title level={5} className="self-end">
-              Total (Tax Excl.): {totalVal.toLocaleString()} RWF
+              Total (Tax Excl.): {totalVal?.toLocaleString()} RWF
             </Typography.Title>
+
+            <Typography.Title level={4}>Details</Typography.Title>
+
+            {sections.map((s, index) => {
+              let section = sections[index]
+                ? sections[index]
+                : { title: "", body: "" };
+              let _sections = [...sections];
+              return (
+                <>
+                  <Typography.Title
+                    level={5}
+                    editable={{
+                      onChange: (e) => {
+                        section.title = e;
+                        _sections[index]
+                          ? (_sections[index] = section)
+                          : _sections.push(section);
+                        setSections(_sections);
+                      },
+                      text: s.title,
+                    }}
+                  >
+                    {s.title}
+                  </Typography.Title>
+                  <ReactQuill
+                    theme="snow"
+                    modules={modules}
+                    formats={formats}
+                    onChange={(value) => {
+                      section.body = value;
+                      _sections[index]
+                        ? (_sections[index] = section)
+                        : _sections.push(section);
+                      setSections(_sections);
+                    }}
+                  />
+                </>
+              );
+            })}
+
+            <Button
+              icon={<PlusOutlined />}
+              onClick={() => {
+                let _sections = [...sections];
+                _sections.push({
+                  title: `Set section ${sections?.length + 1} Title`,
+                  body: "",
+                });
+                setSections(_sections);
+              }}
+            >
+              Add section
+            </Button>
           </div>
           <div className="grid grid-cols-3 gap-5">
-            <div className="flex flex-col ring-1 ring-gray-300 rounded p-5 space-y-3">
-              <div className="flex flex-col">
-                <Typography.Text type="secondary">
-                  <div className="text-xs">On Behalf of</div>
-                </Typography.Text>
-                <Typography.Text strong>Irembo ltd</Typography.Text>
+            <div className="flex flex-col ring-1 ring-gray-300 rounded pt-5 space-y-3">
+              <div className="px-5">
+                <div className="flex flex-col">
+                  <Typography.Text type="secondary">
+                    <div className="text-xs">On Behalf of</div>
+                  </Typography.Text>
+                  <Typography.Text strong>Irembo ltd</Typography.Text>
+                </div>
+
+                <div className="flex flex-col">
+                  <Typography.Text type="secondary">
+                    <div className="text-xs">Representative Title</div>
+                  </Typography.Text>
+                  <Typography.Text strong>Procurement Manager</Typography.Text>
+                </div>
+
+                <div className="flex flex-col">
+                  <Typography.Text type="secondary">
+                    <div className="text-xs">Company Representative</div>
+                  </Typography.Text>
+                  <Typography.Text strong>Manirakiza Edouard</Typography.Text>
+                </div>
+
+                <div className="flex flex-col">
+                  <Typography.Text type="secondary">
+                    <div className="text-xs">Email</div>
+                  </Typography.Text>
+                  <Typography.Text strong>
+                    e.manirakiza@irembo.com
+                  </Typography.Text>
+                </div>
               </div>
 
-              <div className="flex flex-col">
-                <Typography.Text type="secondary">
-                  <div className="text-xs">Representative Title</div>
-                </Typography.Text>
-                <Typography.Text strong>Procurement Manager</Typography.Text>
-              </div>
+              <Popconfirm title="Confirm PO Signature">
+                <div className="flex flex-row justify-center space-x-5 items-center border-t-2 bg-violet-50 p-5 cursor-pointer hover:opacity-75">
+                  <Image
+                    width={40}
+                    height={40}
+                    src="/icons/icons8-stamp-64.png"
+                  />
 
-              <div className="flex flex-col">
-                <Typography.Text type="secondary">
-                  <div className="text-xs">Company Representative</div>
-                </Typography.Text>
-                <Typography.Text strong>Manirakiza Edouard</Typography.Text>
-              </div>
-
-              <div className="flex flex-col">
-                <Typography.Text type="secondary">
-                  <div className="text-xs">Email</div>
-                </Typography.Text>
-                <Typography.Text strong>
-                  e.manirakiza@irembo.com
-                </Typography.Text>
-              </div>
-
-              <div className="flex justify-end">
-                <Image
-                  className=" cursor-pointer hover:opacity-75"
-                  width={40}
-                  height={40}
-                  src="/icons/icons8-stamp-64.png"
-                />
-              </div>
+                  <div className="text-violet-400 text-lg">
+                    Sign with one click
+                  </div>
+                </div>
+              </Popconfirm>
             </div>
           </div>
         </div>
@@ -887,12 +1024,6 @@ const TenderDetails = ({
             </div>
           </div>
           <div className="flex flex-col space-y-5">
-            <Typography.Title level={4}>Details</Typography.Title>
-            <Typography.Title level={5}>
-              Section 1. Payment Terms
-            </Typography.Title>
-            {po?.paymentTerms && <div>{parse(po?.paymentTerms)}</div>}
-
             <Table
               size="small"
               dataSource={items}
@@ -900,50 +1031,436 @@ const TenderDetails = ({
               pagination={false}
             />
             <Typography.Title level={5} className="self-end">
-              Total (Tax Excl.): {totalVal.toLocaleString()} RWF
+              Total (Tax Excl.): {totalVal?.toLocaleString()} RWF
             </Typography.Title>
+            <Typography.Title level={3}>Details</Typography.Title>
+            {po?.sections?.map((section) => {
+              return (
+                <>
+                  <Typography.Title level={4}>{section.title}</Typography.Title>
+                  <div>{parse(section?.body)}</div>
+                </>
+              );
+            })}
           </div>
 
           <div className="grid grid-cols-3 gap-5">
+            <div className="flex flex-col ring-1 ring-gray-300 rounded pt-5 space-y-3">
+              <div className="px-5">
+                <div className="flex flex-col">
+                  <Typography.Text type="secondary">
+                    <div className="text-xs">On Behalf of</div>
+                  </Typography.Text>
+                  <Typography.Text strong>Irembo ltd</Typography.Text>
+                </div>
+
+                <div className="flex flex-col">
+                  <Typography.Text type="secondary">
+                    <div className="text-xs">Representative Title</div>
+                  </Typography.Text>
+                  <Typography.Text strong>Procurement Manager</Typography.Text>
+                </div>
+
+                <div className="flex flex-col">
+                  <Typography.Text type="secondary">
+                    <div className="text-xs">Company Representative</div>
+                  </Typography.Text>
+                  <Typography.Text strong>Manirakiza Edouard</Typography.Text>
+                </div>
+
+                <div className="flex flex-col">
+                  <Typography.Text type="secondary">
+                    <div className="text-xs">Email</div>
+                  </Typography.Text>
+                  <Typography.Text strong>
+                    e.manirakiza@irembo.com
+                  </Typography.Text>
+                </div>
+              </div>
+
+              <Popconfirm title="Confirm PO Signature">
+                <div className="flex flex-row justify-center space-x-5 items-center border-t-2 bg-violet-50 p-5 cursor-pointer hover:opacity-75">
+                  <Image
+                    width={40}
+                    height={40}
+                    src="/icons/icons8-stamp-64.png"
+                  />
+
+                  <div className="text-violet-400 text-lg">
+                    Sign with one click
+                  </div>
+                </div>
+              </Popconfirm>
+            </div>
+          </div>
+        </div>
+      </Modal>
+    );
+  }
+
+  function createContractMOdal() {
+    return (
+      <Modal
+        title="New Contract"
+        centered
+        open={openCreateContract}
+        onOk={() => {
+          setOpenCreateContract(false);
+          handleCreateContract(vendor?._id, tendor?._id, user?._id, sections);
+        }}
+        okText="Save and Submit"
+        onCancel={() => setOpenCreateContract(false)}
+        width={"80%"}
+        bodyStyle={{ maxHeight: "700px", overflow: "scroll" }}
+      >
+        <div className="space-y-10 px-20 py-5">
+          <Typography.Title level={4}>
+            CONTRACTOR: {vendor?.companyName}
+          </Typography.Title>
+          <div className="grid grid-cols-2 gap-5">
             <div className="flex flex-col ring-1 ring-gray-300 rounded p-5 space-y-3">
               <div className="flex flex-col">
                 <Typography.Text type="secondary">
-                  <div className="text-xs">On Behalf of</div>
+                  <div className="text-xs">Company Name</div>
                 </Typography.Text>
                 <Typography.Text strong>Irembo ltd</Typography.Text>
               </div>
 
               <div className="flex flex-col">
                 <Typography.Text type="secondary">
-                  <div className="text-xs">Representative Title</div>
-                </Typography.Text>
-                <Typography.Text strong>Procurement Manager</Typography.Text>
-              </div>
-
-              <div className="flex flex-col">
-                <Typography.Text type="secondary">
-                  <div className="text-xs">Company Representative</div>
-                </Typography.Text>
-                <Typography.Text strong>Manirakiza Edouard</Typography.Text>
-              </div>
-
-              <div className="flex flex-col">
-                <Typography.Text type="secondary">
-                  <div className="text-xs">Email</div>
+                  <div className="text-xs">Company Address</div>
                 </Typography.Text>
                 <Typography.Text strong>
-                  e.manirakiza@irembo.com
+                  Irembo Campass Nyarutarama KG 9 Ave
                 </Typography.Text>
               </div>
 
-              <div className="flex justify-end">
-                <Image
-                  className=" cursor-pointer hover:opacity-75"
-                  width={40}
-                  height={40}
-                  src="/icons/icons8-stamp-64.png"
-                />
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Company TIN no.</div>
+                </Typography.Text>
+                <Typography.Text strong>102911562</Typography.Text>
               </div>
+
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Hereinafter refferd to as</div>
+                </Typography.Text>
+                <Typography.Text strong>Sender</Typography.Text>
+              </div>
+            </div>
+
+            <div className="flex flex-col ring-1 ring-gray-300 rounded p-5 space-y-3">
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Company Name</div>
+                </Typography.Text>
+                <Typography.Text strong>{vendor?.companyName}</Typography.Text>
+              </div>
+
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Company Address</div>
+                </Typography.Text>
+                <Typography.Text strong>
+                  {vendor?.building}-{vendor?.street}-{vendor?.avenue}
+                </Typography.Text>
+              </div>
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Company TIN no.</div>
+                </Typography.Text>
+                <Typography.Text strong>{vendor?.tin}</Typography.Text>
+              </div>
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Hereinafter refferd to as</div>
+                </Typography.Text>
+                <Typography.Text strong>Receiver</Typography.Text>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col space-y-5">
+            <Table
+              size="small"
+              dataSource={items}
+              columns={columns}
+              pagination={false}
+            />
+            <Typography.Title level={5} className="self-end">
+              Total (Tax Excl.): {totalVal?.toLocaleString()} RWF
+            </Typography.Title>
+
+            <Typography.Title level={4}>Details</Typography.Title>
+
+            {sections.map((s, index) => {
+              let section = sections[index]
+                ? sections[index]
+                : { title: "", body: "" };
+              let _sections = [...sections];
+              return (
+                <>
+                  <Typography.Title
+                    level={5}
+                    editable={{
+                      onChange: (e) => {
+                        section.title = e;
+                        _sections[index]
+                          ? (_sections[index] = section)
+                          : _sections.push(section);
+                        setSections(_sections);
+                      },
+                      text: s.title,
+                    }}
+                  >
+                    {s.title}
+                  </Typography.Title>
+                  <ReactQuill
+                    theme="snow"
+                    modules={modules}
+                    formats={formats}
+                    onChange={(value) => {
+                      section.body = value;
+                      _sections[index]
+                        ? (_sections[index] = section)
+                        : _sections.push(section);
+                      setSections(_sections);
+                    }}
+                  />
+                </>
+              );
+            })}
+
+            <Button
+              icon={<PlusOutlined />}
+              onClick={() => {
+                let _sections = [...sections];
+                _sections.push({
+                  title: `Set section ${sections?.length + 1} Title`,
+                  body: "",
+                });
+                setSections(_sections);
+              }}
+            >
+              Add section
+            </Button>
+          </div>
+          <div className="grid grid-cols-3 gap-5">
+            <div className="flex flex-col ring-1 ring-gray-300 rounded pt-5 space-y-3">
+              <div className="px-5">
+                <div className="flex flex-col">
+                  <Typography.Text type="secondary">
+                    <div className="text-xs">On Behalf of</div>
+                  </Typography.Text>
+                  <Typography.Text strong>Irembo ltd</Typography.Text>
+                </div>
+
+                <div className="flex flex-col">
+                  <Typography.Text type="secondary">
+                    <div className="text-xs">Representative Title</div>
+                  </Typography.Text>
+                  <Typography.Text strong>Procurement Manager</Typography.Text>
+                </div>
+
+                <div className="flex flex-col">
+                  <Typography.Text type="secondary">
+                    <div className="text-xs">Company Representative</div>
+                  </Typography.Text>
+                  <Typography.Text strong>Manirakiza Edouard</Typography.Text>
+                </div>
+
+                <div className="flex flex-col">
+                  <Typography.Text type="secondary">
+                    <div className="text-xs">Email</div>
+                  </Typography.Text>
+                  <Typography.Text strong>
+                    e.manirakiza@irembo.com
+                  </Typography.Text>
+                </div>
+              </div>
+
+              <Popconfirm title="Confirm Contract Signature">
+                <div className="flex flex-row justify-center space-x-5 items-center border-t-2 bg-violet-50 p-5 cursor-pointer hover:opacity-75">
+                  <Image
+                    width={40}
+                    height={40}
+                    src="/icons/icons8-stamp-64.png"
+                  />
+
+                  <div className="text-violet-400 text-lg">
+                    Sign with one click
+                  </div>
+                </div>
+              </Popconfirm>
+            </div>
+          </div>
+        </div>
+      </Modal>
+    );
+  }
+
+  function viewContractMOdal() {
+    return (
+      <Modal
+        title="Display Contract"
+        centered
+        open={openViewContract}
+        onOk={() => {
+          setOpenViewContract(false);
+        }}
+        onCancel={() => setOpenViewContract(false)}
+        width={"80%"}
+        bodyStyle={{ maxHeight: "700px", overflow: "scroll" }}
+      >
+        <div className="space-y-10 px-20 py-5 overflow-x-scroll">
+          <div className="flex flex-row justify-between items-center">
+            <Typography.Title level={4} className="flex flex-row items-center">
+              CONTRACTOR: {contract?.vendor?.companyName}{" "}
+              <Image
+                src="/icons/icons8-approval-90.png"
+                width={20}
+                height={20}
+              />
+            </Typography.Title>
+            <Button icon={<PrinterOutlined />}>Print</Button>
+          </div>
+          <div className="grid grid-cols-2 gap-5 ">
+            <div className="flex flex-col ring-1 ring-gray-300 rounded p-5 space-y-3">
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Company Name</div>
+                </Typography.Text>
+                <Typography.Text strong>Irembo ltd</Typography.Text>
+              </div>
+
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Company Address</div>
+                </Typography.Text>
+                <Typography.Text strong>
+                  Irembo Campass Nyarutarama KG 9 Ave
+                </Typography.Text>
+              </div>
+
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Company TIN no.</div>
+                </Typography.Text>
+                <Typography.Text strong>102911562</Typography.Text>
+              </div>
+
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Hereinafter refferd to as</div>
+                </Typography.Text>
+                <Typography.Text strong>Sender</Typography.Text>
+              </div>
+            </div>
+
+            <div className="flex flex-col ring-1 ring-gray-300 rounded p-5 space-y-3">
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Company Name</div>
+                </Typography.Text>
+                <Typography.Text strong>
+                  {contract?.vendor?.companyName}
+                </Typography.Text>
+              </div>
+
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Company Address</div>
+                </Typography.Text>
+                <Typography.Text strong>
+                  {contract?.vendor?.building}-{contract?.vendor?.street}-
+                  {contract?.vendor?.avenue}
+                </Typography.Text>
+              </div>
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Company TIN no.</div>
+                </Typography.Text>
+                <Typography.Text strong>
+                  {contract?.vendor?.tin}
+                </Typography.Text>
+              </div>
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Hereinafter refferd to as</div>
+                </Typography.Text>
+                <Typography.Text strong>Receiver</Typography.Text>
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-col space-y-5">
+            <Table
+              size="small"
+              dataSource={items}
+              columns={columns}
+              pagination={false}
+            />
+            <Typography.Title level={5} className="self-end">
+              Total (Tax Excl.): {totalVal?.toLocaleString()} RWF
+            </Typography.Title>
+            <Typography.Title level={3}>Details</Typography.Title>
+            {contract?.sections?.map((section) => {
+              return (
+                <>
+                  <Typography.Title level={4}>{section.title}</Typography.Title>
+                  <div>{parse(section?.body)}</div>
+                </>
+              );
+            })}
+          </div>
+
+          <div className="grid grid-cols-3 gap-5">
+            <div className="flex flex-col ring-1 ring-gray-300 rounded pt-5 space-y-3">
+              <div className="px-5">
+                <div className="flex flex-col">
+                  <Typography.Text type="secondary">
+                    <div className="text-xs">On Behalf of</div>
+                  </Typography.Text>
+                  <Typography.Text strong>Irembo ltd</Typography.Text>
+                </div>
+
+                <div className="flex flex-col">
+                  <Typography.Text type="secondary">
+                    <div className="text-xs">Representative Title</div>
+                  </Typography.Text>
+                  <Typography.Text strong>Procurement Manager</Typography.Text>
+                </div>
+
+                <div className="flex flex-col">
+                  <Typography.Text type="secondary">
+                    <div className="text-xs">Company Representative</div>
+                  </Typography.Text>
+                  <Typography.Text strong>Manirakiza Edouard</Typography.Text>
+                </div>
+
+                <div className="flex flex-col">
+                  <Typography.Text type="secondary">
+                    <div className="text-xs">Email</div>
+                  </Typography.Text>
+                  <Typography.Text strong>
+                    e.manirakiza@irembo.com
+                  </Typography.Text>
+                </div>
+              </div>
+
+              <Popconfirm title="Confirm Contract Signature">
+                <div className="flex flex-row justify-center space-x-5 items-center border-t-2 bg-violet-50 p-5 cursor-pointer hover:opacity-75">
+                  <Image
+                    width={40}
+                    height={40}
+                    src="/icons/icons8-stamp-64.png"
+                  />
+
+                  <div className="text-violet-400 text-lg">
+                    Sign with one click
+                  </div>
+                </div>
+              </Popconfirm>
             </div>
           </div>
         </div>

@@ -30,7 +30,7 @@ const BidList = ({ tenderId, handleSelectBid, refresh, handleAwardBid, handleSet
         setData(body);
         handleSetBidList(body)
         if (body?.length >= 2) setContainerHeight(200);
-        else if(body?.length == 1) setContainerHeight(100);
+        else if(body?.length == 1) setContainerHeight(200);
         else setContainerHeight(0)
       });
   };
