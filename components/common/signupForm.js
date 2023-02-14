@@ -227,7 +227,7 @@ const SignupForm = () => {
     <div className="flex h-screen">
       {contextHolder}
       {loaded ? (
-        <div className="flex bg-slate-50 pt-2 px-16 rounded-lg shadow-lg h-5/6 mt-20 overflow-x-auto">
+        <div className="flex bg-slate-50 pt-2 px-10 rounded-lg shadow-lg h-5/6 mt-20 overflow-y-auto">
           <Form
             {...formItemLayout}
             form={form}
