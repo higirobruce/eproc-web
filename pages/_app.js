@@ -1,3 +1,4 @@
+import { ConfigProvider } from 'antd';
 import { useEffect } from 'react'
 import '../styles/globals.css'
 
@@ -12,5 +13,15 @@ export default function App({ Component, pageProps }) {
 
 
 
-  return <Component {...pageProps} />
+  return (
+    <ConfigProvider
+      theme={{
+        token: {
+          colorPrimary: "#0063CF",
+        },
+      }}
+    >
+      <Component {...pageProps} />
+    </ConfigProvider>
+  );
 }
