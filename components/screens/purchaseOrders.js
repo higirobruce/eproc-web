@@ -353,7 +353,7 @@ export default function PurchaseOrders() {
               {pOs?.map((po) => {
                 let t = 0;
                 return (
-                  <div className="grid grid-cols-6 ring-1 ring-gray-200 rounded px-5 py-3 shadow hover:shadow-md m-5">
+                  <div key={po?.number} className="grid grid-cols-6 ring-1 ring-gray-200 rounded px-5 py-3 shadow hover:shadow-md m-5">
                     <div className="flex flex-col">
                       <div className="text-xs text-gray-400">
                         Purchase Order

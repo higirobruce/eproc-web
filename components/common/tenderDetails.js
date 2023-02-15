@@ -565,8 +565,8 @@ const TenderDetails = ({
                             ?.filter((d) => d.status === "awarded")
                             ?.map((item) => {
                               return (
-                                <List size="small">
-                                  <List.Item key={item?.number}>
+                                <List size="small" key={item?.number}>
+                                  <List.Item >
                                     <List.Item.Meta
                                       //   avatar={<Avatar src={item.picture.large} />}
                                       title={<a href="#">{item.number}</a>}
