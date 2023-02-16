@@ -17,6 +17,8 @@ import {
   CloseOutlined,
   EllipsisOutlined,
   FileOutlined,
+  FileTextFilled,
+  FileTextOutlined,
   LoadingOutlined,
   MoreOutlined,
   SearchOutlined,
@@ -167,19 +169,15 @@ const UsersRequestsTable = ({
       // dataIndex: "number",
       render: (_, record) => (
         <>
-          <Tag color={record?.number === selectedRow ? "orange" : ""}>
-            <Typography.Link>
-              <div
-                className="font-semibold cursor-pointer space-x-1 flex flex-row items-center"
-                onClick={() => handleSetRow(record)}
-              >
-                <div>
-                  <FileOutlined />
-                </div>
-                <div>{record?.number}</div>
-              </div>
-            </Typography.Link>
-          </Tag>
+          <div
+            className="font-semibold cursor-pointer space-x-1 flex flex-row items-center text-blue-500 hover:underline"
+            onClick={() => handleSetRow(record)}
+          >
+            <div>
+              <FileTextOutlined className="text-xs" />
+            </div>
+            <div>{record?.number}</div>
+          </div>
         </>
       ),
       // ...getColumnSearchProps("number"),

@@ -123,11 +123,7 @@ export default function RequestStats({ totalRequests, totalBids }) {
   
   return (
     <Row gutter={[16, 16]}>
-      <Col>
-        <Card title="Counts by Department" size="small" className="shadow-xl">
-          {byDep && <Pie width={30} data={byDep} />}
-        </Card>
-      </Col>
+      
       {/* <Col>
         <Card title="Counts by Category" size="small" className="shadow-xl">
           {byCat && <Pie height={100} width={250} data={byCat}  />}
@@ -148,6 +144,12 @@ export default function RequestStats({ totalRequests, totalBids }) {
         </Card>
 
         
+      </Col>
+
+      <Col>
+        <Card title="Counts by Department" size="small" className="shadow-xl">
+          {byDep && <Pie width={30} data={byDep} />}
+        </Card>
       </Col>
 
       

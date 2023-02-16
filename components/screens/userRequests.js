@@ -68,7 +68,7 @@ export default function UserRequests() {
   let [confirmRejectLoading, setConfirmRejectLoading] = useState(false);
   let [budgeted, setBudgeted] = useState(true);
   let [budgetLine, setBudgetLine] = useState("");
-  let [reload, setReload] = useState(false)
+  let [reload, setReload] = useState(false);
 
   let [selectedReqId, setSelectedReqId] = useState(null);
 
@@ -112,7 +112,6 @@ export default function UserRequests() {
       .then((res) => {
         setDataLoaded(true);
         setDataset(res);
-        
       })
       .catch((err) => {
         messageApi.open({
@@ -156,7 +155,7 @@ export default function UserRequests() {
           createdBy: user?._id,
           budgeted,
           budgetLine: budgetLine,
-          title
+          title,
         }),
       })
         .then((res) => res.json())
@@ -352,7 +351,7 @@ export default function UserRequests() {
       .then((res) => res.json())
       .then((res) => {
         let r = rowData;
-        setReload(!reload)
+        setReload(!reload);
         refresh();
       });
   }
@@ -420,11 +419,19 @@ export default function UserRequests() {
               <Form.Item label="Due date">
                 <DatePicker onChange={(v, dstr) => setDueDate(dstr)} />
               </Form.Item>
-              <Form.Item label='Request title'>
-                <Input onChange={(e)=>setTitle(e.target.value)} placeholder='How would you name your request?'/>
+              <Form.Item label="Request title">
+                <Input
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="How would you name your request?"
+                />
               </Form.Item>
               <Form.Item label="Request Description">
-                <Input.TextArea onChange={(e) => setDescription(e.target.value)} placeholder='Briefly describe your request' showCount maxLength={100}/>
+                <Input.TextArea
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Briefly describe your request"
+                  showCount
+                  maxLength={100}
+                />
               </Form.Item>
               <Form.Item
                 label="Request Category"
@@ -536,9 +543,7 @@ function buildRequest(
           Back
         </Button>
 
-        <div className="text-xl font-semibold">
-          {selectedReqId?.title}{" "}
-        </div>
+        <div className="text-xl font-semibold">{selectedReqId?.title} </div>
       </div>
       <RequestDetails
         handleUpdateStatus={updateStatus}

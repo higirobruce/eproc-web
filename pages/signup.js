@@ -15,7 +15,7 @@ export default function Home() {
 
       <main className="flex space-x-10 bg-blue-500 items-center justify-center px-5">
         <div className="flex flex-col">
-          <Image alt="" src="/irembo-gov.svg" className="cursor-pointer" width={150} height={150} onClick={()=>Router.push('/')}/>
+          <Image alt="" src="/irembo-gov.svg" className="cursor-pointer" width={100} height={100} onClick={()=>Router.push('/')}/>
           <Image alt="" src="/add_information.svg" width={800} height={800} />
         </div>
         <SignupForm />

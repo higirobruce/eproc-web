@@ -67,7 +67,7 @@ const SignupForm = () => {
   const [messageApi, contextHolder] = message.useMessage();
   let [loaded, setLoaded] = useState(false);
   let [submitting, setSubmitting] = useState(false);
-  let [type, setType] = useState("");
+  let [type, setType] = useState("VENDOR");
   let [dpts, setDpts] = useState([]);
   let [servCategories, setServCategories] = useState([]);
 
@@ -254,7 +254,7 @@ const SignupForm = () => {
                 height={40}
               />
             </Row>
-            <Form.Item
+            {/* <Form.Item
               name="type"
               label="Account type"
               rules={[
@@ -268,7 +268,7 @@ const SignupForm = () => {
                 <Option value="VENDOR">Vendor</Option>
                 <Option value="DPT-USER">Department User</Option>
               </Select>
-            </Form.Item>
+            </Form.Item> */}
 
             {type === "VENDOR" && (
               <>

@@ -70,11 +70,11 @@ const SideMenu = ({ setScreen, screen }) => {
           key: "users",
           icon: <UserOutlined />,
         },
-        {
-          label: "Reports",
-          key: "reports",
-          icon: <CopyOutlined />,
-        },
+        // {
+        //   label: "Reports",
+        //   key: "reports",
+        //   icon: <CopyOutlined />,
+        // },
         {
           type: "divider",
         },

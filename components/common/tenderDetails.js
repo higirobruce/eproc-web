@@ -43,20 +43,31 @@ import Image from "next/image";
 
 let modules = {
   toolbar: [
-    [{ 'header': [1, 2, false] }],
-    ['bold', 'italic', 'underline','strike', 'blockquote'],
-    [{'list': 'ordered'}, {'list': 'bullet'}, {'indent': '-1'}, {'indent': '+1'}],
-    ['link'],
-    ['clean']
+    [{ header: [1, 2, false] }],
+    ["bold", "italic", "underline", "strike", "blockquote"],
+    [
+      { list: "ordered" },
+      { list: "bullet" },
+      { indent: "-1" },
+      { indent: "+1" },
+    ],
+    ["link"],
+    ["clean"],
   ],
-}
+};
 
 let formats = [
-  'header',
-  'bold', 'italic', 'underline', 'strike', 'blockquote',
-  'list', 'bullet', 'indent',
-  'link'
-]
+  "header",
+  "bold",
+  "italic",
+  "underline",
+  "strike",
+  "blockquote",
+  "list",
+  "bullet",
+  "indent",
+  "link",
+];
 
 const TenderDetails = ({
   data,
@@ -324,77 +335,75 @@ const TenderDetails = ({
                   spinning={loading || checkingSubmission}
                   indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />}
                 >
-                  <div className="overflow-x-auto p-3">
+                  <div className="overflow-x-auto p-3 flex flex-col space-y-10">
                     {/* TItle */}
                     {buildTabHeader()}
 
-                    <div className="ml-3 mt-5">
-                      <Typography.Link>
-                        <FileTextOutlined /> Tender document for {data?.number}{" "}
-                      </Typography.Link>
-                    </div>
+                    <div>
+                      {data.items.map((i, index) => {
+                        return (
+                          <div
+                            className="mt-2 flex flex-row justify-between ring-1 ring-gray-200 rounded p-1"
+                            key={index}
+                          >
+                            <div>
+                              <div className="text-xs font-semibold ml-3 text-gray-800">
+                                Item {index + 1}
+                              </div>
+                              <div className="flex flex-row space-x-1 items-center">
+                                <div className="text-xs font-semibold ml-3 text-gray-500">
+                                  Description:
+                                </div>
+                                <div className="text-sm font-semibold text-gray-600">
+                                  {i?.title}
+                                </div>
+                              </div>
+                              <div className="flex flex-row space-x-1 items-center">
+                                <div className="text-xs font-semibold ml-3 text-gray-500">
+                                  Quantity:
+                                </div>
+                                <div className="text-sm font-semibold text-gray-600">
+                                  {i?.quantity}
+                                </div>
+                              </div>
 
-                    {data.items.map((i, index) => {
-                      return (
-                        <div
-                          className="mt-2 flex flex-row justify-between ring-1 ring-gray-200 rounded p-1"
-                          key={index}
-                        >
-                          <div>
-                            <div className="text-xs font-semibold ml-3 text-gray-800">
-                              Item {index + 1}
-                            </div>
-                            <div className="flex flex-row space-x-1 items-center">
-                              <div className="text-xs font-semibold ml-3 text-gray-500">
-                                Description:
-                              </div>
-                              <div className="text-sm font-semibold text-gray-600">
-                                {i?.title}
-                              </div>
-                            </div>
-                            <div className="flex flex-row space-x-1 items-center">
-                              <div className="text-xs font-semibold ml-3 text-gray-500">
-                                Quantity:
-                              </div>
-                              <div className="text-sm font-semibold text-gray-600">
-                                {i?.quantity}
-                              </div>
-                            </div>
+                              {user?.userType !== "VENDOR" && (
+                                <div className="flex flex-row space-x-1 items-center">
+                                  <div className="text-xs font-semibold ml-3 text-gray-500">
+                                    Estimated cost:
+                                  </div>
+                                  <div className="text-sm font-semibold text-gray-600">
+                                    {i?.currency}{" "}
+                                    {(
+                                      i?.estimatedUnitCost * i?.quantity
+                                    ).toLocaleString()}
+                                  </div>
+                                </div>
+                              )}
 
-                            <div className="flex flex-row space-x-1 items-center">
-                              <div className="text-xs font-semibold ml-3 text-gray-500">
-                                Estimated cost:
-                              </div>
-                              <div className="text-sm font-semibold text-gray-600">
-                                {i?.currency}{" "}
-                                {(
-                                  i?.estimatedUnitCost * i?.quantity
-                                ).toLocaleString()}
-                              </div>
-                            </div>
-
-                            {/* {po &&
+                              {/* {po &&
                               buildConfirmDeliveryForm(
                                 po,
                                 handleGetProgress,
                                 handleUpdateProgress,
                                 progress
                               )} */}
-                          </div>
+                            </div>
 
-                          <div className="self-center">
-                            <Popover content="TOR">
-                              <Image
-                                className=" cursor-pointer hover:opacity-60"
-                                width={40}
-                                height={40}
-                                src="/icons/icons8-file-64.png"
-                              />
-                            </Popover>
+                            <div className="self-center">
+                              <Popover content="TOR">
+                                <Image
+                                  className=" cursor-pointer hover:opacity-60"
+                                  width={40}
+                                  height={40}
+                                  src="/icons/icons8-file-64.png"
+                                />
+                              </Popover>
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
 
                     {user?.userType === "VENDOR" &&
                       moment().isBefore(moment(data?.submissionDeadLine)) &&
@@ -541,7 +550,7 @@ const TenderDetails = ({
             {user?.userType !== "VENDOR" && (
               <>
                 <Tabs.TabPane tab="Bidding" key="2">
-                  <div className="flex flex-col space-y-5">
+                  <div className="flex flex-col space-y-5 p-3">
                     {buildTabHeader()}
                     <div>
                       <BidList
@@ -555,7 +564,7 @@ const TenderDetails = ({
                   </div>
                 </Tabs.TabPane>
                 <Tabs.TabPane tab="Aggrement" key="3">
-                  <div className="flex flex-col space-y-5">
+                  <div className="flex flex-col space-y-5 p-3">
                     {buildTabHeader()}
                     {bidList?.filter((d) => d.status === "awarded").length >=
                     1 ? (
@@ -566,7 +575,7 @@ const TenderDetails = ({
                             ?.map((item) => {
                               return (
                                 <List size="small" key={item?.number}>
-                                  <List.Item >
+                                  <List.Item>
                                     <List.Item.Meta
                                       //   avatar={<Avatar src={item.picture.large} />}
                                       title={<a href="#">{item.number}</a>}
@@ -716,6 +725,137 @@ const TenderDetails = ({
                   </div>
                 </Tabs.TabPane>
               </>
+            )}
+            {user?.userType === "VENDOR" && (
+              <Tabs.TabPane tab="Aggrement" key="3">
+                <div className="flex flex-col space-y-5 p-3">
+                  {buildTabHeader()}
+                  {bidList?.filter((d) => d.status === "awarded").length >=
+                  1 ? (
+                    !poCreated || !contractCreated ? (
+                      <div>
+                        {bidList
+                          ?.filter((d) => d.status === "awarded")
+                          ?.map((item) => {
+                            return (
+                              <List size="small" key={item?.number}>
+                                <List.Item>
+                                  <List.Item.Meta
+                                    //   avatar={<Avatar src={item.picture.large} />}
+                                    title={<a href="#">{item.number}</a>}
+                                    description={
+                                      <>
+                                        <div className="text-xs text-gray-400">
+                                          {item?.createdBy?.companyName}
+                                        </div>
+                                        <a href="#">
+                                          <FileTextOutlined />{" "}
+                                        </a>
+                                      </>
+                                    }
+                                  />
+                                  <div className="flex flex-row items-start space-x-10 justify-between">
+                                    <div className="flex flex-row space-x-2">
+                                      <div className="flex flex-col">
+                                        <div className="flex flex-row space-x-2">
+                                          <div className="text-xs font-bold text-gray-500">
+                                            Price:
+                                          </div>
+                                          <div className="text-xs text-gray-400">
+                                            {item?.price.toLocaleString()}
+                                          </div>
+                                        </div>
+
+                                        <div className="flex flex-row space-x-2">
+                                          <div className="text-xs font-bold text-gray-500">
+                                            Discount:
+                                          </div>
+                                          <div className="text-xs text-gray-400">
+                                            {item?.discount}%
+                                          </div>
+                                        </div>
+
+                                        <div className="flex flex-row space-x-2">
+                                          <div className="text-xs font-bold text-gray-500">
+                                            Delivery date:
+                                          </div>
+                                          <div className="text-xs text-gray-400">
+                                            {moment(item?.deliveryDate).format(
+                                              "YYYY-MMM-DD"
+                                            )}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    <Form
+                                      // size="small"
+                                      className="flex flex-row space-x-1"
+                                    >
+                                      {/* <Form.Item>
+                                          <UploadFiles label="Contract" />
+                                        </Form.Item> */}
+
+                                      {contract && (
+                                        <Form.Item>
+                                          <Button
+                                            type="default"
+                                            icon={<FileTextOutlined />}
+                                            onClick={() => {
+                                              setOpenViewContract(true);
+                                              setVendor(item?.createdBy);
+                                              setTendor(item?.tender);
+                                            }}
+                                          >
+                                            View Contract
+                                          </Button>
+                                        </Form.Item>
+                                      )}
+                                    </Form>
+                                  </div>
+                                </List.Item>
+                              </List>
+                            );
+                          })}
+                      </div>
+                    ) : (
+                      <div className="mx-3 flex flex-row space-x-5 items-center justify-center">
+                        <div className="flex flex-col items-center justify-center">
+                          <Typography.Title level={5}>
+                            Contract
+                          </Typography.Title>
+                          {/* <Popover content={'PO: '+po?.number}> */}
+                          <Image
+                            onClick={() => setOpenViewContract(true)}
+                            className=" cursor-pointer hover:opacity-60"
+                            width={40}
+                            height={40}
+                            src="/icons/icons8-file-64.png"
+                          />
+                          {/* </Popover> */}
+                        </div>
+
+                        <div className="flex flex-col items-center justify-center">
+                          <Typography.Title level={5}>
+                            Purchase order
+                          </Typography.Title>
+                          {/* <Popover content={po?.number}> */}
+                          <Image
+                            onClick={() => setOpenViewPO(true)}
+                            className=" cursor-pointer hover:opacity-60"
+                            width={40}
+                            height={40}
+                            src="/icons/icons8-file-64.png"
+                          />
+                          {/* </Popover> */}
+                        </div>
+                      </div>
+                    )
+                  ) : (
+                    <Empty />
+                  )}
+                </div>
+              </Tabs.TabPane>
             )}
           </Tabs>
         </div>
@@ -1182,16 +1322,6 @@ const TenderDetails = ({
           </div>
 
           <div className="flex flex-col space-y-5">
-            <Table
-              size="small"
-              dataSource={items}
-              columns={columns}
-              pagination={false}
-            />
-            <Typography.Title level={5} className="self-end">
-              Total (Tax Excl.): {totalVal?.toLocaleString()} RWF
-            </Typography.Title>
-
             <Typography.Title level={4}>Details</Typography.Title>
 
             {sections.map((s, index) => {
@@ -1394,15 +1524,6 @@ const TenderDetails = ({
             </div>
           </div>
           <div className="flex flex-col space-y-5">
-            <Table
-              size="small"
-              dataSource={items}
-              columns={columns}
-              pagination={false}
-            />
-            <Typography.Title level={5} className="self-end">
-              Total (Tax Excl.): {totalVal?.toLocaleString()} RWF
-            </Typography.Title>
             <Typography.Title level={3}>Details</Typography.Title>
             {contract?.sections?.map((section) => {
               return (
@@ -1470,52 +1591,60 @@ const TenderDetails = ({
 
   function buildTabHeader() {
     return (
-      <div className="flex flex-row justify-between items-center">
-        <div className="flex flex-col">
-          <div className="flex flex-row space-x-1 items-center">
-            <div className="text-xs font-semibold ml-3 text-gray-500">
-              Tender Number:
+      <div className="flex flex-col space-y-5">
+        <div className="grid grid-cols-5 items-start">
+          <div className="flex flex-col items-start">
+            <div className="text-xs font-semibold ml-3 text-gray-400">
+              Tender Number
             </div>
             <div className="text-sm font-semibold ml-3 text-gray-600">
               {data?.number}
             </div>
           </div>
 
-          <div className="flex flex-row space-x-1 items-center">
-            <div className="text-xs font-semibold ml-3 text-gray-500">
-              Service category:
+          <div className="flex flex-col items-start">
+            <div className="text-xs font-semibold ml-3 text-gray-400">
+              Service category
             </div>
             <div className="text-sm font-semibold ml-3 text-gray-600">
               {data?.purchaseRequest?.serviceCategory}
             </div>
           </div>
 
-          <div className="flex flex-row space-x-1 items-center">
-            <div className="text-xs font-semibold ml-3 text-gray-500">
-              Due date:
+          <div className="flex flex-col items-start">
+            <div className="text-xs font-semibold ml-3 text-gray-400">
+              Due date
             </div>
             <div className="text-sm font-semibold ml-3 text-gray-600">
               {moment(data?.dueDate).format("YYYY-MMM-DD")}
             </div>
           </div>
+
+          <div className="">
+            <Typography.Link>
+              <FileTextOutlined /> Tender document for {data?.number}{" "}
+            </Typography.Link>
+          </div>
+
+          <div className="flex flex-col space-y-2 items-start">
+            <Statistic.Countdown
+              title="Deadline (days:hrs:min:sec)"
+              className="text-xs text-gray-500"
+              // valueStyle={{ fontSize: "0.75rem", lineHeight: "1rem" }}
+              format="DD:HH:mm:ss"
+              value={moment(data?.submissionDeadLine)}
+            />
+
+            <Tag color="magenta">
+              {iSubmitted
+                ? "submitted"
+                : moment().isAfter(moment(data?.submissionDeadLine))
+                ? "closed"
+                : data?.status}
+            </Tag>
+          </div>
         </div>
 
-        <Row className="flex flex-row items-center space-x-4">
-          <Statistic.Countdown
-            title="Deadline (days:hrs:min:sec)"
-            className="text-xs text-gray-500"
-            // valueStyle={{ fontSize: "0.75rem", lineHeight: "1rem" }}
-            format="DD:HH:mm:ss"
-            value={moment(data?.submissionDeadLine)}
-          />
-          <Tag color="magenta">
-            {iSubmitted
-              ? "submitted"
-              : moment().isAfter(moment(data?.submissionDeadLine))
-              ? "closed"
-              : data?.status}
-          </Tag>
-        </Row>
       </div>
     );
   }

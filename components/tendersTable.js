@@ -16,6 +16,7 @@ import {
   CloseOutlined,
   EllipsisOutlined,
   FileOutlined,
+  FileProtectOutlined,
   LoadingOutlined,
   MoreOutlined,
 } from "@ant-design/icons";
@@ -46,19 +47,15 @@ const TendersTable = ({
       dataIndex: "number",
       render: (_, record) => (
         <>
-          <Tag>
-            <Typography.Link>
-              <div
-                className="font-semibold cursor-pointer space-x-1 flex flex-row items-center"
-                onClick={() => handleSetRow(record)}
-              >
-                <div>
-                  <FileOutlined />
-                </div>
-                <div>{record?.number}</div>
-              </div>
-            </Typography.Link>
-          </Tag>
+          <div
+            className="font-semibold cursor-pointer space-x-1 flex flex-row items-center text-blue-500 hover:underline"
+            onClick={() => handleSetRow(record)}
+          >
+            <div>
+              <FileProtectOutlined />
+            </div>
+            <div>{record?.number}</div>
+          </div>
         </>
       ),
     },
@@ -67,9 +64,7 @@ const TendersTable = ({
       key: "title",
       render: (_, record) => (
         <>
-          <Typography.Text>
-            {record?.purchaseRequest?.title}
-          </Typography.Text>
+          <Typography.Text>{record?.purchaseRequest?.title}</Typography.Text>
         </>
       ),
     },
@@ -115,20 +110,18 @@ const TendersTable = ({
       render: (_, record) => (
         <>
           {(record.status === "open" || record.status === "pending") && (
-            <Tag color='yellow'>OPEN</Tag>
+            <Tag color="yellow">OPEN</Tag>
           )}
 
           {record.status === "bidSelected" && (
-            <Tag color='green'>BID SELECTED</Tag>
+            <Tag color="green">BID SELECTED</Tag>
           )}
 
           {record.status === "bidAwarded" && (
-            <Tag color='blue'>BID AWARDED</Tag>
+            <Tag color="blue">BID AWARDED</Tag>
           )}
 
-          {record.status === "closed" && (
-            <Tag color='lime'>CLOSED</Tag>
-          )}
+          {record.status === "closed" && <Tag color="lime">CLOSED</Tag>}
         </>
       ),
     },
@@ -184,7 +177,7 @@ const TendersTable = ({
         columns={columns}
         className="shadow-lg rounded-md"
         pagination={{
-          total:10
+          total: 10,
         }}
         // pagination={{
         //   onChange: cancel,

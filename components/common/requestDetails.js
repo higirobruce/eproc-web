@@ -199,12 +199,12 @@ const RequestDetails = ({
               spinning={loading}
               indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />}
             >
-              <>
+              <div className="flex flex-col space-y-10">
                 {/* TItle */}
-                <div className="flex flex-row justify-between items-center">
-                  <div className="flex flex-col">
-                    <div className="flex flex-row space-x-1 items-center">
-                      <div className="text-xs font-semibold ml-3 text-gray-500">
+                <div className="flex flex-row justify-between items-start">
+                  <div className="grid grid-cols-5">
+                    <div className="flex flex-col space-y-1 items-start">
+                      <div className="text-xs font-semibold ml-3 text-gray-400">
                         Request Number:
                       </div>
                       <div className="text-sm font-semibold ml-3 text-gray-600">
@@ -212,8 +212,8 @@ const RequestDetails = ({
                       </div>
                     </div>
 
-                    <div className="flex flex-row space-x-1 items-center">
-                      <div className="text-xs font-semibold ml-3 text-gray-500">
+                    <div className="flex flex-col space-y-1 items-start">
+                      <div className="text-xs font-semibold ml-3 text-gray-400">
                         Service category:
                       </div>
                       <div className="text-sm font-semibold ml-3 text-gray-600">
@@ -221,8 +221,8 @@ const RequestDetails = ({
                       </div>
                     </div>
 
-                    <div className="flex flex-row space-x-1 items-center">
-                      <div className="text-xs font-semibold ml-3 text-gray-500">
+                    <div className="flex flex-col space-y-1 items-start">
+                      <div className="text-xs font-semibold ml-3 text-gray-400">
                         Due date:
                       </div>
                       <div className="text-sm font-semibold ml-3 text-gray-600">
@@ -230,8 +230,8 @@ const RequestDetails = ({
                       </div>
                     </div>
 
-                    <div className="flex flex-row space-x-1 items-start">
-                      <div className="text-xs font-semibold ml-3 text-gray-500">
+                    <div className="flex flex-col col-span-2 space-y-1 items-start">
+                      <div className="text-xs font-semibold ml-3 text-gray-400">
                         Description:
                       </div>
                       <div className="text-sm font-semibold ml-3 text-gray-600 w-2/3">
@@ -347,7 +347,7 @@ const RequestDetails = ({
                     </div>
                   </div>
                 )}
-              </>
+              </div>
             </Spin>
           ) : (
             <Empty />
