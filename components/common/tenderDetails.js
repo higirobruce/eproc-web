@@ -617,7 +617,7 @@ const TenderDetails = ({
                   <div className="flex flex-col space-y-5 p-3">
                     {buildTabHeader()}
                     {!data?.invitationSent && (
-                      <div className="ml-3 flex">
+                      <div className="ml-3 flex self-center">
                         <div className="">
                           <div>Invite Evaluators</div>
                           <div className="flex flex-row space-x-1">

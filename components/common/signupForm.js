@@ -289,9 +289,9 @@ const SignupForm = () => {
                     <Typography.Title className="" level={4}>
                       General Information
                     </Typography.Title>
-                    <div className="grid grid-cols-2 gap-x-5">
+                    <div className="">
                       {/* Grid 1 */}
-                      <div>
+                      <div className="grid grid-cols-2 gap-5">
                         <div>
                           <div>Company Name</div>
                           <Form.Item
@@ -309,6 +309,26 @@ const SignupForm = () => {
                         </div>
 
                         <div>
+                          <div>TIN</div>
+                          <Form.Item
+                            name="tin"
+                            // label="TIN"
+                            rules={[
+                              // { len: 10, message: "TIN should be 10 charachers" },
+                              {
+                                type: "integer",
+                                message: "TIN provided is not a number",
+                              },
+                              { required: true, message: "Please input TIN!" },
+                            ]}
+                          >
+                            <InputNumber style={{ width: "100%" }} />
+                          </Form.Item>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-5">
+                        <div>
                           <div>Contact person Names</div>
                           <Form.Item
                             name="contactPersonNames"
@@ -323,7 +343,15 @@ const SignupForm = () => {
                             <Input />
                           </Form.Item>
                         </div>
+                        <div>
+                          <div>Contact Person Title</div>
+                          <Form.Item name="title">
+                            <Input />
+                          </Form.Item>
+                        </div>
+                      </div>
 
+                      <div className="grid grid-cols-2 gap-5">
                         <div>
                           <div>Email</div>
                           <Form.Item
@@ -343,7 +371,21 @@ const SignupForm = () => {
                             <Input />
                           </Form.Item>
                         </div>
-
+                        <div>
+                          <div>Website</div>
+                          <Form.Item name="website">
+                            <AutoComplete
+                              options={websiteOptions}
+                              onChange={onWebsiteChange}
+                              placeholder="website"
+                            >
+                              <Input />
+                            </AutoComplete>
+                          </Form.Item>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-5">
                         <div>
                           <div>Password</div>
                           <Form.Item
@@ -360,75 +402,6 @@ const SignupForm = () => {
                             <Input.Password />
                           </Form.Item>
                         </div>
-
-                        <div>
-                          <div>Passport/NID</div>
-                          <Form.Item name="passportNid">
-                            <Input />
-                          </Form.Item>
-                        </div>
-
-                        <div>
-                          <div>We offer</div>
-                          <Form.Item name="services">
-                            <Select
-                              mode="multiple"
-                              allowClear
-                              // style={{width:'100%'}}
-                              placeholder="Please select"
-                            >
-                              {servCategories?.map((s) => {
-                                return (
-                                  <Option key={s._id} value={s.description}>
-                                    {s.description}
-                                  </Option>
-                                );
-                              })}
-                            </Select>
-                          </Form.Item>
-                        </div>
-                      </div>
-
-                      {/* Grid 2 */}
-                      <div>
-                        <div>
-                          <div>TIN</div>
-                          <Form.Item
-                            name="tin"
-                            // label="TIN"
-                            rules={[
-                              // { len: 10, message: "TIN should be 10 charachers" },
-                              {
-                                type: "integer",
-                                message: "TIN provided is not a number",
-                              },
-                              { required: true, message: "Please input TIN!" },
-                            ]}
-                          >
-                            <InputNumber style={{ width: "100%" }} />
-                          </Form.Item>
-                        </div>
-
-                        <div>
-                          <div>Contact Person Title</div>
-                          <Form.Item name="title">
-                            <Input />
-                          </Form.Item>
-                        </div>
-
-                        <div>
-                          <div>Website</div>
-                          <Form.Item name="website">
-                            <AutoComplete
-                              options={websiteOptions}
-                              onChange={onWebsiteChange}
-                              placeholder="website"
-                            >
-                              <Input />
-                            </AutoComplete>
-                          </Form.Item>
-                        </div>
-
                         <div>
                           <div>Confirm password</div>
                           <Form.Item
@@ -461,7 +434,15 @@ const SignupForm = () => {
                             <Input.Password />
                           </Form.Item>
                         </div>
+                      </div>
 
+                      <div className="grid grid-cols-2 gap-5">
+                        <div>
+                          <div>Passport/NID</div>
+                          <Form.Item name="passportNid">
+                            <Input />
+                          </Form.Item>
+                        </div>
                         <div>
                           <div>Phone number</div>
                           <Form.Item
@@ -476,7 +457,28 @@ const SignupForm = () => {
                             <Input addonBefore={prefixSelector} />
                           </Form.Item>
                         </div>
+                      </div>
 
+                      <div className="grid grid-cols-2 gap-5">
+                        <div>
+                          <div>We offer</div>
+                          <Form.Item name="services">
+                            <Select
+                              mode="multiple"
+                              allowClear
+                              // style={{width:'100%'}}
+                              placeholder="Please select"
+                            >
+                              {servCategories?.map((s) => {
+                                return (
+                                  <Option key={s._id} value={s.description}>
+                                    {s.description}
+                                  </Option>
+                                );
+                              })}
+                            </Select>
+                          </Form.Item>
+                        </div>
                         <div>
                           <div>Experience (in Years)</div>
                           <Form.Item
@@ -492,6 +494,7 @@ const SignupForm = () => {
                           </Form.Item>
                         </div>
                       </div>
+
                     </div>
                   </div>
 
@@ -501,9 +504,9 @@ const SignupForm = () => {
                       Address Information
                     </Typography.Title>
 
-                    <div className="grid grid-cols-2 gap-x-5">
+                    <div >
                       {/* Grid 1 */}
-                      <div>
+                      <div className="grid grid-cols-2 gap-x-5">
                         <div>
                           <div>Building</div>
                           <Form.Item name="building">
@@ -511,32 +514,32 @@ const SignupForm = () => {
                           </Form.Item>
                         </div>
                         <div>
+                          <div>Street number</div>
+                          <Form.Item name="streetNo">
+                            <Input />
+                          </Form.Item>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-x-5">
+                        <div>
                           <div>Avenue</div>
                           <Form.Item name="avenue">
                             <Input />
                           </Form.Item>
                         </div>
                         <div>
-                          <div>Country</div>
-                          <Form.Item name="country">
+                          <div>City</div>
+                          <Form.Item name="city">
                             <Input />
                           </Form.Item>
                         </div>
                       </div>
 
-                      {/* Grid 2 */}
-
-                      <div>
+                      <div className="grid grid-cols-2 gap-x-5">
                         <div>
-                          <div>Street number</div>
-                          <Form.Item name="streetNo">
-                            <Input />
-                          </Form.Item>
-                        </div>
-
-                        <div>
-                          <div>City</div>
-                          <Form.Item name="city">
+                          <div>Country</div>
+                          <Form.Item name="country">
                             <Input />
                           </Form.Item>
                         </div>
