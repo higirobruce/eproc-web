@@ -36,18 +36,20 @@ export default function Home() {
 
       <main>
         {loggedInUser && (
-          <div className="flex flex-col pb-5 h-screen">
+          <div className="flex flex-col pb-5 h-screen bg-white">
             <TopMenu
               setScreen={setScreen}
               screen={screen}
               handleLogout={(v) => setLoggingOut(v)}
             />
             <Layout>
-              <Layout.Sider width={200} >
-                <SideMenu setScreen={setScreen} screen={screen}/>
-              </Layout.Sider>
+              <div className="hidden md:flex">
+                <Layout.Sider style={{ height: "100%" }} width={200}>
+                  <SideMenu setScreen={setScreen} screen={screen} />
+                </Layout.Sider>
+              </div>
               <Layout>
-                <Layout.Content className="bg-white">
+                <Layout.Content className="bg-gray-50">
                   <Spin
                     spinning={loggingOut}
                     indicator={
@@ -70,7 +72,7 @@ export default function Home() {
         )}
 
         {!loggedInUser && (
-          <div className="flex flex-row items-center justify-center h-screen">
+          <div className="flex flex-row items-center justify-center h-screen w-full">
             <Empty
               image="https://gw.alipayobjects.com/zos/antfincdn/ZHrcdLPrvN/empty.svg"
               imageStyle={{

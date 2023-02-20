@@ -62,7 +62,7 @@ export default function Dashboard() {
     <>
       {contextHolder}
       {dataLoaded ? (
-        <div className="grid grid-cols-2 p-5 gap-10">
+        <div className="grid grid-cols-1 md:grid-cols-3 p-5">
           <div className="p-5 ">
             <Typography.Title level={5}>Requests</Typography.Title>
             <RequestStats totalRequests={requests?.length} />

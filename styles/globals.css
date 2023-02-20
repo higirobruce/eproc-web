@@ -1,12 +1,17 @@
-@font-face {
-  font-family: 'Lota';
-  src: url(/public//fonts/Los\ Andes\ -\ Lota\ Grotesque\ Light.otf)
-}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: 'Nunito';
+  src: url('../pages/Los\ Andes\ -\ Lota\ Grotesque\ Alt\ 3\ Regular.otf');
+}
 
+@font-face {
+  font-family: 'Nunito thin';
+  src: url('../pages/Los\ Andes\ -\ Lota\ Grotesque\ Alt\ 3\ Thin.otf');
+}
 
 * {
     scrollbar-width: thin;
@@ -31,7 +36,6 @@
 
 body {
     margin: 0;
-    font-family: "Lota";
 }
 
  .editable-cell {

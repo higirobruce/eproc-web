@@ -1,8 +1,8 @@
 import React from "react";
 import { UploadOutlined } from "@ant-design/icons";
-import { Button, Upload, message } from "antd";
+import { Button, Upload, message, UploadFile } from "antd";
 
-function UploadFiles({ label }) {
+function UploadTORs({ label, uuid }) {
   const [messageApi, contextHolder] = message.useMessage();
   let url = process.env.NEXT_PUBLIC_BKEND_URL;
   let apiUsername = process.env.NEXT_PUBLIC_API_USERNAME;
@@ -44,7 +44,8 @@ function UploadFiles({ label }) {
       <Upload {...props} headers={{}}>
         <Button icon={<UploadOutlined />}>{label ? label : "Upload"}</Button>
       </Upload>
+
     </>
   );
 }
-export default UploadFiles;
+export default UploadTORs;

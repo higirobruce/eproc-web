@@ -141,16 +141,7 @@ const LoginForm = () => {
     </Form.Item>
   );
 
-  const formItemLayout = {
-    // labelCol: {
-    //   xs: { span: 24 },
-    //   sm: { span: 10 },
-    // },
-    // wrapperCol: {
-    //   xs: { span: 24 },
-    //   sm: { span: 24 },
-    // },
-  };
+  const formItemLayout = {};
   const tailFormItemLayout = {
     // wrapperCol: {
     //   xs: {
@@ -185,7 +176,7 @@ const LoginForm = () => {
     <div>
       {contextHolder}
       {loaded ? (
-        <div className="flex bg-gray-50 py-2 px-16 rounded shadow-md">
+        <div className="flex flex-col bg-gray-50 items-center justify-around rounded shadow-md h-screen px-10 md:px-40">
           <Form
             {...formItemLayout}
             form={form}
@@ -198,6 +189,7 @@ const LoginForm = () => {
               email: "",
             }}
             scrollToFirstError
+            style={{ width: "100%" }}
           >
             <Row className="flex flex-row items-center justify-between pb-5">
               <Typography.Title className="" level={2}>
@@ -213,36 +205,42 @@ const LoginForm = () => {
               />
             </Row>
 
-            <Form.Item
-              name="email"
-              label="E-mail"
-              rules={[
-                {
-                  type: "email",
-                  message: "The input is not valid E-mail!",
-                },
-                {
-                  required: true,
-                  message: "Please input your E-mail!",
-                },
-              ]}
-            >
-              <Input />
-            </Form.Item>
+            <div>
+              <div>Email</div>
+              <Form.Item
+                name="email"
+                // label="E-mail"
+                rules={[
+                  {
+                    type: "email",
+                    message: "The input is not valid E-mail!",
+                  },
+                  {
+                    required: true,
+                    message: "Please input your E-mail!",
+                  },
+                ]}
+              >
+                <Input />
+              </Form.Item>
+            </div>
 
-            <Form.Item
-              name="password"
-              label="Password"
-              rules={[
-                {
-                  required: true,
-                  message: "Please input your password!",
-                },
-              ]}
-              hasFeedback
-            >
-              <Input.Password />
-            </Form.Item>
+            <div>
+              <div>Password</div>
+              <Form.Item
+                name="password"
+                // label="Password"
+                rules={[
+                  {
+                    required: true,
+                    message: "Please input your password!",
+                  },
+                ]}
+                hasFeedback
+              >
+                <Input.Password />
+              </Form.Item>
+            </div>
 
             <Form.Item {...tailFormItemLayout}>
               {submitting ? (
@@ -252,17 +250,19 @@ const LoginForm = () => {
                   <Button type="default" htmlType="submit">
                     Login
                   </Button>
-
-                  <div className="flex flex-row items-center justify-center space-x-2">
-                    <Typography.Text level={5}>New User? </Typography.Text>
-                    <Typography.Link onClick={() => Router.push("/signup")}>
-                      Sign up
-                    </Typography.Link>
-                  </div>
                 </div>
               )}
             </Form.Item>
+
+            
           </Form>
+
+          <div className="flex flex-row space-x-2 self-start">
+              <Typography.Text level={5}>New User? </Typography.Text>
+              <Typography.Link onClick={() => Router.push("/signup")}>
+                Sign up
+              </Typography.Link>
+            </div>
         </div>
       ) : (
         <Skeleton />

@@ -92,7 +92,7 @@ const TopMenu = ({ setScreen, screen, handleLogout }) => {
 
   return (
     <Menu
-      className="w-full"
+      className="w-screen"
       onClick={onClick}
       selectedKeys={[current]}
       mode="horizontal"

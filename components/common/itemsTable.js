@@ -1,6 +1,9 @@
 import { Button, Form, Input, Popconfirm, Table } from "antd";
 import React, { useContext, useEffect, useRef, useState } from "react";
 import UploadFiles from "./uploadFiles";
+import {v4} from 'uuid'
+import UploadTORs from "./uploadTORs";
+
 const EditableContext = React.createContext(null);
 const EditableRow = ({ index, ...props }) => {
   const [form] = Form.useForm();
@@ -81,9 +84,10 @@ const EditableCell = ({
 };
 
 const ItemsTable = ({ setDataSource, dataSource }) => {
-  const [count, setCount] = useState(2);
+  const [count, setCount] = useState(1);
   const handleDelete = (key) => {
-    const newData = dataSource.filter((item) => item.key !== key);
+    const newData = dataSource.filter((item) => item.key !== key && item.key);
+    setCount(count-1)
     setDataSource(newData);
   };
   const defaultColumns = [
@@ -106,10 +110,10 @@ const ItemsTable = ({ setDataSource, dataSource }) => {
     {
       title: "Attachments",
       dataIndex: "attachements",
-      render: (_, record) => (dataSource.length >= 1 ? <UploadFiles /> : null),
+      render: (_, record) => (dataSource.length >= 1 ? <UploadTORs label='TOR' uuid={ v4()}  /> : null),
     },
     {
-      title: "operation",
+      title: "Action",
       dataIndex: "operation",
       render: (_, record) =>
         dataSource.length >= 1 ? (

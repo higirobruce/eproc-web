@@ -312,9 +312,9 @@ const UsersRequestsTable = ({
         dataSource={data}
         columns={columns}
         className="shadow-lg rounded-md"
-        // pagination={{
-        //   onChange: cancel,
-        // }}
+        pagination={{
+          pageSize:20
+        }}
       />
     </Form>
   );

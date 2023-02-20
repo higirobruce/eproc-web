@@ -338,7 +338,7 @@ export default function PurchaseOrders() {
         <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 px-10 flex-1">
           {viewPOMOdal()}
 
-          <Typography.Title level={4}>Purchase Orders List</Typography.Title>
+          <Typography.Title className="mx-5" level={4}>Purchase Orders List</Typography.Title>
 
           {(pOs?.length < 1 || !pOs) && <Empty />}
           {pOs && pOs?.length >= 1 && (
@@ -353,7 +353,7 @@ export default function PurchaseOrders() {
               {pOs?.map((po) => {
                 let t = 0;
                 return (
-                  <div key={po?.number} className="grid grid-cols-6 ring-1 ring-gray-200 rounded px-5 py-3 shadow hover:shadow-md m-5">
+                  <div key={po?.number} className="grid grid-cols-6 ring-1 ring-gray-200 bg-white rounded px-5 py-3 shadow hover:shadow-md m-5">
                     <div className="flex flex-col">
                       <div className="text-xs text-gray-400">
                         Purchase Order
@@ -379,7 +379,7 @@ export default function PurchaseOrders() {
                     <div className="flex flex-col">
                       <div className="text-xs text-gray-400">Total value</div>
                       <div className="font-semibold">
-                        {po?.tender?.items?.map((i) => {
+                        {po?.items?.map((i) => {
                           let lTot = i?.quantity * i?.estimatedUnitCost;
                           t = t + lTot;
                         })}{" "}

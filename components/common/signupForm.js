@@ -83,7 +83,7 @@ const SignupForm = () => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        userType: values.type,
+        userType: type,
         email: values.email,
         telephone: values.prefix + values.phone,
         experienceDurationInYears: values.experience,
@@ -103,7 +103,7 @@ const SignupForm = () => {
         city: values.city,
         country: values.country,
         passportNid: values.passportNid,
-        services: values.services
+        services: values.services,
       }),
     })
       .then((res) => res.json())
@@ -154,15 +154,15 @@ const SignupForm = () => {
         });
       });
 
-      fetch(`${url}/serviceCategories`, {
-        method: "GET",
-        headers: {
-          Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
-          "Content-Type": "application/json",
-        },
-      }).then((res) => res.json())
+    fetch(`${url}/serviceCategories`, {
+      method: "GET",
+      headers: {
+        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+        "Content-Type": "application/json",
+      },
+    })
+      .then((res) => res.json())
       .then((res) => {
-        
         setServCategories(res);
       })
       .catch((err) => {
@@ -171,7 +171,6 @@ const SignupForm = () => {
           content: "Connection Error!",
         });
       });
-
   }, []);
 
   const prefixSelector = (
@@ -185,13 +184,13 @@ const SignupForm = () => {
 
   const formItemLayout = {
     // labelCol: {
-    //   xs: { span: 24 },
+    //   xs: { span: 10 },
     //   sm: { span: 10 },
     // },
-    // wrapperCol: {
-    //   xs: { span: 24 },
-    //   sm: { span: 24 },
-    // },
+    wrapperCol: {
+      xs: { span: 24 },
+      sm: { span: 24 },
+    },
   };
   const tailFormItemLayout = {
     // wrapperCol: {
@@ -227,7 +226,7 @@ const SignupForm = () => {
     <div className="flex h-screen">
       {contextHolder}
       {loaded ? (
-        <div className="flex bg-slate-50 pt-2 px-10 rounded-lg shadow-lg h-5/6 mt-20 overflow-y-auto">
+        <div className="flex bg-slate-50 py-5 my-10 px-10 rounded-lg shadow-lg overflow-y-auto">
           <Form
             {...formItemLayout}
             form={form}
@@ -241,10 +240,22 @@ const SignupForm = () => {
             }}
             scrollToFirstError
           >
+            <div>
+              {submitting ? (
+                <Spin indicator={antIcon} />
+              ) : (
+                <div className="flex flex-row text-sm items-center">
+                  <div>Already have an account?</div>
+                  <Button type="link" onClick={() => Router.push("/")}>
+                    Login
+                  </Button>
+                </div>
+              )}
+            </div>
             <Row className="flex flex-row space-x-5 items-center justify-between">
-              <Typography.Title className="" level={2}>
-                Create an account
-              </Typography.Title>
+              <div>
+                <Typography.Title level={2}>Create an account</Typography.Title>
+              </div>
 
               <Image
                 alt=""
@@ -272,228 +283,287 @@ const SignupForm = () => {
 
             {type === "VENDOR" && (
               <>
-                <Typography.Title className="" level={4}>
-                  General Information
-                </Typography.Title>
-                <Row className="row space-x-4">
-                  <Form.Item
-                    name="companyName"
-                    label="Company name"
-                    rules={[
-                      {
-                        required: true,
-                        message: "Please input your Company Name!",
-                      },
-                    ]}
-                  >
-                    <Input />
-                  </Form.Item>
+                <div className="grid md:grid-cols-2 gap-x-10">
+                  {/* General Information */}
+                  <div>
+                    <Typography.Title className="" level={4}>
+                      General Information
+                    </Typography.Title>
+                    <div className="grid grid-cols-2 gap-x-5">
+                      {/* Grid 1 */}
+                      <div>
+                        <div>
+                          <div>Company Name</div>
+                          <Form.Item
+                            name="companyName"
+                            // label="Company name"
+                            rules={[
+                              {
+                                required: true,
+                                message: "Please input your Company Name!",
+                              },
+                            ]}
+                          >
+                            <Input />
+                          </Form.Item>
+                        </div>
 
-                  <Form.Item
-                    name="tin"
-                    label="TIN"
-                    rules={[
-                      // { len: 10, message: "TIN should be 10 charachers" },
-                      {
-                        type: "integer",
-                        message: "TIN provided is not a number",
-                      },
-                      { required: true, message: "Please input TIN!" },
-                    ]}
-                  >
-                    <InputNumber style={{ width: 200 }} />
-                  </Form.Item>
-                </Row>
-                <Row className="row space-x-4">
-                  <Form.Item
-                    name="contactPersonNames"
-                    label="Contact Person's Names"
-                    rules={[
-                      {
-                        required: true,
-                        message: "Please input contact person's names!",
-                      },
-                    ]}
-                  >
-                    <Input />
-                  </Form.Item>
+                        <div>
+                          <div>Contact person Names</div>
+                          <Form.Item
+                            name="contactPersonNames"
+                            // label="Contact Person's Names"
+                            rules={[
+                              {
+                                required: true,
+                                message: "Please input contact person's names!",
+                              },
+                            ]}
+                          >
+                            <Input />
+                          </Form.Item>
+                        </div>
 
-                  <Form.Item name="title" label="Contact Person's Title">
-                    <Input />
-                  </Form.Item>
-                </Row>
+                        <div>
+                          <div>Email</div>
+                          <Form.Item
+                            name="email"
+                            // label="E-mail"
+                            rules={[
+                              {
+                                type: "email",
+                                message: "The input is not valid E-mail!",
+                              },
+                              {
+                                required: true,
+                                message: "Please input your E-mail!",
+                              },
+                            ]}
+                          >
+                            <Input />
+                          </Form.Item>
+                        </div>
 
-                <Row className="row space-x-4">
-                  <Form.Item
-                    name="email"
-                    label="E-mail"
-                    rules={[
-                      {
-                        type: "email",
-                        message: "The input is not valid E-mail!",
-                      },
-                      {
-                        required: true,
-                        message: "Please input your E-mail!",
-                      },
-                    ]}
-                  >
-                    <Input />
-                  </Form.Item>
+                        <div>
+                          <div>Password</div>
+                          <Form.Item
+                            name="password"
+                            // label="Password"
+                            rules={[
+                              {
+                                required: true,
+                                message: "Please input your password!",
+                              },
+                            ]}
+                            hasFeedback
+                          >
+                            <Input.Password />
+                          </Form.Item>
+                        </div>
 
-                  <Form.Item name="website" label="Website">
-                    <AutoComplete
-                      options={websiteOptions}
-                      onChange={onWebsiteChange}
-                      placeholder="website"
-                    >
-                      <Input />
-                    </AutoComplete>
-                  </Form.Item>
-                </Row>
+                        <div>
+                          <div>Passport/NID</div>
+                          <Form.Item name="passportNid">
+                            <Input />
+                          </Form.Item>
+                        </div>
 
-                <Row className="row space-x-4">
-                  <Form.Item
-                    name="password"
-                    label="Password"
-                    rules={[
-                      {
-                        required: true,
-                        message: "Please input your password!",
-                      },
-                    ]}
-                    hasFeedback
-                  >
-                    <Input.Password />
-                  </Form.Item>
+                        <div>
+                          <div>We offer</div>
+                          <Form.Item name="services">
+                            <Select
+                              mode="multiple"
+                              allowClear
+                              // style={{width:'100%'}}
+                              placeholder="Please select"
+                            >
+                              {servCategories?.map((s) => {
+                                return (
+                                  <Option key={s._id} value={s.description}>
+                                    {s.description}
+                                  </Option>
+                                );
+                              })}
+                            </Select>
+                          </Form.Item>
+                        </div>
+                      </div>
 
-                  <Form.Item
-                    name="confirm"
-                    label="Confirm Password"
-                    dependencies={["password"]}
-                    hasFeedback
-                    rules={[
-                      {
-                        required: true,
-                        message: "Please confirm your password!",
-                      },
-                      ({ getFieldValue }) => ({
-                        validator(_, value) {
-                          if (!value || getFieldValue("password") === value) {
-                            return Promise.resolve();
-                          }
-                          return Promise.reject(
-                            new Error(
-                              "The two passwords that you entered do not match!"
-                            )
-                          );
-                        },
-                      }),
-                    ]}
-                  >
-                    <Input.Password />
-                  </Form.Item>
-                </Row>
+                      {/* Grid 2 */}
+                      <div>
+                        <div>
+                          <div>TIN</div>
+                          <Form.Item
+                            name="tin"
+                            // label="TIN"
+                            rules={[
+                              // { len: 10, message: "TIN should be 10 charachers" },
+                              {
+                                type: "integer",
+                                message: "TIN provided is not a number",
+                              },
+                              { required: true, message: "Please input TIN!" },
+                            ]}
+                          >
+                            <InputNumber style={{ width: "100%" }} />
+                          </Form.Item>
+                        </div>
 
-                <Row className="row space-x-4">
-                  <Form.Item name="passportNid" label="Passport/NID">
-                    <Input />
-                  </Form.Item>
-                  <Form.Item
-                    name="phone"
-                    label="Phone Number"
-                    rules={[
-                      {
-                        required: true,
-                        message: "Please input your phone number!",
-                      },
-                    ]}
-                  >
-                    <Input
-                      addonBefore={prefixSelector}
-                      style={{ width: "100%" }}
-                    />
-                  </Form.Item>
-                </Row>
+                        <div>
+                          <div>Contact Person Title</div>
+                          <Form.Item name="title">
+                            <Input />
+                          </Form.Item>
+                        </div>
 
-                <Row className="flex flex-row space-x-4">
-                  <Form.Item name='services' label='We offer' className="w-1/2">
-                    <Select
-                      mode="multiple"
-                      allowClear
-                      style={{ width: "100%" }}
-                      placeholder="Please select"
+                        <div>
+                          <div>Website</div>
+                          <Form.Item name="website">
+                            <AutoComplete
+                              options={websiteOptions}
+                              onChange={onWebsiteChange}
+                              placeholder="website"
+                            >
+                              <Input />
+                            </AutoComplete>
+                          </Form.Item>
+                        </div>
 
-                    >
-                      {servCategories?.map((s) => {
-                      return (
-                        <Option key={s._id} value={s.description}>
-                          {s.description}
-                        </Option>
-                      );
-                    })}
-                    </Select>
-                  </Form.Item>
-                  <Form.Item
-                    name="experience"
-                    label="Experience in Years"
-                    rules={[
-                      {
-                        type: "integer",
-                        message: "The input is not valid Number",
-                      },
-                    ]}
-                  >
-                    <InputNumber />
-                  </Form.Item>
-                </Row>
+                        <div>
+                          <div>Confirm password</div>
+                          <Form.Item
+                            name="confirm"
+                            // label="Confirm Password"
+                            dependencies={["password"]}
+                            hasFeedback
+                            rules={[
+                              {
+                                required: true,
+                                message: "Please confirm your password!",
+                              },
+                              ({ getFieldValue }) => ({
+                                validator(_, value) {
+                                  if (
+                                    !value ||
+                                    getFieldValue("password") === value
+                                  ) {
+                                    return Promise.resolve();
+                                  }
+                                  return Promise.reject(
+                                    new Error(
+                                      "The two passwords that you entered do not match!"
+                                    )
+                                  );
+                                },
+                              }),
+                            ]}
+                          >
+                            <Input.Password />
+                          </Form.Item>
+                        </div>
 
-                <Typography.Title className="" level={4}>
-                  Address Information
-                </Typography.Title>
+                        <div>
+                          <div>Phone number</div>
+                          <Form.Item
+                            name="phone"
+                            rules={[
+                              {
+                                required: true,
+                                message: "Please input your phone number!",
+                              },
+                            ]}
+                          >
+                            <Input addonBefore={prefixSelector} />
+                          </Form.Item>
+                        </div>
 
-                <Row className="space-x-4">
-                  <Form.Item name="building" label="Building">
-                    <Input />
-                  </Form.Item>
+                        <div>
+                          <div>Experience (in Years)</div>
+                          <Form.Item
+                            name="experience"
+                            rules={[
+                              {
+                                type: "integer",
+                                message: "The input is not valid Number",
+                              },
+                            ]}
+                          >
+                            <InputNumber style={{ width: "100%" }} />
+                          </Form.Item>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
 
-                  <Form.Item name="streetNo" label="Street No.">
-                    <Input />
-                  </Form.Item>
-                </Row>
+                  {/* Address information */}
+                  <div>
+                    <Typography.Title className="" level={4}>
+                      Address Information
+                    </Typography.Title>
 
-                <Row className="space-x-4">
-                  <Form.Item name="avenue" label="Avenue">
-                    <Input />
-                  </Form.Item>
-                  <Form.Item name="city" label="City">
-                    <Input />
-                  </Form.Item>
+                    <div className="grid grid-cols-2 gap-x-5">
+                      {/* Grid 1 */}
+                      <div>
+                        <div>
+                          <div>Building</div>
+                          <Form.Item name="building">
+                            <Input />
+                          </Form.Item>
+                        </div>
+                        <div>
+                          <div>Avenue</div>
+                          <Form.Item name="avenue">
+                            <Input />
+                          </Form.Item>
+                        </div>
+                        <div>
+                          <div>Country</div>
+                          <Form.Item name="country">
+                            <Input />
+                          </Form.Item>
+                        </div>
+                      </div>
 
-                  <Form.Item name="country" label="Country">
-                    <Input />
-                  </Form.Item>
-                </Row>
+                      {/* Grid 2 */}
 
-                <Typography.Title className="" level={4}>
-                  Uploads
-                </Typography.Title>
+                      <div>
+                        <div>
+                          <div>Street number</div>
+                          <Form.Item name="streetNo">
+                            <Input />
+                          </Form.Item>
+                        </div>
 
-                <Form.Item label="Full RDB Registraction">
-                  <UploadFiles />
-                </Form.Item>
+                        <div>
+                          <div>City</div>
+                          <Form.Item name="city">
+                            <Input />
+                          </Form.Item>
+                        </div>
+                      </div>
+                    </div>
 
-                <Form.Item label="VAT Certificate">
-                  <UploadFiles />
-                </Form.Item>
+                    <Typography.Title className="" level={4}>
+                      Uploads
+                    </Typography.Title>
 
-                <Form.Item label="Reference of Work">
-                  <UploadFiles />
-                </Form.Item>
-
-                <Form.Item label="RSSB Certificate">
-                  <UploadFiles />
-                </Form.Item>
+                    <div className="grid md:grid-cols-2 gap-x-5">
+                      <div>
+                        <div>Full RDB registration</div>
+                        <Form.Item name="rdbRegistraction">
+                          <UploadFiles />
+                        </Form.Item>
+                      </div>
+                      <div>
+                        <div>VAT Certificate</div>
+                        <Form.Item name="vatCertificate">
+                          <UploadFiles />
+                        </Form.Item>
+                      </div>
+                      <div></div>
+                    </div>
+                  </div>
+                </div>
 
                 <Form.Item
                   name="agreement"
@@ -515,24 +585,12 @@ const SignupForm = () => {
                   </Checkbox>
                 </Form.Item>
 
-                <Form.Item {...tailFormItemLayout}>
+                <Form.Item className="pb-5" {...tailFormItemLayout}>
                   {submitting ? (
                     <Spin indicator={antIcon} />
                   ) : (
                     <Button type="default" htmlType="submit">
                       Register
-                    </Button>
-                  )}
-                </Form.Item>
-                  
-                <Divider>Or</Divider>
-                  
-                <Form.Item {...tailFormItemLayout} className="pb-10">
-                  {submitting ? (
-                    <Spin indicator={antIcon} />
-                  ) : (
-                    <Button type="link" onClick={()=> Router.push('/')}>
-                      Login
                     </Button>
                   )}
                 </Form.Item>

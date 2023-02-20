@@ -1,10 +1,26 @@
 import React, { useEffect, useState } from "react";
 import { ArrowDownOutlined, ArrowUpOutlined } from "@ant-design/icons";
 import { Card, Col, Row, Statistic } from "antd";
-import { Pie } from "react-chartjs-2";
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
+import { Pie, Bar } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  ArcElement,
+  Tooltip,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Legend,
+} from "chart.js";
 
-ChartJS.register(ArcElement, Tooltip);
+ChartJS.register(
+  ArcElement,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip
+);
 
 export default function TendersStats({ totalTenders, totalBids }) {
   let [byDep, setByDepData] = useState(null);
@@ -123,8 +139,8 @@ export default function TendersStats({ totalTenders, totalBids }) {
 
   return (
     <div className="">
-      <Row gutter={[16]}>
-        <Col className="flex flex-col justify-between">
+      <Row gutter={[16]} className="flex flex-col justify-between space-y-2">
+        <div className="flex flex-col justify-between space-y-2">
           <Card className="shadow-xl" style={{ width: 150 }}>
             <Statistic
               title="Total Tenders"
@@ -137,30 +153,28 @@ export default function TendersStats({ totalTenders, totalBids }) {
               //   suffix="%"
             />
           </Card>
-        </Col>
-        <Col className="flex flex-row space-x-5">
-          <Card title="Counts by Category" size="small" className="shadow-xl">
-            {byCat && <Pie width={10} data={byCat} />}
-          </Card>
-          <Card title="Counts by Department" size="small" className="shadow-xl">
-            {byDep && <Pie width={10} data={byDep} />}
-          </Card>
-        </Col>
+        </div>
+        <div className="flex flex-row space-x-2 w-full">
+          <div>
+            <Card
+              title="Counts by Category"
+              size="default"
+              className="shadow-xl"
+            >
+              {byCat && <Bar data={byCat} />}
+            </Card>
+          </div>
 
-        {/* <Col span={6}>
-        <Card bordered={false}>
-          <Statistic
-            title="Closed"
-            value={closed}
-            precision={2}
-            valueStyle={{
-              color: "#cf1322",
-            }}
-            //   prefix={<ArrowDownOutlined />}
-            //   suffix="%"
-          />
-        </Card>
-      </Col> */}
+          {/* <div>
+            <Card
+              title="Counts by Department"
+              size="default"
+              className="shadow-xl"
+            >
+              {byDep && <Bar data={byDep} />}
+            </Card>
+          </div> */}
+        </div>
       </Row>
     </div>
   );

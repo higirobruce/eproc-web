@@ -3,6 +3,7 @@ import dynamic from "next/dynamic";
 import parse from "html-react-parser";
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 import "react-quill/dist/quill.snow.css";
+import { PaperAirplaneIcon } from "@heroicons/react/24/outline";
 import {
   Button,
   DatePicker,
@@ -35,6 +36,7 @@ import {
   LoadingOutlined,
   PlusOutlined,
   PrinterOutlined,
+  SendOutlined,
 } from "@ant-design/icons";
 import moment from "moment";
 import dayjs from "dayjs";
@@ -77,7 +79,7 @@ const TenderDetails = ({
   handleClose,
   handleRefreshData,
   handleCreatePO,
-  handleCreateContract,
+  handleSendInvitation,
 }) => {
   let url = process.env.NEXT_PUBLIC_BKEND_URL;
   let apiUsername = process.env.NEXT_PUBLIC_API_USERNAME;
@@ -105,8 +107,11 @@ const TenderDetails = ({
   let [openCreatePO, setOpenCreatePO] = useState(false);
   let [openViewPO, setOpenViewPO] = useState(false);
 
+  let [users, setUsers] = useState([]);
+
   let [openCreateContract, setOpenCreateContract] = useState(false);
   let [openViewContract, setOpenViewContract] = useState(false);
+  let [selectionComitee, setSelectionComitee] = useState([]);
 
   let [vendor, setVendor] = useState("");
   let [tendor, setTendor] = useState("");
@@ -163,13 +168,14 @@ const TenderDetails = ({
       ),
     },
   ];
+
   useEffect(() => {
     let statusCode = getRequestStatusCode(data?.status);
-    console.log(statusCode);
     setCurrentCode(1);
-    updateBidList();
     setItems(data?.purchaseRequest?.items);
+    getUsers();
     if (data) checkSubmission();
+    updateBidList();
   }, [data]);
 
   useEffect(() => {
@@ -178,7 +184,55 @@ const TenderDetails = ({
       t = t + i?.quantity * i?.estimatedUnitCost;
     });
     setTotVal(t);
+    updateBidList();
   }, [items]);
+
+  function handleCreateContract(vendor, tender, createdBy, sections) {
+    fetch(`${url}/contracts/`, {
+      method: "POST",
+      headers: {
+        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        vendor,
+        tender,
+        createdBy,
+        sections,
+      }),
+    })
+      .then((res) => res.json())
+      .then((res1) => {
+        updateBidList();
+      })
+      .catch((err) => {
+        alert(JSON.stringify(err));
+        console.error(err);
+        messageApi.open({
+          type: "error",
+          content: JSON.stringify(err),
+        });
+      });
+  }
+
+  function getUsers() {
+    fetch(`${url}/users/internal`, {
+      method: "GET",
+      headers: {
+        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+        "Content-Type": "application/json",
+      },
+    })
+      .then((res) => res.json())
+      .then((body) => {
+        setUsers(body);
+      })
+      .catch((err) => {
+        messageApi.error({
+          content: "Could not fetch users!",
+        });
+      });
+  }
 
   const updateBidList = () => {
     fetch(`${url}/submissions/byTender/${data._id}`, {
@@ -282,6 +336,7 @@ const TenderDetails = ({
       proposalUrls,
       deliveryDate,
       price,
+      currency,
       warranty,
       discount,
       status: "pending",
@@ -322,9 +377,16 @@ const TenderDetails = ({
         setRefresh(refresh + 1);
       });
   }
+  function sendInvitation() {
+    let _data = data;
+    _data.invitees = selectionComitee;
+    _data.invitationSent = true;
+
+    handleSendInvitation(_data);
+  }
 
   return (
-    <div className="flex flex-col ring-1 ring-gray-200 p-3 rounded shadow-md ">
+    <div className="flex flex-col ring-1 ring-gray-200 p-3 rounded shadow-md bg-white">
       <contextHolder />
       <div className="flex flex-row justify-between items-start">
         <div className="flex-1 ">
@@ -338,6 +400,8 @@ const TenderDetails = ({
                   <div className="overflow-x-auto p-3 flex flex-col space-y-10">
                     {/* TItle */}
                     {buildTabHeader()}
+
+                    <Divider></Divider>
 
                     <div>
                       {data.items.map((i, index) => {
@@ -552,13 +616,49 @@ const TenderDetails = ({
                 <Tabs.TabPane tab="Bidding" key="2">
                   <div className="flex flex-col space-y-5 p-3">
                     {buildTabHeader()}
+                    {!data?.invitationSent && (
+                      <div className="ml-3 flex">
+                        <div className="">
+                          <div>Invite Evaluators</div>
+                          <div className="flex flex-row space-x-1">
+                            <Form>
+                              <Form.Item>
+                                <Select
+                                  showSearch
+                                  showArrow
+                                  onChange={(value) =>
+                                    setSelectionComitee(value)
+                                  }
+                                  style={{ width: "400px" }}
+                                  mode="multiple"
+                                  options={users.map((user) => {
+                                    return {
+                                      label: user?.email,
+                                      value: user?.email,
+                                    };
+                                  })}
+                                />
+                              </Form.Item>
+                            </Form>
+
+                            <Button
+                              icon={<PaperAirplaneIcon className="h-5 w-5" />}
+                              onClick={() => sendInvitation()}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    <Divider></Divider>
                     <div>
                       <BidList
                         tenderId={data._id}
                         handleSelectBid={handleSelectBid}
                         handleAwardBid={handleAwardBid}
                         refresh={refresh}
+                        canSelectBid={data?.invitationSent}
                         handleSetBidList={setBidList}
+                        comitee={data?.invitees}
                       />
                     </div>
                   </div>
@@ -566,6 +666,7 @@ const TenderDetails = ({
                 <Tabs.TabPane tab="Aggrement" key="3">
                   <div className="flex flex-col space-y-5 p-3">
                     {buildTabHeader()}
+                    <Divider></Divider>
                     {bidList?.filter((d) => d.status === "awarded").length >=
                     1 ? (
                       !poCreated || !contractCreated ? (
@@ -580,107 +681,109 @@ const TenderDetails = ({
                                       //   avatar={<Avatar src={item.picture.large} />}
                                       title={<a href="#">{item.number}</a>}
                                       description={
-                                        <>
-                                          <div className="text-xs text-gray-400">
-                                            {item?.createdBy?.companyName}
-                                          </div>
-                                          <a href="#">
-                                            <FileTextOutlined />{" "}
-                                          </a>
-                                        </>
-                                      }
-                                    />
-                                    <div className="flex flex-row items-start space-x-10 justify-between">
-                                      <div className="flex flex-row space-x-2">
-                                        <div className="flex flex-col">
-                                          <div className="flex flex-row space-x-2">
-                                            <div className="text-xs font-bold text-gray-500">
-                                              Price:
+                                        <div className="grid grid-cols-6">
+                                          <div>
+                                            <div className="text-xs text-gray-600">
+                                              {item?.createdBy?.companyName}
                                             </div>
+                                            <a href="#">
+                                              <FileTextOutlined />{" "}
+                                            </a>
+                                          </div>
+
+                                          <div className="">
                                             <div className="text-xs text-gray-400">
-                                              {item?.price.toLocaleString()}
+                                              Price
+                                            </div>
+                                            <div className="text-xs text-gray-600">
+                                              {item?.price.toLocaleString() +
+                                                " " +
+                                                item?.currency}
                                             </div>
                                           </div>
 
-                                          <div className="flex flex-row space-x-2">
-                                            <div className="text-xs font-bold text-gray-500">
-                                              Discount:
-                                            </div>
+                                          <div className="">
                                             <div className="text-xs text-gray-400">
+                                              Discount
+                                            </div>
+                                            <div className="text-xs text-gray-600">
                                               {item?.discount}%
                                             </div>
                                           </div>
 
-                                          <div className="flex flex-row space-x-2">
-                                            <div className="text-xs font-bold text-gray-500">
-                                              Delivery date:
-                                            </div>
+                                          <div className="">
                                             <div className="text-xs text-gray-400">
+                                              Delivery date
+                                            </div>
+                                            <div className="text-xs text-gray-600">
                                               {moment(
                                                 item?.deliveryDate
-                                              ).format("YYYY-MMM-DD")}
+                                              ).fromNow()}
                                             </div>
                                           </div>
-                                        </div>
-                                      </div>
 
-                                      <Form
-                                        // size="small"
-                                        className="flex flex-row space-x-1"
-                                      >
-                                        {/* <Form.Item>
+                                          <div className="flex flex-row">
+                                          <Form
+                                            // size="small"
+                                            className="flex flex-row space-x-1"
+                                          >
+                                            {/* <Form.Item>
                                           <UploadFiles label="Contract" />
                                         </Form.Item> */}
 
-                                        {contract ? (
-                                          <Form.Item>
-                                            <Button
-                                              type="default"
-                                              icon={<FileTextOutlined />}
-                                              onClick={() => {
-                                                setOpenViewContract(true);
-                                                setVendor(item?.createdBy);
-                                                setTendor(item?.tender);
-                                              }}
-                                            >
-                                              View Contract
-                                            </Button>
-                                          </Form.Item>
-                                        ) : (
-                                          <Form.Item>
-                                            <Button
-                                              // size="small"
-                                              type="primary"
-                                              icon={<FileDoneOutlined />}
-                                              onClick={() => {
-                                                setOpenCreateContract(true);
-                                                setVendor(item?.createdBy);
-                                                setTendor(item?.tender);
-                                              }}
-                                            >
-                                              Create Contract
-                                            </Button>
-                                          </Form.Item>
-                                        )}
+                                            {contract ? (
+                                              <Form.Item>
+                                                <Button
+                                                  type="default"
+                                                  icon={<FileTextOutlined />}
+                                                  onClick={() => {
+                                                    setOpenViewContract(true);
+                                                    setVendor(item?.createdBy);
+                                                    setTendor(item?.tender);
+                                                  }}
+                                                >
+                                                  View Contract
+                                                </Button>
+                                              </Form.Item>
+                                            ) : (
+                                              <Form.Item>
+                                                <Button
+                                                  // size="small"
+                                                  type="primary"
+                                                  icon={<FileDoneOutlined />}
+                                                  onClick={() => {
+                                                    setOpenCreateContract(true);
+                                                    setVendor(item?.createdBy);
+                                                    setTendor(item?.tender);
+                                                  }}
+                                                >
+                                                  Create Contract
+                                                </Button>
+                                              </Form.Item>
+                                            )}
 
-                                        {contractCreated && (
-                                          <Form.Item>
-                                            <Button
-                                              // size="small"
-                                              type="primary"
-                                              icon={<FileDoneOutlined />}
-                                              onClick={() => {
-                                                setOpenCreatePO(true);
-                                                setVendor(item?.createdBy);
-                                                setTendor(item?.tender);
-                                              }}
-                                            >
-                                              Create PO
-                                            </Button>
-                                          </Form.Item>
-                                        )}
-                                      </Form>
-                                    </div>
+                                            {contractCreated && (
+                                              <Form.Item>
+                                                <Button
+                                                  // size="small"
+                                                  type="primary"
+                                                  icon={<FileDoneOutlined />}
+                                                  onClick={() => {
+                                                    setOpenCreatePO(true);
+                                                    setVendor(item?.createdBy);
+                                                    setTendor(item?.tender);
+                                                  }}
+                                                >
+                                                  Create PO
+                                                </Button>
+                                              </Form.Item>
+                                            )}
+                                          </Form>
+                                          </div>
+                                        </div>
+                                      }
+                                    />
+                                    
                                   </List.Item>
                                 </List>
                               );
@@ -878,7 +981,7 @@ const TenderDetails = ({
         open={openCreatePO}
         onOk={() => {
           setOpenCreatePO(false);
-          handleCreatePO(vendor?._id, tendor?._id, user?._id, sections);
+          handleCreatePO(vendor?._id, tendor?._id, user?._id, sections, items);
         }}
         okText="Save and Submit"
         onCancel={() => setOpenCreatePO(false)}
@@ -1245,8 +1348,8 @@ const TenderDetails = ({
         centered
         open={openCreateContract}
         onOk={() => {
-          setOpenCreateContract(false);
           handleCreateContract(vendor?._id, tendor?._id, user?._id, sections);
+          setOpenCreateContract(false);
         }}
         okText="Save and Submit"
         onCancel={() => setOpenCreateContract(false)}
@@ -1644,7 +1747,6 @@ const TenderDetails = ({
             </Tag>
           </div>
         </div>
-
       </div>
     );
   }

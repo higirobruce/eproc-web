@@ -49,6 +49,7 @@ export default function UserRequests() {
   ];
   const [serviceCategories, setServiceCategories] = useState([]);
   let [serviceCategory, setServiceCategory] = useState("");
+  let [budgetLines, setBudgetLines] = useState([]);
   const [dataLoaded, setDataLoaded] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
   let url = process.env.NEXT_PUBLIC_BKEND_URL;
@@ -102,6 +103,18 @@ export default function UserRequests() {
           type: "error",
           content: "Something happened! Please try again.",
         });
+      });
+
+    fetch(`${url}/budgetLines`, {
+      method: "GET",
+      headers: {
+        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+        "Content-Type": "application/json",
+      },
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        setBudgetLines(res);
       });
   }, []);
 
@@ -307,6 +320,13 @@ export default function UserRequests() {
     }, 2000);
   }
 
+  function handleSetRow(row) {
+    console.log(row);
+    setLoadingRowData(true);
+    setRowData(row);
+    setLoadingRowData(false);
+  }
+
   function createTender(tenderData) {
     setLoadingRowData(true);
     fetch(`${url}/tenders`, {
@@ -330,13 +350,6 @@ export default function UserRequests() {
       });
   }
 
-  function handleSetRow(row) {
-    console.log(row);
-    setLoadingRowData(true);
-    setRowData(row);
-    setLoadingRowData(false);
-  }
-
   function updateProgress(poId, progress) {
     fetch(`${url}/purchaseOrders/progress/${poId}`, {
       method: "PUT",
@@ -355,13 +368,47 @@ export default function UserRequests() {
         refresh();
       });
   }
+
+  function createPO(vendor, tender, createdBy, sections, items) {
+    fetch(`${url}/purchaseOrders/`, {
+      method: "POST",
+      headers: {
+        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        vendor,
+        tender,
+        createdBy,
+        sections,
+        items,
+        request: rowData?._id,
+      }),
+    })
+      .then((res) => res.json())
+      .then((res1) => {
+        updateStatus(rowData._id, "po created");
+        messageApi.open({
+          type: "success",
+          content: "PO created!",
+        });
+      })
+      .catch((err) => {
+        console.log(err);
+        messageApi.open({
+          type: "error",
+          content: "Something happened! Please try again.",
+        });
+      });
+  }
+
   return !rowData ? (
     <>
       {contextHolder}
       {dataLoaded ? (
         <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 px-10 py-5 flex-1 space-y-3">
           <Row className="flex flex-row justify-between items-center">
-            <div className="flex flex-row items-start space-x-5 w-1/4">
+            <div className="flex flex-row items-start space-x-5">
               <div className="text-xl font-semibold">Purchase Requests</div>
               <div className="flex-1">
                 <SelectStatuses />
@@ -435,7 +482,7 @@ export default function UserRequests() {
               </Form.Item>
               <Form.Item
                 label="Request Category"
-                name={[name, "serviceCategory"]}
+                name="serviceCategory"
               >
                 <Select
                   placeholder="Select service category"
@@ -480,13 +527,37 @@ export default function UserRequests() {
               </Form.Item>
 
               {budgeted && (
-                <Form.Item label="Budget Line" name="budgetLine">
-                  <Input
-                    onChange={(e) => {
-                      setBudgetLine(e.target.value);
+                // <Form.Item label="Budget Line" name="budgetLine">
+                //   <Input
+                //     onChange={(e) => {
+                //       setBudgetLine(e.target.value);
+                //     }}
+                //     placeholder=""
+                //   />
+                // </Form.Item>
+
+                <Form.Item
+                label="Budget Line" name="budgetLine"
+                >
+                  <Select
+                    placeholder="Select service category"
+                    showSearch
+                    onChange={(value) => {
+                      setBudgetLine(value)
                     }}
-                    placeholder=""
-                  />
+                   
+                    options={budgetLines.map((s) => {
+                      return {
+                        label:s.title.toUpperCase(),
+                        options: s.subLines.map(sub=>{
+                          return {
+                            label: sub,
+                            value:sub
+                          }
+                        })
+                      }
+                    })}
+                  ></Select>
                 </Form.Item>
               )}
             </Form>
@@ -516,7 +587,8 @@ export default function UserRequests() {
       setConfirmRejectLoading,
       confirmRejectLoading,
       updateProgress,
-      reload
+      reload,
+      createPO
     )
   );
 }
@@ -531,7 +603,8 @@ function buildRequest(
   setConfirmRejectLoading,
   confirmRejectLoading,
   updateProgress,
-  reload
+  reload,
+  createPO
 ) {
   return (
     <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 px-36 py-5 flex-1 space-y-3">
@@ -555,6 +628,7 @@ function buildRequest(
         confirmRejectLoading={confirmRejectLoading}
         handleUpdateProgress={updateProgress}
         reload={reload}
+        handleCreatePO={createPO}
       />
     </div>
   );

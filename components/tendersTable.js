@@ -177,7 +177,7 @@ const TendersTable = ({
         columns={columns}
         className="shadow-lg rounded-md"
         pagination={{
-          total: 10,
+          total: 20
         }}
         // pagination={{
         //   onChange: cancel,

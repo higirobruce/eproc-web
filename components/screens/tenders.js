@@ -42,6 +42,7 @@ export default function Tenders() {
   let [loadingRowData, setLoadingRowData] = useState(false);
   let [totalTenders, setTotalTenders] = useState(0);
   let [totalBids, setTotalBids] = useState(0);
+  let [doneCreatingContract, setDoneCreatingContract] = useState(false);
 
   useEffect(() => {
     loadTenders()
@@ -256,7 +257,7 @@ export default function Tenders() {
       });
   }
 
-  function createPO(vendor, tender, createdBy, sections) {
+  function createPO(vendor, tender, createdBy, sections,items) {
     fetch(`${url}/purchaseOrders/`, {
       method: "POST",
       headers: {
@@ -268,6 +269,7 @@ export default function Tenders() {
         tender,
         createdBy,
         sections,
+        items
       }),
     })
       .then((res) => res.json())
@@ -302,56 +304,57 @@ export default function Tenders() {
       });
   }
 
-  function createContract(vendor, tender, createdBy, sections) {
-    fetch(`${url}/contracts/`, {
-      method: "POST",
-      headers: {
-        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        vendor,
-        tender,
-        createdBy,
-        sections,
-      }),
-    })
-      .then((res) => res.json())
-      .then((res1) => {
-        loadTenders()
-          .then((res2) => res2.json())
-          .then((res3) => {
-            setDataset(res3);
-            let r = res3.filter((d) => {
-              return d._id === rowData._id;
-            });
-            console.log("hereeeeeee", r);
-            setRowData(r[0]);
-            setLoadingRowData(false);
-          })
-          .catch((err) => {
-            console.error(err);
-            setLoadingRowData(false);
-            messageApi.open({
-              type: "error",
-              content: JSON.stringify(err),
-            });
-          });
+  function sendInvitation(tenderUpdate){
+    setLoadingRowData(true);
+    setTimeout(() => {
+      fetch(`${url}/tenders/${tenderUpdate?._id}`, {
+        method: "PUT",
+        headers: {
+          Authorization:
+            "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          newTender: tenderUpdate
+        }),
       })
-      .catch((err) => {
-        console.error(err);
-        setLoadingRowData(false);
-        messageApi.open({
-          type: "error",
-          content: JSON.stringify(err),
+        .then((res) => res.json())
+        .then((res) => {
+          loadTenders()
+            .then((res) => res.json())
+            .then((res) => {
+              setDataset(res);
+              let r = res.filter((d) => {
+                return d._id === id;
+              });
+              console.log(r);
+              setRowData(r[0]);
+              setLoadingRowData(false);
+            })
+            .catch((err) => {
+              setLoadingRowData(false);
+              messageApi.open({
+                type: "error",
+                content: "Something happened! Please try again.",
+              });
+            });
+        })
+        .catch((err) => {
+          setLoadingRowData(false);
+          messageApi.open({
+            type: "error",
+            content: "Something happened! Please try again.",
+          });
         });
-      });
+    }, 2000);
   }
+
+  
   return !rowData ? (
     <>
       {contextHolder}
       {dataLoaded ? (
-        <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 px-10 flex-1">
+        <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 px-10 flex-1 h-full">
           <Row className="flex flex-row justify-between items-center">
             <Typography.Title level={4}>Tenders</Typography.Title>
             <Row className="flex flex-row space-x-5 items-center">
@@ -431,7 +434,7 @@ export default function Tenders() {
       setRowData,
       refresh,
       createPO,
-      createContract
+      sendInvitation
     )
   );
 }
@@ -443,10 +446,10 @@ function buildTender(
   setRowData,
   refresh,
   createPO,
-  createContract
+  sendInvitation
 ) {
   return (
-    <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 px-36 py-5 flex-1 space-y-3">
+    <div className="flex flex-col transition-opacity ease-in-out duration-1000 px-36 py-5 flex-1 space-y-3 bg-gray-50 h-full">
       <div className="flex flex-row items-center space-x-5">
         <Button icon={<ArrowLeftOutlined />} onClick={() => setRowData(null)}>
           Back
@@ -464,7 +467,7 @@ function buildTender(
         handleClose={() => setRowData(null)}
         handleRefreshData={refresh}
         handleCreatePO={createPO}
-        handleCreateContract={createContract}
+        handleSendInvitation={sendInvitation}
       />
     </div>
   );
