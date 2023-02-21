@@ -4,14 +4,11 @@
 @tailwind utilities;
 
 @font-face {
-  font-family: 'Nunito';
-  src: url('../pages/Los\ Andes\ -\ Lota\ Grotesque\ Alt\ 3\ Regular.otf');
+  font-family: 'Lota';
+  src: url('../pages/Los\ Andes\ -\ Lota\ Grotesque\ Alt\ 3\ Regular.otf'),
+  url('../pages/Los\ Andes\ -\ Lota\ Grotesque\ Alt\ 3\ Thin.otf');
 }
 
-@font-face {
-  font-family: 'Nunito thin';
-  src: url('../pages/Los\ Andes\ -\ Lota\ Grotesque\ Alt\ 3\ Thin.otf');
-}
 
 * {
     scrollbar-width: thin;

@@ -98,9 +98,7 @@ const TopMenu = ({ setScreen, screen, handleLogout }) => {
       mode="horizontal"
       theme="light"
       items={items}
-      style={{
-        width: "100%",
-      }}
+      style={{ position: 'sticky', zIndex: 1, width: '100%' }}
     />
   );
 };

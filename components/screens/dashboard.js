@@ -62,15 +62,21 @@ export default function Dashboard() {
     <>
       {contextHolder}
       {dataLoaded ? (
-        <div className="grid grid-cols-1 md:grid-cols-3 p-5">
-          <div className="p-5 ">
-            <Typography.Title level={5}>Requests</Typography.Title>
-            <RequestStats totalRequests={requests?.length} />
-          </div>
-          <div className="p-5">
+        <div className="grid md:grid-cols-3 gap-5 p-5">
+          <div className="flex-col">
             <Typography.Title level={5}>Tenders</Typography.Title>
             <TendersStats totalTenders={tenders?.length} />
           </div>
+
+          <div className="flex-col">
+            <Typography.Title level={5}>Tenders</Typography.Title>
+            <TendersStats totalTenders={tenders?.length} />
+          </div>
+          {/* <div className="flex-col">
+            <Typography.Title level={5}>Requests</Typography.Title>
+            <RequestStats totalRequests={requests?.length} />
+          </div> */}
+          
         </div>
       ) : (
         <div className="flex items-center justify-center flex-1 overflow-x-scroll">

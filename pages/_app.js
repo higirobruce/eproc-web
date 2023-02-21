@@ -16,7 +16,7 @@ export default function App({ Component, pageProps }) {
       theme={{
         token: {
           colorPrimary: "#0063CF",
-          fontFamily: 'Nunito'
+          fontFamily: 'Lota'
         },
       }}
     >

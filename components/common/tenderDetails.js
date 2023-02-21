@@ -168,6 +168,7 @@ const TenderDetails = ({
       ),
     },
   ];
+  const [signatories, setSignatories] = useState([])
 
   useEffect(() => {
     let statusCode = getRequestStatusCode(data?.status);
@@ -723,67 +724,74 @@ const TenderDetails = ({
                                           </div>
 
                                           <div className="flex flex-row">
-                                          <Form
-                                            // size="small"
-                                            className="flex flex-row space-x-1"
-                                          >
-                                            {/* <Form.Item>
+                                            <Form
+                                              // size="small"
+                                              className="flex flex-row space-x-1"
+                                            >
+                                              {/* <Form.Item>
                                           <UploadFiles label="Contract" />
                                         </Form.Item> */}
 
-                                            {contract ? (
-                                              <Form.Item>
-                                                <Button
-                                                  type="default"
-                                                  icon={<FileTextOutlined />}
-                                                  onClick={() => {
-                                                    setOpenViewContract(true);
-                                                    setVendor(item?.createdBy);
-                                                    setTendor(item?.tender);
-                                                  }}
-                                                >
-                                                  View Contract
-                                                </Button>
-                                              </Form.Item>
-                                            ) : (
-                                              <Form.Item>
-                                                <Button
-                                                  // size="small"
-                                                  type="primary"
-                                                  icon={<FileDoneOutlined />}
-                                                  onClick={() => {
-                                                    setOpenCreateContract(true);
-                                                    setVendor(item?.createdBy);
-                                                    setTendor(item?.tender);
-                                                  }}
-                                                >
-                                                  Create Contract
-                                                </Button>
-                                              </Form.Item>
-                                            )}
+                                              {contract ? (
+                                                <Form.Item>
+                                                  <Button
+                                                    type="default"
+                                                    icon={<FileTextOutlined />}
+                                                    onClick={() => {
+                                                      setOpenViewContract(true);
+                                                      setVendor(
+                                                        item?.createdBy
+                                                      );
+                                                      setTendor(item?.tender);
+                                                    }}
+                                                  >
+                                                    View Contract
+                                                  </Button>
+                                                </Form.Item>
+                                              ) : (
+                                                <Form.Item>
+                                                  <Button
+                                                    // size="small"
+                                                    type="primary"
+                                                    icon={<FileDoneOutlined />}
+                                                    onClick={() => {
+                                                      setOpenCreateContract(
+                                                        true
+                                                      );
+                                                      setVendor(
+                                                        item?.createdBy
+                                                      );
+                                                      setTendor(item?.tender);
+                                                    }}
+                                                  >
+                                                    Create Contract
+                                                  </Button>
+                                                </Form.Item>
+                                              )}
 
-                                            {contractCreated && (
-                                              <Form.Item>
-                                                <Button
-                                                  // size="small"
-                                                  type="primary"
-                                                  icon={<FileDoneOutlined />}
-                                                  onClick={() => {
-                                                    setOpenCreatePO(true);
-                                                    setVendor(item?.createdBy);
-                                                    setTendor(item?.tender);
-                                                  }}
-                                                >
-                                                  Create PO
-                                                </Button>
-                                              </Form.Item>
-                                            )}
-                                          </Form>
+                                              {contractCreated && (
+                                                <Form.Item>
+                                                  <Button
+                                                    // size="small"
+                                                    type="primary"
+                                                    icon={<FileDoneOutlined />}
+                                                    onClick={() => {
+                                                      setOpenCreatePO(true);
+                                                      setVendor(
+                                                        item?.createdBy
+                                                      );
+                                                      setTendor(item?.tender);
+                                                    }}
+                                                  >
+                                                    Create PO
+                                                  </Button>
+                                                </Form.Item>
+                                              )}
+                                            </Form>
                                           </div>
                                         </div>
                                       }
                                     />
-                                    
                                   </List.Item>
                                 </List>
                               );
@@ -988,7 +996,7 @@ const TenderDetails = ({
         width={"80%"}
         bodyStyle={{ maxHeight: "700px", overflow: "scroll" }}
       >
-        <div className="space-y-10 px-20 py-5">
+        <div className="space-y-5 px-20 py-5">
           <Typography.Title level={4}>
             PURCHASE ORDER: {vendor?.companyName}
           </Typography.Title>
@@ -1121,53 +1129,79 @@ const TenderDetails = ({
               Add section
             </Button>
           </div>
+
+          <div className="text-lg font-semibold">Reviews</div>
+          {/* Initiator and Reviewers */}
           <div className="grid grid-cols-3 gap-5">
-            <div className="flex flex-col ring-1 ring-gray-300 rounded pt-5 space-y-3">
+            <div className="flex flex-col ring-1 ring-gray-300 rounded py-5 space-y-3">
               <div className="px-5">
+                <Typography.Text type="secondary">Initiated by</Typography.Text>
                 <div className="flex flex-col">
-                  <Typography.Text type="secondary">
-                    <div className="text-xs">On Behalf of</div>
-                  </Typography.Text>
-                  <Typography.Text strong>Irembo ltd</Typography.Text>
-                </div>
-
-                <div className="flex flex-col">
-                  <Typography.Text type="secondary">
-                    <div className="text-xs">Representative Title</div>
-                  </Typography.Text>
-                  <Typography.Text strong>Procurement Manager</Typography.Text>
-                </div>
-
-                <div className="flex flex-col">
-                  <Typography.Text type="secondary">
-                    <div className="text-xs">Company Representative</div>
-                  </Typography.Text>
-                  <Typography.Text strong>Manirakiza Edouard</Typography.Text>
-                </div>
-
-                <div className="flex flex-col">
-                  <Typography.Text type="secondary">
-                    <div className="text-xs">Email</div>
-                  </Typography.Text>
                   <Typography.Text strong>
                     e.manirakiza@irembo.com
                   </Typography.Text>
                 </div>
               </div>
+            </div>
 
-              <Popconfirm title="Confirm PO Signature">
-                <div className="flex flex-row justify-center space-x-5 items-center border-t-2 bg-violet-50 p-5 cursor-pointer hover:opacity-75">
-                  <Image
-                    width={40}
-                    height={40}
-                    src="/icons/icons8-stamp-64.png"
-                  />
-
-                  <div className="text-violet-400 text-lg">
-                    Sign with one click
-                  </div>
+            <div className="flex flex-col ring-1 ring-gray-300 rounded py-5 space-y-3">
+              <div className="px-5">
+                <Typography.Text type="secondary">Reviewed by</Typography.Text>
+                <div className="flex flex-col">
+                  <Typography.Text strong>
+                    {user?.email}
+                  </Typography.Text>
                 </div>
-              </Popconfirm>
+              </div>
+            </div>
+          </div>
+
+          <div className="text-lg font-semibold">Signatories</div>
+
+          {/* Signatories */}
+          <div className="grid grid-cols-3 gap-5">
+            {signatories.map(s=>{
+              return <div key={s} className="flex flex-col ring-1 ring-gray-300 rounded py-5 space-y-3">
+              <div className="flex flex-col space-y-3 px-5">
+                <div className="flex flex-col space-y-1">
+                  <Typography.Text type="secondary">
+                    <div className="text-xs">On Behalf of</div>
+                  </Typography.Text>
+                  <Typography.Text editable>Irembo ltd</Typography.Text>
+                </div>
+
+                <div className="flex flex-col space-y-1">
+                  <Typography.Text type="secondary">
+                    <div className="text-xs">Representative Title</div>
+                  </Typography.Text>
+                  <Typography.Text editable>Procurement Manager</Typography.Text>
+                </div>
+
+                <div className="flex flex-col space-y-1">
+                  <Typography.Text type="secondary">
+                    <div className="text-xs">Company Representative</div>
+                  </Typography.Text>
+                  <Typography.Text editable>Manirakiza Edouard</Typography.Text>
+                </div>
+
+                <div className="flex flex-col space-y-1">
+                  <Typography.Text type="secondary">
+                    <div className="text-xs">Email</div>
+                  </Typography.Text>
+                  <Typography.Text editable>
+                    e.manirakiza@irembo.com
+                  </Typography.Text>
+                </div>
+              </div>
+            </div>
+            })}
+            <div onClick={()=>{
+              let signs = [...signatories]
+              signs.push([])
+              setSignatories(signs)
+            }} className="flex flex-col ring-1 ring-gray-300 rounded pt-5 space-y-3 items-center justify-center cursor-pointer hover:bg-gray-50">
+              <Image src='/icons/icons8-stamp-64.png' width={40} height={40}/>
+              <div>Add new Signatory</div>
             </div>
           </div>
         </div>
@@ -1424,6 +1458,7 @@ const TenderDetails = ({
             </div>
           </div>
 
+          {/* Sections */}
           <div className="flex flex-col space-y-5">
             <Typography.Title level={4}>Details</Typography.Title>
 
@@ -1479,55 +1514,78 @@ const TenderDetails = ({
               Add section
             </Button>
           </div>
+          {/* Initiator and Reviewers */}
           <div className="grid grid-cols-3 gap-5">
-            <div className="flex flex-col ring-1 ring-gray-300 rounded pt-5 space-y-3">
+            <div className="flex flex-col ring-1 ring-gray-300 rounded py-5 space-y-3">
               <div className="px-5">
+                <Typography.Text type="secondary">Initiated by</Typography.Text>
                 <div className="flex flex-col">
-                  <Typography.Text type="secondary">
-                    <div className="text-xs">On Behalf of</div>
-                  </Typography.Text>
-                  <Typography.Text strong>Irembo ltd</Typography.Text>
-                </div>
-
-                <div className="flex flex-col">
-                  <Typography.Text type="secondary">
-                    <div className="text-xs">Representative Title</div>
-                  </Typography.Text>
-                  <Typography.Text strong>Procurement Manager</Typography.Text>
-                </div>
-
-                <div className="flex flex-col">
-                  <Typography.Text type="secondary">
-                    <div className="text-xs">Company Representative</div>
-                  </Typography.Text>
-                  <Typography.Text strong>Manirakiza Edouard</Typography.Text>
-                </div>
-
-                <div className="flex flex-col">
-                  <Typography.Text type="secondary">
-                    <div className="text-xs">Email</div>
-                  </Typography.Text>
                   <Typography.Text strong>
                     e.manirakiza@irembo.com
                   </Typography.Text>
                 </div>
               </div>
+            </div>
 
-              <Popconfirm title="Confirm Contract Signature">
-                <div className="flex flex-row justify-center space-x-5 items-center border-t-2 bg-violet-50 p-5 cursor-pointer hover:opacity-75">
-                  <Image
-                    width={40}
-                    height={40}
-                    src="/icons/icons8-stamp-64.png"
-                  />
-
-                  <div className="text-violet-400 text-lg">
-                    Sign with one click
-                  </div>
+            <div className="flex flex-col ring-1 ring-gray-300 rounded py-5 space-y-3">
+              <div className="px-5">
+                <Typography.Text type="secondary">Reviewed by</Typography.Text>
+                <div className="flex flex-col">
+                  <Typography.Text strong>
+                    {user?.email}
+                  </Typography.Text>
                 </div>
-              </Popconfirm>
+              </div>
             </div>
           </div>
+
+          {/* Signatories */}
+          <div className="grid grid-cols-3 gap-5">
+            {signatories.map(s=>{
+              return <div key={s} className="flex flex-col ring-1 ring-gray-300 rounded py-5 space-y-3">
+              <div className="flex flex-col space-y-3 px-5">
+                <div className="flex flex-col space-y-1">
+                  <Typography.Text type="secondary">
+                    <div className="text-xs">On Behalf of</div>
+                  </Typography.Text>
+                  <Typography.Text editable>Irembo ltd</Typography.Text>
+                </div>
+
+                <div className="flex flex-col space-y-1">
+                  <Typography.Text type="secondary">
+                    <div className="text-xs">Representative Title</div>
+                  </Typography.Text>
+                  <Typography.Text editable>Procurement Manager</Typography.Text>
+                </div>
+
+                <div className="flex flex-col space-y-1">
+                  <Typography.Text type="secondary">
+                    <div className="text-xs">Company Representative</div>
+                  </Typography.Text>
+                  <Typography.Text editable>Manirakiza Edouard</Typography.Text>
+                </div>
+
+                <div className="flex flex-col space-y-1">
+                  <Typography.Text type="secondary">
+                    <div className="text-xs">Email</div>
+                  </Typography.Text>
+                  <Typography.Text editable>
+                    e.manirakiza@irembo.com
+                  </Typography.Text>
+                </div>
+              </div>
+            </div>
+            })}
+            <div onClick={()=>{
+              let signs = [...signatories]
+              signs.push([])
+              setSignatories(signs)
+            }} className="flex flex-col ring-1 ring-gray-300 rounded pt-5 space-y-3 items-center justify-center cursor-pointer hover:bg-gray-50">
+              <Image src='/icons/icons8-stamp-64.png' width={40} height={40}/>
+              <div>Add new Signatory</div>
+            </div>
+          </div>
+          
         </div>
       </Modal>
     );
