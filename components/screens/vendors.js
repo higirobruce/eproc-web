@@ -35,7 +35,8 @@ import {
   UserOutlined,
 } from "@ant-design/icons";
 import moment from "moment";
-export default function Vendors() {
+import {UserIcon, } from '@heroicons/react/24/outline'
+export default function Vendors({user}) {
   const [dataLoaded, setDataLoaded] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
   let url = process.env.NEXT_PUBLIC_BKEND_URL;
@@ -247,7 +248,7 @@ export default function Vendors() {
     <>
       {contextHolder}
       {dataLoaded ? (
-        <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 flex-1 px-10 py-5 space-y-5 h-full bg-gray-50">
+        <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 flex-1 px-10 py-5 space-y-5">
           <Row className="flex flex-row justify-between items-center">
             <div className="flex flex-row items-start space-x-5 w-1/4">
               <div className="text-xl font-semibold">Vendors List</div>
@@ -294,7 +295,7 @@ export default function Vendors() {
 
   function buildVendor() {
     return (
-      <div className="flex flex-col  transition-opacity ease-in-out duration-1000 px-10 py-5 flex-1 space-y-3 h-full bg-gray-50">
+      <div className="flex flex-col  transition-opacity ease-in-out duration-1000 px-10 py-5 flex-1 space-y-3 h-full">
         <div className="flex flex-col space-y-5">
           <div>
             <Button
@@ -400,17 +401,12 @@ export default function Vendors() {
                 <div className="flex flex-col space-y-2">
                   <div className="flex flex-row items-center space-x-10">
                     <PaperClipOutlined className="text-gray-400" />
-                    <div className="text-sm ">RDB registration certificate</div>
+                    <div className="text-sm ">Full RDB registration</div>
                   </div>
 
                   <div className="flex flex-row items-center space-x-10">
                     <PaperClipOutlined className="text-gray-400" />
                     <div className="text-sm ">VAT certificate</div>
-                  </div>
-
-                  <div className="flex flex-row items-center space-x-10">
-                    <PaperClipOutlined className="text-gray-400" />
-                    <div className="text-sm ">RSSB certificate</div>
                   </div>
                 </div>
               </div>
@@ -419,8 +415,9 @@ export default function Vendors() {
             {/* Transactions */}
             <div className="col-span-2 flex flex-col space-y-5 bg-white ring-1 ring-gray-100 rounded shadow p-10">
               <Segmented
+                block
                 size="large"
-                options={["Bids", "Purchase orders", "Emails", "Tasks"]}
+                options={["Bids", "Purchase orders"]}
                 onChange={setSegment}
               />
               {segment === "Bids" && vendorsBids?.length>0 &&
@@ -433,7 +430,7 @@ export default function Vendors() {
                             //   avatar={<Avatar src={item.picture.large} />}
                             // title={<a href="#">{bid.number}</a>}
                             description={
-                              <div className="grid grid-cols-4 rounded ring-1 ring-gray-100 p-2 shadow">
+                              <div className="grid md:grid-cols-5 rounded ring-1 ring-gray-100 p-2 gap-4 shadow">
                                 <div>
                                   <div className="text-md font-semibold text-gray-800">
                                     {bid?.number}
@@ -450,7 +447,16 @@ export default function Vendors() {
 
                                 <div className="">
                                   <div className="text-xs text-gray-400">
-                                    Price
+                                    Title
+                                  </div>
+                                  <div className="text-xs text-gray-600">
+                                    {bid?.tender?.purchaseRequest?.title}
+                                  </div>
+                                </div>
+
+                                <div className="">
+                                  <div className="text-xs text-gray-400">
+                                    Total Price
                                   </div>
                                   <div className="text-xs text-gray-600">
                                     {bid?.price.toLocaleString() +

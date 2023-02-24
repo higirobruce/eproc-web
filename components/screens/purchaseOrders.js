@@ -15,9 +15,8 @@ import React, { useEffect, useState } from "react";
 import parse from "html-react-parser";
 import * as _ from "lodash";
 
-export default function PurchaseOrders() {
+export default function PurchaseOrders({user}) {
   const [dataLoaded, setDataLoaded] = useState(false);
-  let user = JSON.parse(localStorage.getItem("user"));
   let url = process.env.NEXT_PUBLIC_BKEND_URL;
   let apiUsername = process.env.NEXT_PUBLIC_API_USERNAME;
   let apiPassword = process.env.NEXT_PUBLIC_API_PASSWORD;
@@ -129,7 +128,7 @@ export default function PurchaseOrders() {
         bodyStyle={{ maxHeight: "700px", overflow: "scroll" }}
       >
         <div className="space-y-10 px-20 py-5 overflow-x-scroll">
-          <div className="flex flex-row justify-between items-center">
+          <div className="md:flex grid flex-row justify-between items-center">
             <Typography.Title level={4} className="flex flex-row items-center">
               PURCHASE ORDER: {po?.vendor?.companyName}{" "}
               <Image
@@ -140,7 +139,7 @@ export default function PurchaseOrders() {
             </Typography.Title>
             <Button icon={<PrinterOutlined />}>Print</Button>
           </div>
-          <div className="grid grid-cols-2 gap-5 ">
+          <div className="grid md:grid-cols-2 gap-5 ">
             <div className="flex flex-col ring-1 ring-gray-300 rounded p-5 space-y-3">
               <div className="flex flex-col">
                 <Typography.Text type="secondary">
@@ -209,13 +208,13 @@ export default function PurchaseOrders() {
           <div className="flex flex-col space-y-5">
             <Table
               size="small"
-              dataSource={po?.tender?.items}
+              dataSource={po?.items}
               columns={columns}
               pagination={false}
             />
             <Typography.Title level={5} className="self-end ">
               Total:{" "}
-              {po?.tender?.items?.map((i) => {
+              {po?.items?.map((i) => {
                 t = t + i?.quantity * i?.estimatedUnitCost;
               })}{" "}
               {t.toLocaleString()} RWF
@@ -231,7 +230,7 @@ export default function PurchaseOrders() {
             })}
           </div>
 
-          <div className="grid grid-cols-3 gap-5">
+          <div className="grid md:grid-cols-3 gap-5">
             <div className="flex flex-col ring-1 ring-gray-300 rounded pt-5 space-y-3">
               <div className="px-5">
                 <div className="flex flex-col">
@@ -353,31 +352,31 @@ export default function PurchaseOrders() {
               {pOs?.map((po) => {
                 let t = 0;
                 return (
-                  <div key={po?.number} className="grid grid-cols-6 ring-1 ring-gray-200 bg-white rounded px-5 py-3 shadow hover:shadow-md m-5">
-                    <div className="flex flex-col">
-                      <div className="text-xs text-gray-400">
+                  <div key={po?.number} className="grid md:grid-cols-5 gap-3 ring-1 ring-gray-200 bg-white rounded px-5 py-3 shadow hover:shadow-md m-5">
+                    <div className="flex flex-col space-y-1">
+                      <div className="text-xs text-gray-600">
                         Purchase Order
                       </div>
                       <div className="font-semibold">{po?.number}</div>
-                      <div className="font-semibold text-gray-500">
+                      <div className="text-gray-600">
                         {po?.tender?.purchaseRequest?.description}
                       </div>
                     </div>
-                    <div className="flex flex-col">
-                      <div className="text-xs text-gray-400">Vendor</div>
+                    <div className="flex flex-col space-y-1">
+                      <div className="text-xs text-gray-600">Vendor</div>
                       <div className="font-semibold">
                         {po?.vendor?.companyName}
                       </div>
-                      <div className="font-semibold text-xs text-gray-400">
+                      <div className=" text-gray-500">
                         TIN: {po?.vendor?.tin}
                       </div>
-                      <div className="font-semibold text-xs text-gray-400">
+                      <div className=" text-gray-500">
                         email: {po?.vendor?.companyEmail}
                       </div>
                     </div>
 
-                    <div className="flex flex-col">
-                      <div className="text-xs text-gray-400">Total value</div>
+                    <div className="flex flex-col space-y-1">
+                      <div className="text-xs text-gray-600">Total value</div>
                       <div className="font-semibold">
                         {po?.items?.map((i) => {
                           let lTot = i?.quantity * i?.estimatedUnitCost;
@@ -386,18 +385,9 @@ export default function PurchaseOrders() {
                         {t.toLocaleString()} RWF
                       </div>
                     </div>
-                    <div className="flex flex-col">
-                      <div className="text-xs text-gray-400">Status</div>
-                      <div className="font-semibold">
-                        <Image
-                          width={25}
-                          height={25}
-                          src="/icons/icons8-approval-60.png"
-                        />
-                      </div>
-                    </div>
+                    
 
-                    <div className="flex flex-col items-center justify-center">
+                    <div className="flex flex-col space-y-1 items-center justify-center">
                       <Dropdown.Button
                         menu={{ items, onClick: onMenuClick }}
                         onOpenChange={() => {
@@ -408,7 +398,7 @@ export default function PurchaseOrders() {
                       </Dropdown.Button>
                     </div>
 
-                    <div className="flex flex-col justify-center">
+                    <div className="flex flex-col space-y-1 justify-center">
                       {/* <div className="text-xs text-gray-400">Delivery</div> */}
                       {po?.status !== "started" && po?.status !== "stopped" && (
                         <Button

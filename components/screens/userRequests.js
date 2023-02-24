@@ -32,7 +32,7 @@ import RequestStats from "../common/requestsStatistics";
 import SelectStatuses from "../common/statusSelectTags";
 import UsersRequestsTable from "../userRequestsTable";
 
-export default function UserRequests() {
+export default function UserRequests({ user }) {
   const requestStatuses = [
     {
       key: "1",
@@ -363,14 +363,30 @@ export default function UserRequests() {
     })
       .then((res) => res.json())
       .then((res) => {
-        let r = rowData;
-        setReload(!reload);
-        refresh();
+        setReload(!reload)
+        loadRequests()
+          .then((res) => res.json())
+          .then((res) => {
+            setDataset(res);
+            let r = res.filter((d) => {
+              return d._id === id;
+            });
+            console.log(r);
+            setRowData(r[0]);
+            setLoadingRowData(false);
+          })
+          .catch((err) => {
+            setLoadingRowData(false);
+            messageApi.open({
+              type: "error",
+              content: "Something happened! Please try again.",
+            });
+          });
       });
   }
 
-  function createPO(vendor, tender, createdBy, sections, items) {
-    fetch(`${url}/purchaseOrders/`, {
+  function createPO(vendor, tender, createdBy, sections, items, B1Data) {
+    return fetch(`${url}/purchaseOrders/`, {
       method: "POST",
       headers: {
         Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
@@ -382,31 +398,73 @@ export default function UserRequests() {
         createdBy,
         sections,
         items,
+        B1Data,
         request: rowData?._id,
       }),
     })
       .then((res) => res.json())
       .then((res1) => {
-        updateStatus(rowData._id, "po created");
-        messageApi.open({
-          type: "success",
-          content: "PO created!",
-        });
+        if (res1.error) {
+          messageApi.open({
+            type: "error",
+            content: res1.message,
+          });
+        } else {
+          updateStatus(rowData._id, "completed");
+          messageApi.open({
+            type: "success",
+            content: "PO created!",
+          });
+        }
       })
       .catch((err) => {
-        console.log(err);
+        console.error(err);
+        setLoadingRowData(false);
         messageApi.open({
           type: "error",
-          content: "Something happened! Please try again.",
+          content: JSON.stringify(err),
         });
       });
   }
+
+  // function createPO(vendor, tender, createdBy, sections, items) {
+  //   fetch(`${url}/purchaseOrders/`, {
+  //     method: "POST",
+  //     headers: {
+  //       Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+  //       "Content-Type": "application/json",
+  //     },
+  //     body: JSON.stringify({
+  //       vendor,
+  //       tender,
+  //       createdBy,
+  //       sections,
+  //       items,
+  //       request: rowData?._id,
+  //     }),
+  //   })
+  //     .then((res) => res.json())
+  //     .then((res1) => {
+  //       updateStatus(rowData._id, "po created");
+  //       messageApi.open({
+  //         type: "success",
+  //         content: "PO created!",
+  //       });
+  //     })
+  //     .catch((err) => {
+  //       console.log(err);
+  //       messageApi.open({
+  //         type: "error",
+  //         content: "Something happened! Please try again.",
+  //       });
+  //     });
+  // }
 
   return !rowData ? (
     <>
       {contextHolder}
       {dataLoaded ? (
-        <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 px-10 py-5 flex-1 space-y-3">
+        <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 px-10 py-5 flex-1 space-y-3 h-full">
           <Row className="flex flex-row justify-between items-center">
             <div className="flex flex-row items-start space-x-5">
               <div className="text-xl font-semibold">Purchase Requests</div>
@@ -423,13 +481,16 @@ export default function UserRequests() {
                 icon={<ReloadOutlined />}
                 onClick={() => refresh()}
               ></Button>
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={() => setOpen(true)}
-              >
-                New request
-              </Button>
+
+              {user?.permissions?.canCreateRequests && (
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={() => setOpen(true)}
+                >
+                  New request
+                </Button>
+              )}
 
               <Button type="text" icon={<SettingOutlined />}></Button>
             </Row>
@@ -480,10 +541,7 @@ export default function UserRequests() {
                   maxLength={100}
                 />
               </Form.Item>
-              <Form.Item
-                label="Request Category"
-                name="serviceCategory"
-              >
+              <Form.Item label="Request Category" name="serviceCategory">
                 <Select
                   placeholder="Select service category"
                   showSearch
@@ -536,26 +594,23 @@ export default function UserRequests() {
                 //   />
                 // </Form.Item>
 
-                <Form.Item
-                label="Budget Line" name="budgetLine"
-                >
+                <Form.Item label="Budget Line" name="budgetLine">
                   <Select
                     placeholder="Select service category"
                     showSearch
                     onChange={(value) => {
-                      setBudgetLine(value)
+                      setBudgetLine(value);
                     }}
-                   
                     options={budgetLines.map((s) => {
                       return {
-                        label:s.title.toUpperCase(),
-                        options: s.subLines.map(sub=>{
+                        label: s.title.toUpperCase(),
+                        options: s.subLines.map((sub) => {
                           return {
                             label: sub,
-                            value:sub
-                          }
-                        })
-                      }
+                            value: sub,
+                          };
+                        }),
+                      };
                     })}
                   ></Select>
                 </Form.Item>
@@ -607,7 +662,7 @@ function buildRequest(
   createPO
 ) {
   return (
-    <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 px-36 py-5 flex-1 space-y-3">
+    <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 px-36 py-5 flex-1 space-y-3 h-full">
       <div className="flex flex-row items-center space-x-5">
         <Button
           icon={<ArrowLeftOutlined />}

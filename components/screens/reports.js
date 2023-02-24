@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import React, { useState } from 'react'
 
-export default function Reports() {
+export default function Reports({user}) {
   const [dataLoaded, setDataLoaded] = useState(false);
   return (
     <>

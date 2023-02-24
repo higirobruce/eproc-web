@@ -176,7 +176,7 @@ const LoginForm = () => {
     <div>
       {contextHolder}
       {loaded ? (
-        <div className="flex flex-col bg-gray-50 items-center justify-around rounded shadow-md h-screen px-10 md:px-40">
+        <div className="flex flex-col bg-gray-50 items-center justify-center rounded shadow-md h-screen px-10 md:px-40">
           <Form
             {...formItemLayout}
             form={form}

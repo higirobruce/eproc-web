@@ -23,6 +23,7 @@ const UsersTable = ({
   handleApproveUser,
   handleDeclineUser,
   updatingId,
+  handleSetRow
 }) => {
   const [form] = Form.useForm();
   const [data, setData] = useState(dataSet);
@@ -57,6 +58,16 @@ const UsersTable = ({
     {
       title: "Email",
       dataIndex: "email",
+      render: (_, record) => (
+        <>
+          <div
+            className="font-semibold cursor-pointer space-x-1 flex flex-row items-center text-blue-500 hover:underline"
+            onClick={() => handleSetRow(record)}
+          >
+            <div>{record?.email}</div>
+          </div>
+        </>
+      ),
     },
     {
       title: "Phone",
@@ -124,7 +135,6 @@ const UsersTable = ({
       <Table
         size="small"
         className="shadow-lg rounded-md"
-        bordered
         dataSource={data}
         columns={columns}
         rowClassName="editable-row"

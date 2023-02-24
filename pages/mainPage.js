@@ -15,7 +15,7 @@ import Users from "../components/screens/users";
 import Vendors from "../components/screens/vendors";
 
 export default function Home() {
-  let [screen, setScreen] = useState("dashboard");
+  let [screen, setScreen] = useState("");
   let [loggedInUser, setLoggedInUser] = useState(null);
   let [loggingOut, setLoggingOut] = useState(false);
 
@@ -36,7 +36,7 @@ export default function Home() {
 
       <main>
         {loggedInUser && (
-          <div className="flex flex-col pb-5 h-screen bg-white">
+          <div className="flex flex-col pb-5 bg-white">
             <TopMenu
               setScreen={setScreen}
               screen={screen}
@@ -44,26 +44,26 @@ export default function Home() {
             />
             <Layout>
               <div className="hidden md:flex">
-                <Layout.Sider style={{ height: "100%" }} width={200}>
-                  <SideMenu setScreen={setScreen} screen={screen} />
+                <Layout.Sider width={200}>
+                  <SideMenu setScreen={setScreen} screen={screen} user={JSON.parse(loggedInUser)} />
                 </Layout.Sider>
               </div>
               <Layout>
-                <Layout.Content className="bg-gray-50">
+                <Layout.Content className="bg-white h-screen">
                   <Spin
                     spinning={loggingOut}
                     indicator={
                       <LoadingOutlined style={{ fontSize: 24 }} spin />
                     }
                   >
-                    {screen === "dashboard" && <Dashboard />}
-                    {screen === "requests" && <UserRequests />}
-                    {screen === "tenders" && <Tenders />}
-                    {screen === "contracts" && <Contracts />}
-                    {screen === "pos" && <PurchaseOrders />}
-                    {screen === "vendors" && <Vendors />}
-                    {screen === "users" && <Users />}
-                    {screen === "reports" && <Reports />}
+                    {screen === "dashboard" && <Dashboard user={JSON.parse(loggedInUser)}/>}
+                    {screen === "requests" && <UserRequests user={JSON.parse(loggedInUser)}/>}
+                    {screen === "tenders" && <Tenders user={JSON.parse(loggedInUser)}/>}
+                    {screen === "contracts" && <Contracts user={JSON.parse(loggedInUser)}/>}
+                    {screen === "pos" && <PurchaseOrders user={JSON.parse(loggedInUser)}/>}
+                    {screen === "vendors" && <Vendors user={JSON.parse(loggedInUser)}/>}
+                    {screen === "users" && <Users user={JSON.parse(loggedInUser)}/>}
+                    {screen === "reports" && <Reports user={JSON.parse(loggedInUser)}/>}
                   </Spin>
                 </Layout.Content>
               </Layout>

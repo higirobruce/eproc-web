@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import RequestStats from "../common/requestsStatistics";
 import TendersStats from "../common/tendersStatistics";
 
-export default function Dashboard() {
+export default function Dashboard({user}) {
   const [dataLoaded, setDataLoaded] = useState(true);
   const [requests, setRequests] = useState([]);
   const [tenders, setTenders] = useState([]);
@@ -79,7 +79,7 @@ export default function Dashboard() {
           
         </div>
       ) : (
-        <div className="flex items-center justify-center flex-1 overflow-x-scroll">
+        <div className="flex items-center justify-center flex-1">
           <Image alt="" src="/dashboard_loading.gif" width={800} height={800} />
         </div>
       )}

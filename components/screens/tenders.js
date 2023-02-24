@@ -24,10 +24,9 @@ import TenderDetails from "../common/tenderDetails";
 import TenderStats from "../common/tendersStatistics";
 import TendersTable from "../tendersTable";
 
-export default function Tenders() {
+export default function Tenders({user}) {
   const [dataLoaded, setDataLoaded] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
-  let user = JSON.parse(localStorage.getItem("user"));
   let url = process.env.NEXT_PUBLIC_BKEND_URL;
   let apiUsername = process.env.NEXT_PUBLIC_API_USERNAME;
   let apiPassword = process.env.NEXT_PUBLIC_API_PASSWORD;
@@ -257,8 +256,8 @@ export default function Tenders() {
       });
   }
 
-  function createPO(vendor, tender, createdBy, sections,items) {
-    fetch(`${url}/purchaseOrders/`, {
+  function createPO(vendor, tender, createdBy, sections,items, B1Data) {
+    return fetch(`${url}/purchaseOrders/`, {
       method: "POST",
       headers: {
         Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
@@ -269,19 +268,26 @@ export default function Tenders() {
         tender,
         createdBy,
         sections,
-        items
+        items,
+        B1Data
       }),
     })
       .then((res) => res.json())
       .then((res1) => {
-        loadTenders()
+        if(res1.error){
+          messageApi.open({
+            type: "error",
+            content: res1.message
+          });
+        }else{
+          loadTenders()
           .then((res2) => res2.json())
           .then((res3) => {
             setDataset(res3);
             let r = res3.filter((d) => {
               return d._id === rowData._id;
             });
-            console.log("hereeeeeee", r);
+          
             setRowData(r[0]);
             setLoadingRowData(false);
           })
@@ -293,6 +299,9 @@ export default function Tenders() {
               content: JSON.stringify(err),
             });
           });
+        }
+        
+        
       })
       .catch((err) => {
         console.error(err);
@@ -434,7 +443,8 @@ export default function Tenders() {
       setRowData,
       refresh,
       createPO,
-      sendInvitation
+      sendInvitation,
+      user
     )
   );
 }
@@ -446,10 +456,11 @@ function buildTender(
   setRowData,
   refresh,
   createPO,
-  sendInvitation
+  sendInvitation,
+  user
 ) {
   return (
-    <div className="flex flex-col transition-opacity ease-in-out duration-1000 px-36 py-5 flex-1 space-y-3 bg-gray-50 h-full">
+    <div className="flex flex-col transition-opacity ease-in-out duration-1000 px-36 py-5 flex-1 space-y-3 bg-gray-50">
       <div className="flex flex-row items-center space-x-5">
         <Button icon={<ArrowLeftOutlined />} onClick={() => setRowData(null)}>
           Back
@@ -468,6 +479,7 @@ function buildTender(
         handleRefreshData={refresh}
         handleCreatePO={createPO}
         handleSendInvitation={sendInvitation}
+        user={user}
       />
     </div>
   );

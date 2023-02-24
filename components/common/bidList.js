@@ -1,5 +1,16 @@
 import React, { useEffect, useState } from "react";
-import { Avatar, Button, Empty, Form, List, message, Modal, Tag, Typography } from "antd";
+import {
+  Alert,
+  Avatar,
+  Button,
+  Empty,
+  Form,
+  List,
+  message,
+  Modal,
+  Tag,
+  Typography,
+} from "antd";
 import VirtualList from "rc-virtual-list";
 import moment from "moment";
 import {
@@ -12,6 +23,7 @@ import {
   CheckCircleIcon,
   MinusCircleIcon,
   UserCircleIcon,
+  UserIcon,
   XCircleIcon,
 } from "@heroicons/react/24/outline";
 const fakeDataUrl =
@@ -25,6 +37,7 @@ const BidList = ({
   handleSetBidList,
   canSelectBid,
   comitee,
+  user
 }) => {
   const [data, setData] = useState(null);
   let url = process.env.NEXT_PUBLIC_BKEND_URL;
@@ -145,7 +158,7 @@ const BidList = ({
                           <Button
                             size="small"
                             type="primary"
-                            disabled={!canSelectBid}
+                            disabled={!canSelectBid || !user?.permissions?.canApproveBids}
                             onClick={() => {
                               setSelectedBid(item._id);
                               setOpenSelectBid(true);
@@ -214,31 +227,43 @@ const BidList = ({
       >
         <Form>
           <div className="flex flex-col">
-            <Typography.Title level={4}>Please upload the evaluation report.</Typography.Title>
+            <Typography.Title level={4}>
+              Please upload the evaluation report.
+            </Typography.Title>
             <Form.Item>
               <UploadFiles label="Select the file!" />
             </Form.Item>
 
-            <Typography.Title level={4}>Please mention evaluation results.</Typography.Title>
-            <div className="grid grid-cols-2 gap-3 pb-5">
-              {comitee?.map((c) => {
-                return (
-                  <>
-                    <div
-                      key={c}
-                      className="flex flex-row space-x-5 items-center text-sm"
-                    >
-                      {c}
-                    </div>
-                    <div className="flex flex-row space-x-2 items-center">
+            <Alert
+              banner
+              message={
+                <>
+                  <div className="text-sm mb-2">
+                    The following people should approve of this.
+                  </div>
+                  <div className="grid grid-cols1 gap-3">
+                    {comitee?.map((c) => {
+                      return (
+                        <>
+                          <div
+                            key={c.approver}
+                            className="flex flex-row items-center space-x-2 w-full"
+                          >
+                            <UserIcon className="h-4 w-4" />
+                            <div>{c.approver}</div>
+                          </div>
+                          {/* <div className="flex flex-row space-x-2 items-center">
                       <CheckCircleIcon className="cursor-pointer h-5 w-5 text-green-500" />
                       <XCircleIcon className="cursor-pointer h-5 w-5 text-red-500" />
                       <MinusCircleIcon className="cursor-pointer h-5 w-5 text-yellow-500" />
-                    </div>
-                  </>
-                );
-              })}
-            </div>
+                    </div> */}
+                        </>
+                      );
+                    })}
+                  </div>
+                </>
+              }
+            />
           </div>
         </Form>
       </Modal>

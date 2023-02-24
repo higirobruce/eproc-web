@@ -14,79 +14,68 @@ import { Menu } from "antd";
 import Router from "next/router";
 import Image from "next/image";
 
-const SideMenu = ({ setScreen, screen }) => {
+const SideMenu = ({ setScreen, screen, user }) => {
   const [current, setCurrent] = useState(screen);
   const [items, setItems] = useState([]);
-  const [loggedInUser, setLoggedInUser] = useState(null);
-
   useEffect(() => {}, [screen]);
 
   useEffect(() => {
-    let user = JSON.parse(localStorage.getItem("user"));
     let _items = [];
     if (user?.userType !== "VENDOR") {
-      _items = [
-        {
+      _items = [];
+      if (user?.permissions?.canViewDashboard) {
+        _items.push({
           label: "Dashboard",
           key: "dashboard",
           icon: <PieChartOutlined />,
-        },
+        });
+      }
 
-        {
+      if (user?.permissions?.canViewRequests) {
+        _items.push({
           label: "Requests",
           key: "requests",
           icon: <SolutionOutlined />,
-        },
+        });
+      }
 
-        {
+      if (user?.permissions?.canViewTenders) {
+        _items.push({
           label: "Tenders",
           key: "tenders",
           icon: <MessageOutlined />,
-        },
+        });
+      }
 
-        // {
-        //   label: "Contracts",
-        //   key: "contracts",
-        //   icon: <FileDoneOutlined />,
-
-        // },
-        {
+      if (user?.permissions?.canViewPurchaseOrders) {
+        _items.push({
           label: "Purchase Orders",
           key: "pos",
           icon: <OrderedListOutlined />,
-        },
+        });
+      }
 
-        {
+      if (user?.permissions?.canViewVendors) {
+        _items.push({
           label: "Vendors",
           key: "vendors",
           icon: <UsergroupAddOutlined />,
-        },
-        {
-          type: "divider",
-        },
+        });
+      }
 
-        {
+      if (user?.permissions?.canViewUsers) {
+        _items.push({
+          type: "divider",
+        });
+
+        _items.push({
           label: "Internal Users",
           key: "users",
           icon: <UserOutlined />,
-        },
-        // {
-        //   label: "Reports",
-        //   key: "reports",
-        //   icon: <CopyOutlined />,
-        // },
-        {
-          type: "divider",
-        },
-        // {
-        //   key: "logout",
-        //   label:"Logout",
-        //   danger:true,
-        //   icon: <LogoutOutlined className="text-red-400" />,
-        //   // style: { marginTop: "480px"},
-        //   // onClick: logout,
-        // },
-      ];
+        },)
+      }
+
+
     } else {
       _items = [
         {
@@ -129,8 +118,9 @@ const SideMenu = ({ setScreen, screen }) => {
   return (
     <Menu
       onClick={onClick}
+      className="h-full"
       style={{
-        height: "100%",
+        // height: "100%",
         // borderRight: 0,
       }}
       selectedKeys={[current]}

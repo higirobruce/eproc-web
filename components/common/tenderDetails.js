@@ -42,6 +42,7 @@ import moment from "moment";
 import dayjs from "dayjs";
 import BidList from "./bidList";
 import Image from "next/image";
+import ItemsTable from "./itemsTableB1";
 
 let modules = {
   toolbar: [
@@ -80,6 +81,7 @@ const TenderDetails = ({
   handleRefreshData,
   handleCreatePO,
   handleSendInvitation,
+  user
 }) => {
   let url = process.env.NEXT_PUBLIC_BKEND_URL;
   let apiUsername = process.env.NEXT_PUBLIC_API_USERNAME;
@@ -88,7 +90,6 @@ const TenderDetails = ({
   const [size, setSize] = useState("small");
   const [currentCode, setCurrentCode] = useState(-1);
   let [deadLine, setDeadLine] = useState(null);
-  let user = JSON.parse(localStorage.getItem("user"));
   let [proposalUrls, setProposalUrls] = useState([""]);
   let [deliveryDate, setDeliveryDate] = useState(null);
   let [price, setPrice] = useState(0);
@@ -119,6 +120,8 @@ const TenderDetails = ({
   let [items, setItems] = useState(null);
   let tot = 0;
   let [totalVal, setTotVal] = useState(0);
+  let [totalTax, setTotTax] = useState(0);
+  let [grossTotal, setGrossTotal] = useState(0);
   let [warrantyDuration, setWarrantyDuration] = useState("months");
   let [sectionTitle, setSectionTitle] = useState("Section 1: ");
   let [sections, setSections] = useState([
@@ -168,7 +171,9 @@ const TenderDetails = ({
       ),
     },
   ];
-  const [signatories, setSignatories] = useState([])
+  const [signatories, setSignatories] = useState([]);
+  const [docDate, setDocDate] = useState(moment());
+  const [docType, setDocType] = useState("dDocument_Service");
 
   useEffect(() => {
     let statusCode = getRequestStatusCode(data?.status);
@@ -181,10 +186,17 @@ const TenderDetails = ({
 
   useEffect(() => {
     let t = 0;
+    let tax = 0;
     items?.map((i) => {
       t = t + i?.quantity * i?.estimatedUnitCost;
+      if (i.taxGroup === "I1")
+        tax = tax + (i?.quantity * i?.estimatedUnitCost * 18) / 100;
     });
+
     setTotVal(t);
+    setTotTax(tax);
+    setGrossTotal(t + tax);
+
     updateBidList();
   }, [items]);
 
@@ -380,7 +392,12 @@ const TenderDetails = ({
   }
   function sendInvitation() {
     let _data = data;
-    _data.invitees = selectionComitee;
+    _data.invitees = selectionComitee.map((s) => {
+      return {
+        approver: s,
+        approved: false,
+      };
+    });
     _data.invitationSent = true;
 
     handleSendInvitation(_data);
@@ -622,30 +639,41 @@ const TenderDetails = ({
                         <div className="">
                           <div>Invite Evaluators</div>
                           <div className="flex flex-row space-x-1">
-                            <Form>
-                              <Form.Item>
-                                <Select
-                                  showSearch
-                                  showArrow
-                                  onChange={(value) =>
-                                    setSelectionComitee(value)
-                                  }
-                                  style={{ width: "400px" }}
-                                  mode="multiple"
-                                  options={users.map((user) => {
-                                    return {
-                                      label: user?.email,
-                                      value: user?.email,
-                                    };
-                                  })}
-                                />
-                              </Form.Item>
+                            <Form
+                              onFinish={() => sendInvitation()}
+                              className="flex flex-row space-x-1"
+                            >
+                              <div>
+                                <Form.Item name="ivitees" required>
+                                  <Select
+                                    showSearch
+                                    showArrow
+                                    onChange={(value) =>
+                                      setSelectionComitee(value)
+                                    }
+                                    style={{ width: "400px" }}
+                                    mode="multiple"
+                                    options={users.map((user) => {
+                                      return {
+                                        label: user?.email,
+                                        value: user?.email,
+                                      };
+                                    })}
+                                  />
+                                </Form.Item>
+                              </div>
+                              <div>
+                                <Form.Item>
+                                  <Button
+                                    htmlType="submit"
+                                    disabled={selectionComitee?.length<1}
+                                    icon={
+                                      <PaperAirplaneIcon className="h-5 w-5" />
+                                    }
+                                  />
+                                </Form.Item>
+                              </div>
                             </Form>
-
-                            <Button
-                              icon={<PaperAirplaneIcon className="h-5 w-5" />}
-                              onClick={() => sendInvitation()}
-                            />
                           </div>
                         </div>
                       </div>
@@ -660,6 +688,7 @@ const TenderDetails = ({
                         canSelectBid={data?.invitationSent}
                         handleSetBidList={setBidList}
                         comitee={data?.invitees}
+                        user={user}
                       />
                     </div>
                   </div>
@@ -837,7 +866,7 @@ const TenderDetails = ({
                 </Tabs.TabPane>
               </>
             )}
-            {user?.userType === "VENDOR" && (
+            {user?.userType === "VENDOR" && contract?.vendor?._id===user?._id && (
               <Tabs.TabPane tab="Aggrement" key="3">
                 <div className="flex flex-col space-y-5 p-3">
                   {buildTabHeader()}
@@ -846,7 +875,7 @@ const TenderDetails = ({
                     !poCreated || !contractCreated ? (
                       <div>
                         {bidList
-                          ?.filter((d) => d.status === "awarded")
+                          ?.filter((d) => d.status === "awarded" && d?.createdBy?._id === user?._id)
                           ?.map((item) => {
                             return (
                               <List size="small" key={item?.number}>
@@ -930,37 +959,37 @@ const TenderDetails = ({
                           })}
                       </div>
                     ) : (
-                      <div className="mx-3 flex flex-row space-x-5 items-center justify-center">
-                        <div className="flex flex-col items-center justify-center">
-                          <Typography.Title level={5}>
-                            Contract
-                          </Typography.Title>
-                          {/* <Popover content={'PO: '+po?.number}> */}
-                          <Image
-                            onClick={() => setOpenViewContract(true)}
-                            className=" cursor-pointer hover:opacity-60"
-                            width={40}
-                            height={40}
-                            src="/icons/icons8-file-64.png"
-                          />
-                          {/* </Popover> */}
-                        </div>
+                     contract?.vendor?._id === user?._id ?  <div className="mx-3 flex flex-row space-x-5 items-center justify-center">
+                     <div className="flex flex-col items-center justify-center">
+                       <Typography.Title level={5}>
+                         Contract
+                       </Typography.Title>
+                       {/* <Popover content={'PO: '+po?.number}> */}
+                       <Image
+                         onClick={() => setOpenViewContract(true)}
+                         className=" cursor-pointer hover:opacity-60"
+                         width={40}
+                         height={40}
+                         src="/icons/icons8-file-64.png"
+                       />
+                       {/* </Popover> */}
+                     </div>
 
-                        <div className="flex flex-col items-center justify-center">
-                          <Typography.Title level={5}>
-                            Purchase order
-                          </Typography.Title>
-                          {/* <Popover content={po?.number}> */}
-                          <Image
-                            onClick={() => setOpenViewPO(true)}
-                            className=" cursor-pointer hover:opacity-60"
-                            width={40}
-                            height={40}
-                            src="/icons/icons8-file-64.png"
-                          />
-                          {/* </Popover> */}
-                        </div>
-                      </div>
+                     <div className="flex flex-col items-center justify-center">
+                       <Typography.Title level={5}>
+                         Purchase order
+                       </Typography.Title>
+                       {/* <Popover content={po?.number}> */}
+                       <Image
+                         onClick={() => setOpenViewPO(true)}
+                         className=" cursor-pointer hover:opacity-60"
+                         width={40}
+                         height={40}
+                         src="/icons/icons8-file-64.png"
+                       />
+                       {/* </Popover> */}
+                     </div>
+                   </div> : <Empty/>
                     )
                   ) : (
                     <Empty />
@@ -987,9 +1016,29 @@ const TenderDetails = ({
         title="New Purchase Order"
         centered
         open={openCreatePO}
-        onOk={() => {
+        onOk={async () => {
+          let B1Data = {
+            CardName: vendor?.companyName,
+            DocType: docType,
+            DocDate: docDate,
+            DocumentLines: items.map((i) => {
+              return {
+                ItemDescription: i.title,
+                Quantity: i.quantity,
+                UnitPrice: i.estimatedUnitCost,
+                VatGroup: i.taxGroup ? i.taxGroup : "X1",
+              };
+            }),
+          };
+          await handleCreatePO(
+            vendor?._id,
+            tendor?._id,
+            user?._id,
+            sections,
+            items,
+            B1Data
+          );
           setOpenCreatePO(false);
-          handleCreatePO(vendor?._id, tendor?._id, user?._id, sections, items);
         }}
         okText="Save and Submit"
         onCancel={() => setOpenCreatePO(false)}
@@ -1000,6 +1049,23 @@ const TenderDetails = ({
           <Typography.Title level={4}>
             PURCHASE ORDER: {vendor?.companyName}
           </Typography.Title>
+          <div className="grid grid-cols-2 w-1/2">
+            <div>
+              <div>Document date</div>
+              <DatePicker onChange={(v, dstr) => setDocDate(dstr)} />
+            </div>
+            <div>
+              <div>PO Type</div>
+              <Select
+                onChange={(value) => setDocType(value)}
+                defaultValue="dDocument_Service"
+                options={[
+                  { value: "dDocument_Service", label: "Service" },
+                  { value: "dDocument_Item", label: "Item" },
+                ]}
+              />
+            </div>
+          </div>
           <div className="grid grid-cols-2 gap-5">
             <div className="flex flex-col ring-1 ring-gray-300 rounded p-5 space-y-3">
               <div className="flex flex-col">
@@ -1065,14 +1131,15 @@ const TenderDetails = ({
           </div>
 
           <div className="flex flex-col space-y-5">
-            <Table
-              size="small"
-              dataSource={items}
-              columns={columns}
-              pagination={false}
-            />
+            <ItemsTable dataSource={items} setDataSource={setItems} />
             <Typography.Title level={5} className="self-end">
               Total (Tax Excl.): {totalVal?.toLocaleString()} RWF
+            </Typography.Title>
+            <Typography.Title level={5} className="self-end">
+              Total Tax: {totalTax?.toLocaleString()} RWF
+            </Typography.Title>
+            <Typography.Title level={4} className="self-end">
+              Gross Total: {grossTotal?.toLocaleString()} RWF
             </Typography.Title>
 
             <Typography.Title level={4}>Details</Typography.Title>
@@ -1148,9 +1215,7 @@ const TenderDetails = ({
               <div className="px-5">
                 <Typography.Text type="secondary">Reviewed by</Typography.Text>
                 <div className="flex flex-col">
-                  <Typography.Text strong>
-                    {user?.email}
-                  </Typography.Text>
+                  <Typography.Text strong>{user?.email}</Typography.Text>
                 </div>
               </div>
             </div>
@@ -1160,47 +1225,59 @@ const TenderDetails = ({
 
           {/* Signatories */}
           <div className="grid grid-cols-3 gap-5">
-            {signatories.map(s=>{
-              return <div key={s} className="flex flex-col ring-1 ring-gray-300 rounded py-5 space-y-3">
-              <div className="flex flex-col space-y-3 px-5">
-                <div className="flex flex-col space-y-1">
-                  <Typography.Text type="secondary">
-                    <div className="text-xs">On Behalf of</div>
-                  </Typography.Text>
-                  <Typography.Text editable>Irembo ltd</Typography.Text>
-                </div>
+            {signatories.map((s) => {
+              return (
+                <div
+                  key={s}
+                  className="flex flex-col ring-1 ring-gray-300 rounded py-5 space-y-3"
+                >
+                  <div className="flex flex-col space-y-3 px-5">
+                    <div className="flex flex-col space-y-1">
+                      <Typography.Text type="secondary">
+                        <div className="text-xs">On Behalf of</div>
+                      </Typography.Text>
+                      <Typography.Text editable>Irembo ltd</Typography.Text>
+                    </div>
 
-                <div className="flex flex-col space-y-1">
-                  <Typography.Text type="secondary">
-                    <div className="text-xs">Representative Title</div>
-                  </Typography.Text>
-                  <Typography.Text editable>Procurement Manager</Typography.Text>
-                </div>
+                    <div className="flex flex-col space-y-1">
+                      <Typography.Text type="secondary">
+                        <div className="text-xs">Representative Title</div>
+                      </Typography.Text>
+                      <Typography.Text editable>
+                        Procurement Manager
+                      </Typography.Text>
+                    </div>
 
-                <div className="flex flex-col space-y-1">
-                  <Typography.Text type="secondary">
-                    <div className="text-xs">Company Representative</div>
-                  </Typography.Text>
-                  <Typography.Text editable>Manirakiza Edouard</Typography.Text>
-                </div>
+                    <div className="flex flex-col space-y-1">
+                      <Typography.Text type="secondary">
+                        <div className="text-xs">Company Representative</div>
+                      </Typography.Text>
+                      <Typography.Text editable>
+                        Manirakiza Edouard
+                      </Typography.Text>
+                    </div>
 
-                <div className="flex flex-col space-y-1">
-                  <Typography.Text type="secondary">
-                    <div className="text-xs">Email</div>
-                  </Typography.Text>
-                  <Typography.Text editable>
-                    e.manirakiza@irembo.com
-                  </Typography.Text>
+                    <div className="flex flex-col space-y-1">
+                      <Typography.Text type="secondary">
+                        <div className="text-xs">Email</div>
+                      </Typography.Text>
+                      <Typography.Text editable>
+                        e.manirakiza@irembo.com
+                      </Typography.Text>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
+              );
             })}
-            <div onClick={()=>{
-              let signs = [...signatories]
-              signs.push([])
-              setSignatories(signs)
-            }} className="flex flex-col ring-1 ring-gray-300 rounded pt-5 space-y-3 items-center justify-center cursor-pointer hover:bg-gray-50">
-              <Image src='/icons/icons8-stamp-64.png' width={40} height={40}/>
+            <div
+              onClick={() => {
+                let signs = [...signatories];
+                signs.push([]);
+                setSignatories(signs);
+              }}
+              className="flex flex-col ring-1 ring-gray-300 rounded pt-5 space-y-3 items-center justify-center cursor-pointer hover:bg-gray-50"
+            >
+              <Image src="/icons/icons8-stamp-64.png" width={40} height={40} />
               <div>Add new Signatory</div>
             </div>
           </div>
@@ -1303,12 +1380,19 @@ const TenderDetails = ({
           <div className="flex flex-col space-y-5">
             <Table
               size="small"
-              dataSource={items}
+              dataSource={po?.items}
               columns={columns}
               pagination={false}
             />
             <Typography.Title level={5} className="self-end">
-              Total (Tax Excl.): {totalVal?.toLocaleString()} RWF
+              Total (Tax Excl.): {getPoTotalVal().totalVal?.toLocaleString()}{" "}
+              RWF
+            </Typography.Title>
+            <Typography.Title level={5} className="self-end">
+              Tax: {getPoTotalVal().totalTax?.toLocaleString()} RWF
+            </Typography.Title>
+            <Typography.Title level={5} className="self-end">
+              Gross Total: {getPoTotalVal().grossTotal?.toLocaleString()} RWF
             </Typography.Title>
             <Typography.Title level={3}>Details</Typography.Title>
             {po?.sections?.map((section) => {
@@ -1531,9 +1615,7 @@ const TenderDetails = ({
               <div className="px-5">
                 <Typography.Text type="secondary">Reviewed by</Typography.Text>
                 <div className="flex flex-col">
-                  <Typography.Text strong>
-                    {user?.email}
-                  </Typography.Text>
+                  <Typography.Text strong>{user?.email}</Typography.Text>
                 </div>
               </div>
             </div>
@@ -1541,51 +1623,62 @@ const TenderDetails = ({
 
           {/* Signatories */}
           <div className="grid grid-cols-3 gap-5">
-            {signatories.map(s=>{
-              return <div key={s} className="flex flex-col ring-1 ring-gray-300 rounded py-5 space-y-3">
-              <div className="flex flex-col space-y-3 px-5">
-                <div className="flex flex-col space-y-1">
-                  <Typography.Text type="secondary">
-                    <div className="text-xs">On Behalf of</div>
-                  </Typography.Text>
-                  <Typography.Text editable>Irembo ltd</Typography.Text>
-                </div>
+            {signatories.map((s) => {
+              return (
+                <div
+                  key={s}
+                  className="flex flex-col ring-1 ring-gray-300 rounded py-5 space-y-3"
+                >
+                  <div className="flex flex-col space-y-3 px-5">
+                    <div className="flex flex-col space-y-1">
+                      <Typography.Text type="secondary">
+                        <div className="text-xs">On Behalf of</div>
+                      </Typography.Text>
+                      <Typography.Text editable>Irembo ltd</Typography.Text>
+                    </div>
 
-                <div className="flex flex-col space-y-1">
-                  <Typography.Text type="secondary">
-                    <div className="text-xs">Representative Title</div>
-                  </Typography.Text>
-                  <Typography.Text editable>Procurement Manager</Typography.Text>
-                </div>
+                    <div className="flex flex-col space-y-1">
+                      <Typography.Text type="secondary">
+                        <div className="text-xs">Representative Title</div>
+                      </Typography.Text>
+                      <Typography.Text editable>
+                        Procurement Manager
+                      </Typography.Text>
+                    </div>
 
-                <div className="flex flex-col space-y-1">
-                  <Typography.Text type="secondary">
-                    <div className="text-xs">Company Representative</div>
-                  </Typography.Text>
-                  <Typography.Text editable>Manirakiza Edouard</Typography.Text>
-                </div>
+                    <div className="flex flex-col space-y-1">
+                      <Typography.Text type="secondary">
+                        <div className="text-xs">Company Representative</div>
+                      </Typography.Text>
+                      <Typography.Text editable>
+                        Manirakiza Edouard
+                      </Typography.Text>
+                    </div>
 
-                <div className="flex flex-col space-y-1">
-                  <Typography.Text type="secondary">
-                    <div className="text-xs">Email</div>
-                  </Typography.Text>
-                  <Typography.Text editable>
-                    e.manirakiza@irembo.com
-                  </Typography.Text>
+                    <div className="flex flex-col space-y-1">
+                      <Typography.Text type="secondary">
+                        <div className="text-xs">Email</div>
+                      </Typography.Text>
+                      <Typography.Text editable>
+                        e.manirakiza@irembo.com
+                      </Typography.Text>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
+              );
             })}
-            <div onClick={()=>{
-              let signs = [...signatories]
-              signs.push([])
-              setSignatories(signs)
-            }} className="flex flex-col ring-1 ring-gray-300 rounded pt-5 space-y-3 items-center justify-center cursor-pointer hover:bg-gray-50">
-              <Image src='/icons/icons8-stamp-64.png' width={40} height={40}/>
+            <div
+              onClick={() => {
+                let signs = [...signatories];
+                signs.push([]);
+                setSignatories(signs);
+              }}
+              className="flex flex-col ring-1 ring-gray-300 rounded pt-5 space-y-3 items-center justify-center cursor-pointer hover:bg-gray-50"
+            >
+              <Image src="/icons/icons8-stamp-64.png" width={40} height={40} />
               <div>Add new Signatory</div>
             </div>
           </div>
-          
         </div>
       </Modal>
     );
@@ -1807,6 +1900,21 @@ const TenderDetails = ({
         </div>
       </div>
     );
+  }
+
+  function getPoTotalVal() {
+    let t = 0;
+    let tax = 0;
+    po?.items.map((i) => {
+      t = t + i?.quantity * i?.estimatedUnitCost;
+      if (i.taxGroup === "I1")
+        tax = tax + (i?.quantity * i?.estimatedUnitCost * 18) / 100;
+    });
+    return {
+      totalVal: t,
+      totalTax: tax,
+      grossTotal: t + tax,
+    };
   }
 };
 export default TenderDetails;

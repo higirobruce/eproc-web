@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { LoadingOutlined } from "@ant-design/icons";
+import { LoadingOutlined, StarFilled } from "@ant-design/icons";
 import {
   AutoComplete,
   Button,
@@ -293,7 +293,8 @@ const SignupForm = () => {
                       {/* Grid 1 */}
                       <div className="grid grid-cols-2 gap-5">
                         <div>
-                          <div>Company Name</div>
+                        <div className="flex flex-row spacex-3">Company Name<div className="text-red-500">*</div></div>
+                         
                           <Form.Item
                             name="companyName"
                             // label="Company name"
@@ -309,7 +310,7 @@ const SignupForm = () => {
                         </div>
 
                         <div>
-                          <div>TIN</div>
+                        <div className="flex flex-row spacex-3">TIN<div className="text-red-500">*</div></div>
                           <Form.Item
                             name="tin"
                             // label="TIN"
@@ -329,7 +330,8 @@ const SignupForm = () => {
 
                       <div className="grid grid-cols-2 gap-5">
                         <div>
-                          <div>Contact person Names</div>
+                          
+                          <div className="flex flex-row spacex-3">Contact person Names<div className="text-red-500">*</div></div>
                           <Form.Item
                             name="contactPersonNames"
                             // label="Contact Person's Names"
@@ -344,8 +346,14 @@ const SignupForm = () => {
                           </Form.Item>
                         </div>
                         <div>
-                          <div>Contact Person Title</div>
-                          <Form.Item name="title">
+                          
+                          <div className="flex flex-row spacex-3">Contact Person Title<div className="text-red-500">*</div></div>
+                          <Form.Item name="title" rules={[
+                              {
+                                required: true,
+                                message: "Please input contact person's title!",
+                              },
+                            ]}>
                             <Input />
                           </Form.Item>
                         </div>
@@ -384,10 +392,10 @@ const SignupForm = () => {
                           </Form.Item>
                         </div>
                       </div>
-                      
+
                       <div className="grid grid-cols-2 gap-5">
                         <div>
-                          <div>Password</div>
+                          <div className="flex flex-row spacex-3">Password<div className="text-red-500">*</div></div>
                           <Form.Item
                             name="password"
                             // label="Password"
@@ -403,7 +411,7 @@ const SignupForm = () => {
                           </Form.Item>
                         </div>
                         <div>
-                          <div>Confirm password</div>
+                          <div className="flex flex-row spacex-3">Confirm password<div className="text-red-500">*</div></div>
                           <Form.Item
                             name="confirm"
                             // label="Confirm Password"
@@ -438,13 +446,7 @@ const SignupForm = () => {
 
                       <div className="grid grid-cols-2 gap-5">
                         <div>
-                          <div>Passport/NID</div>
-                          <Form.Item name="passportNid">
-                            <Input />
-                          </Form.Item>
-                        </div>
-                        <div>
-                          <div>Phone number</div>
+                          <div className="flex flex-row spacex-3">Phone number <div className="text-red-500">*</div></div>
                           <Form.Item
                             name="phone"
                             rules={[
@@ -457,11 +459,8 @@ const SignupForm = () => {
                             <Input addonBefore={prefixSelector} />
                           </Form.Item>
                         </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-5">
                         <div>
-                          <div>We offer</div>
+                          <div className="flex flex-row spacex-3">Area(s) of expertise<div className="text-red-500">*</div></div>
                           <Form.Item name="services">
                             <Select
                               mode="multiple"
@@ -479,6 +478,9 @@ const SignupForm = () => {
                             </Select>
                           </Form.Item>
                         </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-5">
                         <div>
                           <div>Experience (in Years)</div>
                           <Form.Item
@@ -494,7 +496,6 @@ const SignupForm = () => {
                           </Form.Item>
                         </div>
                       </div>
-
                     </div>
                   </div>
 
@@ -504,7 +505,7 @@ const SignupForm = () => {
                       Address Information
                     </Typography.Title>
 
-                    <div >
+                    <div>
                       {/* Grid 1 */}
                       <div className="grid grid-cols-2 gap-x-5">
                         <div>

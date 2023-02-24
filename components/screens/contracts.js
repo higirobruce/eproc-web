@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import React, { useState } from 'react'
 
-export default function Contracts() {
+export default function Contracts({user}) {
   const [dataLoaded, setDataLoaded] = useState(false);
   return (
     <>
