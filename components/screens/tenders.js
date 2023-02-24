@@ -460,7 +460,7 @@ function buildTender(
   user
 ) {
   return (
-    <div className="flex flex-col transition-opacity ease-in-out duration-1000 px-36 py-5 flex-1 space-y-3 bg-gray-50">
+    <div className="flex flex-col transition-opacity ease-in-out duration-1000 px-36 py-5 flex-1 space-y-3">
       <div className="flex flex-row items-center space-x-5">
         <Button icon={<ArrowLeftOutlined />} onClick={() => setRowData(null)}>
           Back

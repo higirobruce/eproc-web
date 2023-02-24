@@ -113,6 +113,8 @@ const TenderDetails = ({
   let [openCreateContract, setOpenCreateContract] = useState(false);
   let [openViewContract, setOpenViewContract] = useState(false);
   let [selectionComitee, setSelectionComitee] = useState([]);
+  let [contractStartDate, setContractStartDate] = useState(moment())
+  let [contractEndDate, setContractEndDate] = useState(moment())
 
   let [vendor, setVendor] = useState("");
   let [tendor, setTendor] = useState("");
@@ -200,7 +202,7 @@ const TenderDetails = ({
     updateBidList();
   }, [items]);
 
-  function handleCreateContract(vendor, tender, createdBy, sections) {
+  function handleCreateContract(vendor, tender, createdBy, sections, contractStartDate, contractEndDate) {
     fetch(`${url}/contracts/`, {
       method: "POST",
       headers: {
@@ -212,6 +214,8 @@ const TenderDetails = ({
         tender,
         createdBy,
         sections,
+        contractStartDate,
+        contractEndDate
       }),
     })
       .then((res) => res.json())
@@ -1466,7 +1470,7 @@ const TenderDetails = ({
         centered
         open={openCreateContract}
         onOk={() => {
-          handleCreateContract(vendor?._id, tendor?._id, user?._id, sections);
+          handleCreateContract(vendor?._id, tendor?._id, user?._id, sections, contractStartDate, contractEndDate);
           setOpenCreateContract(false);
         }}
         okText="Save and Submit"
@@ -1478,7 +1482,18 @@ const TenderDetails = ({
           <Typography.Title level={4}>
             CONTRACTOR: {vendor?.companyName}
           </Typography.Title>
+          <div className="grid grid-cols-2 w-1/2">
+            <div>
+              <div>Contract validity</div>
+              <DatePicker.RangePicker onChange={(v, dates) => {
+                setContractStartDate(dates[0])
+                setContractEndDate(dates[1])
+              }} />
+            </div>
+            
+          </div>
           <div className="grid grid-cols-2 gap-5">
+
             <div className="flex flex-col ring-1 ring-gray-300 rounded p-5 space-y-3">
               <div className="flex flex-col">
                 <Typography.Text type="secondary">
