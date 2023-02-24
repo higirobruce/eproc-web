@@ -662,7 +662,7 @@ function buildRequest(
   createPO
 ) {
   return (
-    <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 px-36 py-5 flex-1 space-y-3 h-full">
+    <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 px-10 py-5 flex-1 space-y-3 h-full">
       <div className="flex flex-row items-center space-x-5">
         <Button
           icon={<ArrowLeftOutlined />}

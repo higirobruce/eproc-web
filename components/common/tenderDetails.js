@@ -81,7 +81,7 @@ const TenderDetails = ({
   handleRefreshData,
   handleCreatePO,
   handleSendInvitation,
-  user
+  user,
 }) => {
   let url = process.env.NEXT_PUBLIC_BKEND_URL;
   let apiUsername = process.env.NEXT_PUBLIC_API_USERNAME;
@@ -113,8 +113,8 @@ const TenderDetails = ({
   let [openCreateContract, setOpenCreateContract] = useState(false);
   let [openViewContract, setOpenViewContract] = useState(false);
   let [selectionComitee, setSelectionComitee] = useState([]);
-  let [contractStartDate, setContractStartDate] = useState(moment())
-  let [contractEndDate, setContractEndDate] = useState(moment())
+  let [contractStartDate, setContractStartDate] = useState(moment());
+  let [contractEndDate, setContractEndDate] = useState(moment());
 
   let [vendor, setVendor] = useState("");
   let [tendor, setTendor] = useState("");
@@ -202,7 +202,14 @@ const TenderDetails = ({
     updateBidList();
   }, [items]);
 
-  function handleCreateContract(vendor, tender, createdBy, sections, contractStartDate, contractEndDate) {
+  function handleCreateContract(
+    vendor,
+    tender,
+    createdBy,
+    sections,
+    contractStartDate,
+    contractEndDate
+  ) {
     fetch(`${url}/contracts/`, {
       method: "POST",
       headers: {
@@ -215,7 +222,7 @@ const TenderDetails = ({
         createdBy,
         sections,
         contractStartDate,
-        contractEndDate
+        contractEndDate,
       }),
     })
       .then((res) => res.json())
@@ -670,7 +677,7 @@ const TenderDetails = ({
                                 <Form.Item>
                                   <Button
                                     htmlType="submit"
-                                    disabled={selectionComitee?.length<1}
+                                    disabled={selectionComitee?.length < 1}
                                     icon={
                                       <PaperAirplaneIcon className="h-5 w-5" />
                                     }
@@ -870,137 +877,144 @@ const TenderDetails = ({
                 </Tabs.TabPane>
               </>
             )}
-            {user?.userType === "VENDOR" && contract?.vendor?._id===user?._id && (
-              <Tabs.TabPane tab="Aggrement" key="3">
-                <div className="flex flex-col space-y-5 p-3">
-                  {buildTabHeader()}
-                  {bidList?.filter((d) => d.status === "awarded").length >=
-                  1 ? (
-                    !poCreated || !contractCreated ? (
-                      <div>
-                        {bidList
-                          ?.filter((d) => d.status === "awarded" && d?.createdBy?._id === user?._id)
-                          ?.map((item) => {
-                            return (
-                              <List size="small" key={item?.number}>
-                                <List.Item>
-                                  <List.Item.Meta
-                                    //   avatar={<Avatar src={item.picture.large} />}
-                                    title={<a href="#">{item.number}</a>}
-                                    description={
-                                      <>
-                                        <div className="text-xs text-gray-400">
-                                          {item?.createdBy?.companyName}
-                                        </div>
-                                        <a href="#">
-                                          <FileTextOutlined />{" "}
-                                        </a>
-                                      </>
-                                    }
-                                  />
-                                  <div className="flex flex-row items-start space-x-10 justify-between">
-                                    <div className="flex flex-row space-x-2">
-                                      <div className="flex flex-col">
-                                        <div className="flex flex-row space-x-2">
-                                          <div className="text-xs font-bold text-gray-500">
-                                            Price:
-                                          </div>
+            {user?.userType === "VENDOR" &&
+              contract?.vendor?._id === user?._id && (
+                <Tabs.TabPane tab="Aggrement" key="3">
+                  <div className="flex flex-col space-y-5 p-3">
+                    {buildTabHeader()}
+                    {bidList?.filter((d) => d.status === "awarded").length >=
+                    1 ? (
+                      !poCreated || !contractCreated ? (
+                        <div>
+                          {bidList
+                            ?.filter(
+                              (d) =>
+                                d.status === "awarded" &&
+                                d?.createdBy?._id === user?._id
+                            )
+                            ?.map((item) => {
+                              return (
+                                <List size="small" key={item?.number}>
+                                  <List.Item>
+                                    <List.Item.Meta
+                                      //   avatar={<Avatar src={item.picture.large} />}
+                                      title={<a href="#">{item.number}</a>}
+                                      description={
+                                        <>
                                           <div className="text-xs text-gray-400">
-                                            {item?.price.toLocaleString()}
+                                            {item?.createdBy?.companyName}
                                           </div>
-                                        </div>
+                                          <a href="#">
+                                            <FileTextOutlined />{" "}
+                                          </a>
+                                        </>
+                                      }
+                                    />
+                                    <div className="flex flex-row items-start space-x-10 justify-between">
+                                      <div className="flex flex-row space-x-2">
+                                        <div className="flex flex-col">
+                                          <div className="flex flex-row space-x-2">
+                                            <div className="text-xs font-bold text-gray-500">
+                                              Price:
+                                            </div>
+                                            <div className="text-xs text-gray-400">
+                                              {item?.price.toLocaleString()}
+                                            </div>
+                                          </div>
 
-                                        <div className="flex flex-row space-x-2">
-                                          <div className="text-xs font-bold text-gray-500">
-                                            Discount:
+                                          <div className="flex flex-row space-x-2">
+                                            <div className="text-xs font-bold text-gray-500">
+                                              Discount:
+                                            </div>
+                                            <div className="text-xs text-gray-400">
+                                              {item?.discount}%
+                                            </div>
                                           </div>
-                                          <div className="text-xs text-gray-400">
-                                            {item?.discount}%
-                                          </div>
-                                        </div>
 
-                                        <div className="flex flex-row space-x-2">
-                                          <div className="text-xs font-bold text-gray-500">
-                                            Delivery date:
-                                          </div>
-                                          <div className="text-xs text-gray-400">
-                                            {moment(item?.deliveryDate).format(
-                                              "YYYY-MMM-DD"
-                                            )}
+                                          <div className="flex flex-row space-x-2">
+                                            <div className="text-xs font-bold text-gray-500">
+                                              Delivery date:
+                                            </div>
+                                            <div className="text-xs text-gray-400">
+                                              {moment(
+                                                item?.deliveryDate
+                                              ).format("YYYY-MMM-DD")}
+                                            </div>
                                           </div>
                                         </div>
                                       </div>
-                                    </div>
 
-                                    <Form
-                                      // size="small"
-                                      className="flex flex-row space-x-1"
-                                    >
-                                      {/* <Form.Item>
+                                      <Form
+                                        // size="small"
+                                        className="flex flex-row space-x-1"
+                                      >
+                                        {/* <Form.Item>
                                           <UploadFiles label="Contract" />
                                         </Form.Item> */}
 
-                                      {contract && (
-                                        <Form.Item>
-                                          <Button
-                                            type="default"
-                                            icon={<FileTextOutlined />}
-                                            onClick={() => {
-                                              setOpenViewContract(true);
-                                              setVendor(item?.createdBy);
-                                              setTendor(item?.tender);
-                                            }}
-                                          >
-                                            View Contract
-                                          </Button>
-                                        </Form.Item>
-                                      )}
-                                    </Form>
-                                  </div>
-                                </List.Item>
-                              </List>
-                            );
-                          })}
-                      </div>
-                    ) : (
-                     contract?.vendor?._id === user?._id ?  <div className="mx-3 flex flex-row space-x-5 items-center justify-center">
-                     <div className="flex flex-col items-center justify-center">
-                       <Typography.Title level={5}>
-                         Contract
-                       </Typography.Title>
-                       {/* <Popover content={'PO: '+po?.number}> */}
-                       <Image
-                         onClick={() => setOpenViewContract(true)}
-                         className=" cursor-pointer hover:opacity-60"
-                         width={40}
-                         height={40}
-                         src="/icons/icons8-file-64.png"
-                       />
-                       {/* </Popover> */}
-                     </div>
+                                        {contract && (
+                                          <Form.Item>
+                                            <Button
+                                              type="default"
+                                              icon={<FileTextOutlined />}
+                                              onClick={() => {
+                                                setOpenViewContract(true);
+                                                setVendor(item?.createdBy);
+                                                setTendor(item?.tender);
+                                              }}
+                                            >
+                                              View Contract
+                                            </Button>
+                                          </Form.Item>
+                                        )}
+                                      </Form>
+                                    </div>
+                                  </List.Item>
+                                </List>
+                              );
+                            })}
+                        </div>
+                      ) : contract?.vendor?._id === user?._id ? (
+                        <div className="mx-3 flex flex-row space-x-5 items-center justify-center">
+                          <div className="flex flex-col items-center justify-center">
+                            <Typography.Title level={5}>
+                              Contract
+                            </Typography.Title>
+                            {/* <Popover content={'PO: '+po?.number}> */}
+                            <Image
+                              onClick={() => setOpenViewContract(true)}
+                              className=" cursor-pointer hover:opacity-60"
+                              width={40}
+                              height={40}
+                              src="/icons/icons8-file-64.png"
+                            />
+                            {/* </Popover> */}
+                          </div>
 
-                     <div className="flex flex-col items-center justify-center">
-                       <Typography.Title level={5}>
-                         Purchase order
-                       </Typography.Title>
-                       {/* <Popover content={po?.number}> */}
-                       <Image
-                         onClick={() => setOpenViewPO(true)}
-                         className=" cursor-pointer hover:opacity-60"
-                         width={40}
-                         height={40}
-                         src="/icons/icons8-file-64.png"
-                       />
-                       {/* </Popover> */}
-                     </div>
-                   </div> : <Empty/>
-                    )
-                  ) : (
-                    <Empty />
-                  )}
-                </div>
-              </Tabs.TabPane>
-            )}
+                          <div className="flex flex-col items-center justify-center">
+                            <Typography.Title level={5}>
+                              Purchase order
+                            </Typography.Title>
+                            {/* <Popover content={po?.number}> */}
+                            <Image
+                              onClick={() => setOpenViewPO(true)}
+                              className=" cursor-pointer hover:opacity-60"
+                              width={40}
+                              height={40}
+                              src="/icons/icons8-file-64.png"
+                            />
+                            {/* </Popover> */}
+                          </div>
+                        </div>
+                      ) : (
+                        <Empty />
+                      )
+                    ) : (
+                      <Empty />
+                    )}
+                  </div>
+                </Tabs.TabPane>
+              )}
           </Tabs>
         </div>
 
@@ -1470,7 +1484,14 @@ const TenderDetails = ({
         centered
         open={openCreateContract}
         onOk={() => {
-          handleCreateContract(vendor?._id, tendor?._id, user?._id, sections, contractStartDate, contractEndDate);
+          handleCreateContract(
+            vendor?._id,
+            tendor?._id,
+            user?._id,
+            sections,
+            contractStartDate,
+            contractEndDate
+          );
           setOpenCreateContract(false);
         }}
         okText="Save and Submit"
@@ -1485,15 +1506,15 @@ const TenderDetails = ({
           <div className="grid grid-cols-2 w-1/2">
             <div>
               <div>Contract validity</div>
-              <DatePicker.RangePicker onChange={(v, dates) => {
-                setContractStartDate(dates[0])
-                setContractEndDate(dates[1])
-              }} />
+              <DatePicker.RangePicker
+                onChange={(v, dates) => {
+                  setContractStartDate(dates[0]);
+                  setContractEndDate(dates[1]);
+                }}
+              />
             </div>
-            
           </div>
           <div className="grid grid-cols-2 gap-5">
-
             <div className="flex flex-col ring-1 ring-gray-300 rounded p-5 space-y-3">
               <div className="flex flex-col">
                 <Typography.Text type="secondary">
@@ -1715,12 +1736,22 @@ const TenderDetails = ({
         <div className="space-y-10 px-20 py-5 overflow-x-scroll">
           <div className="flex flex-row justify-between items-center">
             <Typography.Title level={4} className="flex flex-row items-center">
-              CONTRACTOR: {contract?.vendor?.companyName}{" "}
-              <Image
-                src="/icons/icons8-approval-90.png"
-                width={20}
-                height={20}
-              />
+              <div>
+                CONTRACTOR: {contract?.vendor?.companyName}{" "}
+                <div>
+                  <Popover
+                    placement="topLeft"
+                    content={`${moment(contract?.startDate).format(
+                      "YYYY-MMM-DD"
+                    )} - ${moment(contract?.endDate).format("YYYY-MMM-DD")}`}
+                  >
+                    <div className="text-xs font-thin text-gray-500">
+                      Expires in {moment(contract?.endDate).fromNow()}
+                    </div>
+                  </Popover>
+                </div>
+              </div>
+              
             </Typography.Title>
             <Button icon={<PrinterOutlined />}>Print</Button>
           </div>
