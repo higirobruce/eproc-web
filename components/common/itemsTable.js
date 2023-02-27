@@ -3,6 +3,7 @@ import React, { useContext, useEffect, useRef, useState } from "react";
 import UploadFiles from "./uploadFiles";
 import {v4} from 'uuid'
 import UploadTORs from "./uploadTORs";
+import { uniqueId } from "lodash";
 
 const EditableContext = React.createContext(null);
 const EditableRow = ({ index, ...props }) => {
@@ -83,7 +84,7 @@ const EditableCell = ({
   return <td {...restProps}>{childNode}</td>;
 };
 
-const ItemsTable = ({ setDataSource, dataSource }) => {
+const ItemsTable = ({ setDataSource, dataSource, setFileList, fileList }) => {
   const [count, setCount] = useState(1);
   const handleDelete = (key) => {
     const newData = dataSource.filter((item) => item.key !== key && item.key);
@@ -110,7 +111,7 @@ const ItemsTable = ({ setDataSource, dataSource }) => {
     {
       title: "Attachments",
       dataIndex: "attachements",
-      render: (_, record) => (dataSource.length >= 1 ? <UploadTORs label='TOR' uuid={ v4()}  /> : null),
+      render: (_, record) => (dataSource.length >= 1 ? <UploadTORs label='TOR' uuid={record?.id} setFileList={setFileList} fileList={fileList} /> : null),
     },
     {
       title: "Action",
@@ -132,6 +133,7 @@ const ItemsTable = ({ setDataSource, dataSource }) => {
       title: `Title`,
       quantity: "0",
       estimatedUnitCost: `0`,
+      id: v4()
     };
     setDataSource([...dataSource, newData]);
     setCount(count + 1);

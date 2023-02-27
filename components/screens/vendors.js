@@ -35,8 +35,9 @@ import {
   UserOutlined,
 } from "@ant-design/icons";
 import moment from "moment";
-import {UserIcon, } from '@heroicons/react/24/outline'
-export default function Vendors({user}) {
+import { UserIcon } from "@heroicons/react/24/outline";
+import { PDFObject } from "react-pdfobject";
+export default function Vendors({ user }) {
   const [dataLoaded, setDataLoaded] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
   let url = process.env.NEXT_PUBLIC_BKEND_URL;
@@ -47,6 +48,8 @@ export default function Vendors({user}) {
   let [rowData, setRowData] = useState(null);
   let [segment, setSegment] = useState("Bids");
   let [vendorsBids, setVendorsBids] = useState([]);
+  const [previewAttachment, setPreviewAttachment] = useState(false);
+  const [attachmentId, setAttachmentId] = useState(null);
 
   useEffect(() => {
     loadVendors();
@@ -401,13 +404,32 @@ export default function Vendors({user}) {
                 <div className="flex flex-col space-y-2">
                   <div className="flex flex-row items-center space-x-10">
                     <PaperClipOutlined className="text-gray-400" />
-                    <div className="text-sm ">Full RDB registration</div>
+                    <div
+                      className="text-sm "
+                      onClick={() => {
+                        setAttachmentId(`rdbCerts/${rowData?.rdbCertId}.pdf`);
+                        setPreviewAttachment(!previewAttachment);
+                      }}
+                    >
+                      <Typography.Link>Full RDB registration</Typography.Link>
+                    </div>
                   </div>
 
                   <div className="flex flex-row items-center space-x-10">
                     <PaperClipOutlined className="text-gray-400" />
-                    <div className="text-sm ">VAT certificate</div>
+                    <div
+                      className="text-sm "
+                      onClick={() => {
+                        setAttachmentId(`vatCerts/${rowData?.vatCertId}.pdf`);
+                        previewAttachment
+                          ? setPreviewAttachment(false)
+                          : setPreviewAttachment(true);
+                      }}
+                    >
+                      <Typography.Link>VAT certificate</Typography.Link>
+                    </div>
                   </div>
+
                 </div>
               </div>
             </div>
@@ -420,11 +442,12 @@ export default function Vendors({user}) {
                 options={["Bids", "Purchase orders"]}
                 onChange={setSegment}
               />
-              {segment === "Bids" && vendorsBids?.length>0 &&
+              {segment === "Bids" &&
+                vendorsBids?.length > 0 &&
                 vendorsBids.map((bid) => {
                   return (
                     <div key={bid?.number}>
-                      <List size="small" >
+                      <List size="small">
                         <List.Item>
                           <List.Item.Meta
                             //   avatar={<Avatar src={item.picture.large} />}
@@ -491,12 +514,14 @@ export default function Vendors({user}) {
                   );
                 })}
 
-                {
-                  segment==='Bids' && (!vendorsBids || vendorsBids?.length==0)
-                  && <Empty/>
-                }
+              {segment === "Bids" &&
+                (!vendorsBids || vendorsBids?.length == 0) && <Empty />}
             </div>
           </div>
+
+          {previewAttachment && (
+            <PDFObject url={`${url}/file/${attachmentId}`} height="40rem" />
+          )}
         </div>
       </div>
     );

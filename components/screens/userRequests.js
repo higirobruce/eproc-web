@@ -22,6 +22,7 @@ import {
   Radio,
   Tabs,
   Tag,
+  Upload,
 } from "antd";
 import Image from "next/image";
 import React, { useState, useEffect, useRef } from "react";
@@ -70,6 +71,7 @@ export default function UserRequests({ user }) {
   let [budgeted, setBudgeted] = useState(true);
   let [budgetLine, setBudgetLine] = useState("");
   let [reload, setReload] = useState(false);
+  let [fileList, setFileList] = useState([]);
 
   let [selectedReqId, setSelectedReqId] = useState(null);
 
@@ -172,7 +174,7 @@ export default function UserRequests({ user }) {
         }),
       })
         .then((res) => res.json())
-        .then((res) => {
+        .then(async (res) => {
           loadRequests()
             .then((res) => res.json())
             .then((res) => {
@@ -363,7 +365,7 @@ export default function UserRequests({ user }) {
     })
       .then((res) => res.json())
       .then((res) => {
-        setReload(!reload)
+        setReload(!reload);
         loadRequests()
           .then((res) => res.json())
           .then((res) => {
@@ -425,6 +427,10 @@ export default function UserRequests({ user }) {
           content: JSON.stringify(err),
         });
       });
+  }
+
+  function _setFileList(list, id) {
+    setFileList(list);
   }
 
   // function createPO(vendor, tender, createdBy, sections, items) {
@@ -620,7 +626,12 @@ export default function UserRequests({ user }) {
             <div>
               <Typography.Title level={4}>Items</Typography.Title>
               {/* <ItemList handleSetValues={setValues} /> */}
-              <ItemsTable setDataSource={setValues} dataSource={values} />
+              <ItemsTable
+                setDataSource={setValues}
+                dataSource={values}
+                fileList={fileList}
+                setFileList={_setFileList}
+              />
             </div>
           </Modal>
         </div>

@@ -1,41 +1,22 @@
 import React from "react";
 import { UploadOutlined } from "@ant-design/icons";
-import { Button, Upload, message, UploadFile } from "antd";
+import { Button, Upload, message } from "antd";
 
-function UploadTORs({ label, uuid, fileList, setFileList }) {
+function UploadVatCerts({ label, uuid}) {
   const [messageApi, contextHolder] = message.useMessage();
   let url = process.env.NEXT_PUBLIC_BKEND_URL;
   let apiUsername = process.env.NEXT_PUBLIC_API_USERNAME;
   let apiPassword = process.env.NEXT_PUBLIC_API_PASSWORD;
 
   const props = {
-    onRemove: (file) => {
-      const index = fileList.indexOf(file);
-      const newFileList = fileList.slice();
-      newFileList.splice(index, 1);
-      setFileList(newFileList, uuid);
-    },
-    multiple: false,
-    showUploadList: {
-        showDownloadIcon: false,
-    },
     beforeUpload: (file) => {
-      let fileUploaded = fileList?.length===1;
       let isPDF = file.type == "application/pdf";
       if (!isPDF) {
         messageApi.error(`${file.name} is not a PDF file`);
       }
-
-      if(fileUploaded){
-        messageApi.error(`You can only upload 1 file per item!`);
-      }
-      if(!fileUploaded){
-        setFileList([...fileList, file],uuid);
-      }
-      
-      return (!fileUploaded && isPDF)|| Upload.LIST_IGNORE;
+      return isPDF || Upload.LIST_IGNORE;
     },
-    action: `${url}/uploads/termsOfReference?id=${uuid}`,
+    action: `${url}/uploads/vatCerts?id=${uuid}`,
     headers: {
       Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
       "Content-Type": "application/json",
@@ -63,8 +44,7 @@ function UploadTORs({ label, uuid, fileList, setFileList }) {
       <Upload {...props} headers={{}}>
         <Button icon={<UploadOutlined />}>{label ? label : "Upload"}</Button>
       </Upload>
-
     </>
   );
 }
-export default UploadTORs;
+export default UploadVatCerts;

@@ -43,6 +43,8 @@ import dynamic from "next/dynamic";
 import parse from "html-react-parser";
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 import "react-quill/dist/quill.snow.css";
+import { PDFObject } from "react-pdfobject";
+import { PaperClipIcon } from "@heroicons/react/24/outline";
 
 let modules = {
   toolbar: [
@@ -70,34 +72,6 @@ let formats = [
   "bullet",
   "indent",
   "link",
-];
-
-const columns = [
-  {
-    title: "Description",
-    dataIndex: "title",
-    key: "title",
-  },
-  {
-    title: "Quantity",
-    dataIndex: "quantity",
-    key: "quantity",
-    render: (_, item) => <>{(item?.quantity).toLocaleString()}</>,
-  },
-  {
-    title: "Unit Price (RWF)",
-    dataIndex: "estimatedUnitCost",
-    key: "estimatedUnitCost",
-    render: (_, item) => <>{(item?.estimatedUnitCost).toLocaleString()}</>,
-  },
-  {
-    title: "Total Amount (Rwf)",
-    dataIndex: "totalAmount",
-    key: "totalAmount",
-    render: (_, item) => (
-      <>{(item?.quantity * item?.estimatedUnitCost).toLocaleString()}</>
-    ),
-  },
 ];
 
 const RequestDetails = ({
@@ -139,6 +113,8 @@ const RequestDetails = ({
   const [signatories, setSignatories] = useState([]);
   const [docDate, setDocDate] = useState(moment());
   const [docType, setDocType] = useState("dDocument_Service");
+  const [previewAttachment, setPreviewAttachment] = useState(false);
+  const [attachmentId, setAttachmentId] = useState("TOR-id.pdf");
 
   const showPopconfirm = () => {
     setOpen(true);
@@ -162,6 +138,22 @@ const RequestDetails = ({
       title: "Description",
       dataIndex: "title",
       key: "title",
+      render: (_, item) => (
+        <>
+          <Typography.Link
+            className="flex flex-row items-center space-x-2"
+            onClick={() => {
+              setPreviewAttachment(!previewAttachment);
+              setAttachmentId(item?.id + ".pdf");
+            }}
+          >
+            <div>{item.title}</div>{" "}
+            <div>
+              <PaperClipIcon className="h-4 w-4" />
+            </div>
+          </Typography.Link>
+        </>
+      ),
     },
     {
       title: "Quantity",
@@ -175,6 +167,7 @@ const RequestDetails = ({
       key: "estimatedUnitCost",
       render: (_, item) => <>{(item?.estimatedUnitCost).toLocaleString()}</>,
     },
+
     {
       title: "Total Amount (Rwf)",
       dataIndex: "totalAmount",
@@ -239,7 +232,6 @@ const RequestDetails = ({
   }, [tender]);
 
   useEffect(() => {
-    
     if (po && po.status !== "started") setCurrentStep(1);
     else if (po && po.status === "started") setCurrentStep(1);
     else if (tender) setCurrentStep(0);
@@ -390,7 +382,7 @@ const RequestDetails = ({
                     <div className="flex flex-row justify-between items-start">
                       <div className="grid grid-cols-5">
                         <div className="flex flex-col space-y-1 items-start">
-                          <div className="text-xs font-semibold ml-3 text-gray-400">
+                          <div className="text-xs ml-3 text-gray-400">
                             Request Number:
                           </div>
                           <div className="text-sm font-semibold ml-3 text-gray-600">
@@ -399,7 +391,7 @@ const RequestDetails = ({
                         </div>
 
                         <div className="flex flex-col space-y-1 items-start">
-                          <div className="text-xs font-semibold ml-3 text-gray-400">
+                          <div className="text-xs ml-3 text-gray-400">
                             Service category:
                           </div>
                           <div className="text-sm font-semibold ml-3 text-gray-600">
@@ -408,7 +400,7 @@ const RequestDetails = ({
                         </div>
 
                         <div className="flex flex-col space-y-1 items-start">
-                          <div className="text-xs font-semibold ml-3 text-gray-400">
+                          <div className="text-xs ml-3 text-gray-400">
                             Due date:
                           </div>
                           <div className="text-sm font-semibold ml-3 text-gray-600">
@@ -417,7 +409,7 @@ const RequestDetails = ({
                         </div>
 
                         <div className="flex flex-col col-span-2 space-y-1 items-start">
-                          <div className="text-xs font-semibold ml-3 text-gray-400">
+                          <div className="text-xs ml-3 text-gray-400">
                             Description:
                           </div>
                           <div className="text-sm font-semibold ml-3 text-gray-600 w-2/3">
@@ -480,7 +472,7 @@ const RequestDetails = ({
                         );
                       })}
 
-                    {(data.status === "completed") &&
+                    {data.status === "completed" &&
                       (tender || po) &&
                       buildWorkflow(currentStep, tender, po)}
 
@@ -518,16 +510,22 @@ const RequestDetails = ({
           </Tabs>
         </div>
         {createPOMOdal()}
+        {previewAttachment && (
+          <PDFObject
+            url={`${url}/file/termsOfReference/${attachmentId}`}
+            height="40rem"
+          />
+        )}
       </div>
-      <div className="flex flex-col px-3 rounded  bg-white h-full">
+      <div className="flex flex-col px-10 py-4 rounded ring-1 ring-gray-200 bg-white h-full">
         <Typography.Title level={5}>Workflow tracker (V2)</Typography.Title>
         <Steps
           direction="vertical"
           progressDot
-          // size="small"
+          size="small"
           current={0}
           items={[
-            { title: "PR created", description: "" },
+            { title: "PR created" },
             {
               title: "PR approved",
               description: "",
