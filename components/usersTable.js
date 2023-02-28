@@ -61,7 +61,7 @@ const UsersTable = ({
       render: (_, record) => (
         <>
           <div
-            className="font-semibold cursor-pointer space-x-1 flex flex-row items-center text-blue-500 hover:underline"
+            className="cursor-pointer space-x-1 flex flex-row items-center text-blue-500 hover:underline"
             onClick={() => handleSetRow(record)}
           >
             <div>{record?.email}</div>

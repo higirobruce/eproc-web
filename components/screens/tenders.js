@@ -15,6 +15,7 @@ import {
   Typography,
   message,
   Input,
+  Empty,
 } from "antd";
 import Image from "next/image";
 import React, { useState, useEffect } from "react";
@@ -24,7 +25,7 @@ import TenderDetails from "../common/tenderDetails";
 import TenderStats from "../common/tendersStatistics";
 import TendersTable from "../tendersTable";
 
-export default function Tenders({user}) {
+export default function Tenders({ user }) {
   const [dataLoaded, setDataLoaded] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
   let url = process.env.NEXT_PUBLIC_BKEND_URL;
@@ -56,7 +57,7 @@ export default function Tenders({user}) {
           content: "Something happened! Please try again.",
         });
       });
-  }, []);
+  }, [user]);
 
   function refresh() {
     setDataLoaded(false);
@@ -76,13 +77,27 @@ export default function Tenders({user}) {
       });
   }
   async function loadTenders() {
-    return fetch(`${url}/tenders/`, {
-      method: "GET",
-      headers: {
-        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
-        "Content-Type": "application/json",
-      },
-    });
+    if (user?.userType === "VENDOR")
+      return fetch(`${url}/tenders/byServiceCategories/`, {
+        method: "POST",
+        headers: {
+          Authorization:
+            "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          serviceCategories: user?.services,
+        }),
+      });
+    else
+      return fetch(`${url}/tenders/`, {
+        method: "GET",
+        headers: {
+          Authorization:
+            "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+          "Content-Type": "application/json",
+        },
+      });
   }
 
   useEffect(() => {
@@ -256,7 +271,7 @@ export default function Tenders({user}) {
       });
   }
 
-  function createPO(vendor, tender, createdBy, sections,items, B1Data) {
+  function createPO(vendor, tender, createdBy, sections, items, B1Data) {
     return fetch(`${url}/purchaseOrders/`, {
       method: "POST",
       headers: {
@@ -269,39 +284,37 @@ export default function Tenders({user}) {
         createdBy,
         sections,
         items,
-        B1Data
+        B1Data,
       }),
     })
       .then((res) => res.json())
       .then((res1) => {
-        if(res1.error){
+        if (res1.error) {
           messageApi.open({
             type: "error",
-            content: res1.message
+            content: res1.message,
           });
-        }else{
+        } else {
           loadTenders()
-          .then((res2) => res2.json())
-          .then((res3) => {
-            setDataset(res3);
-            let r = res3.filter((d) => {
-              return d._id === rowData._id;
+            .then((res2) => res2.json())
+            .then((res3) => {
+              setDataset(res3);
+              let r = res3.filter((d) => {
+                return d._id === rowData._id;
+              });
+
+              setRowData(r[0]);
+              setLoadingRowData(false);
+            })
+            .catch((err) => {
+              console.error(err);
+              setLoadingRowData(false);
+              messageApi.open({
+                type: "error",
+                content: JSON.stringify(err),
+              });
             });
-          
-            setRowData(r[0]);
-            setLoadingRowData(false);
-          })
-          .catch((err) => {
-            console.error(err);
-            setLoadingRowData(false);
-            messageApi.open({
-              type: "error",
-              content: JSON.stringify(err),
-            });
-          });
         }
-        
-        
       })
       .catch((err) => {
         console.error(err);
@@ -313,7 +326,7 @@ export default function Tenders({user}) {
       });
   }
 
-  function sendInvitation(tenderUpdate){
+  function sendInvitation(tenderUpdate) {
     setLoadingRowData(true);
     setTimeout(() => {
       fetch(`${url}/tenders/${tenderUpdate?._id}`, {
@@ -324,7 +337,7 @@ export default function Tenders({user}) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          newTender: tenderUpdate
+          newTender: tenderUpdate,
         }),
       })
         .then((res) => res.json())
@@ -358,11 +371,10 @@ export default function Tenders({user}) {
     }, 2000);
   }
 
-  
   return !rowData ? (
     <>
       {contextHolder}
-      {dataLoaded ? (
+      {dataLoaded && dataset?.length >= 1 ? (
         <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 px-10 flex-1 h-full">
           <Row className="flex flex-row justify-between items-center">
             <Typography.Title level={4}>Tenders</Typography.Title>
@@ -428,6 +440,8 @@ export default function Tenders({user}) {
             </Form>
           </Modal>
         </div>
+      ) : dataLoaded && dataset?.length === 0 ? (
+        <Empty />
       ) : (
         <div className="flex items-center justify-center h-screen flex-1">
           <Image alt="" src="/file_searching.svg" width={600} height={600} />

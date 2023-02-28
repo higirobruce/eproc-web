@@ -1,6 +1,7 @@
 import Image from "next/image";
 import React, { useState, useEffect } from "react";
 import _ from "lodash";
+import moment from "moment";
 import {
   Typography,
   message,
@@ -28,8 +29,12 @@ import {
   PhoneOutlined,
   UserOutlined,
 } from "@ant-design/icons";
-import moment from "moment";
-import { EnvelopeIcon, UserIcon, UsersIcon } from "@heroicons/react/24/outline";
+import {
+  DocumentCheckIcon,
+  EnvelopeIcon,
+  UserIcon,
+  UsersIcon,
+} from "@heroicons/react/24/outline";
 import PermissionsTable from "../permissionsTable";
 
 export default function Users({ user }) {
@@ -42,10 +47,35 @@ export default function Users({ user }) {
   let [updatingId, setUpdatingId] = useState("");
   let [row, setRow] = useState(null);
   let [segment, setSegment] = useState("Permissions");
+  let [usersRequests, setUsersRequests] = useState([]);
 
   useEffect(() => {
     loadUsers();
   }, []);
+
+  useEffect(() => {
+    if (row) loadUsersRequests();
+  }, [row]);
+
+  function loadUsersRequests() {
+    fetch(`${url}/requests/${row?._id}`, {
+      method: "GET",
+      headers: {
+        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+        "Content-Type": "application/json",
+      },
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        setUsersRequests(res);
+      })
+      .catch((err) => {
+        messageApi.open({
+          type: "error",
+          content: "Something happened! Please try again.",
+        });
+      });
+  }
 
   function loadUsers() {
     fetch(`${url}/users/internal`, {
@@ -344,7 +374,7 @@ export default function Users({ user }) {
 
   function buildUser() {
     return (
-      <div className="flex flex-col  transition-opacity ease-in-out duration-1000 px-10 py-5 flex-1 space-y-3 h-full bg-gray-50">
+      <div className="flex flex-col  transition-opacity ease-in-out duration-1000 px-10 py-5 flex-1 space-y-3 h-full overflow-x-scroll">
         <div className="flex flex-col space-y-5">
           <div>
             <Button
@@ -376,7 +406,9 @@ export default function Users({ user }) {
                         {row?.firstName} {row?.lastName}
                       </div>{" "}
                       <div>
-                        <Tag color="cyan">{row?.title ? row?.title : row?.number}</Tag>
+                        <Tag color="cyan">
+                          {row?.title ? row?.title : row?.number}
+                        </Tag>
                       </div>
                     </div>
                   </div>
@@ -420,7 +452,7 @@ export default function Users({ user }) {
                 ]}
                 onChange={setSegment}
               />
-              {segment == "Permissions" && (
+              {segment === "Permissions" && (
                 <div>
                   <PermissionsTable
                     canApproveRequests={row?.permissions?.canApproveRequests}
@@ -480,7 +512,7 @@ export default function Users({ user }) {
                       label="Can approve as a Head of finance"
                     >
                       <Checkbox
-                      defaultChecked={row?.permissions.canApproveAsHof}
+                        defaultChecked={row?.permissions.canApproveAsHof}
                         onChange={(e) => setCanApproveAsHof(e.target.checked)}
                       />
                     </Form.Item>
@@ -489,11 +521,45 @@ export default function Users({ user }) {
                       label="Can approve as a Procurement manager"
                     >
                       <Checkbox
-                      defaultChecked={row?.permissions.canApproveAsPM}
+                        defaultChecked={row?.permissions.canApproveAsPM}
                         onChange={(e) => setCanApproveAsPM(e.target.checked)}
                       />
                     </Form.Item>
                   </Form>
+                </div>
+              )}
+              {segment === "Requests History" && (
+                <div className="p-3">
+                  {usersRequests?.map((request) => {
+                    return (
+                      <div
+                        key={request?._id}
+                        className="grid grid-cols-4 ring-1 ring-gray-200 rounded my-3 p-3 text-gray-700"
+                      >
+                        <div>
+                          <div className="flex-row  flex items-center">
+                            <div>
+                              <FileTextOutlined className="h-4 w-4" />
+                            </div>{" "}
+                            <div>{request?.number}</div>
+                          </div>
+                          <div>{request?.title}</div>
+                          <div>{request?.description}</div>
+                        </div>
+                        <div>
+                          <div className="text-gray-500">Status</div>
+                          <div><Tag color='gold'>{request.status}</Tag></div>
+                        </div>
+                        <div>
+                          {`Due ${moment(request?.dueDate).fromNow()}`}
+                        </div>
+                        <div>
+                          {request?.budgeted ? <div><Tag color='green'>BUDGETED</Tag></div> : <div><Tag color='magenta'>NOT BUDGETED</Tag></div>}
+                        </div>
+                        <div></div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>

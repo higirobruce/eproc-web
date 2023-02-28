@@ -102,10 +102,7 @@ const SignupForm = () => {
         department: values.dpt,
         contactPersonNames: values.contactPersonNames,
         title: values.title,
-        building: values.building,
-        streetNo: values.streetNo,
-        avenue: values.avenue,
-        city: values.city,
+        hqAddress: values.hqAddress,
         country: values.country,
         passportNid: values.passportNid,
         services: values.services,
@@ -539,35 +536,12 @@ const SignupForm = () => {
                       {/* Grid 1 */}
                       <div className="grid grid-cols-2 gap-x-5">
                         <div>
-                          <div>Building</div>
-                          <Form.Item name="building">
+                          <div>Hq Address</div>
+                          <Form.Item name="hqAddress">
                             <Input />
                           </Form.Item>
                         </div>
-                        <div>
-                          <div>Street number</div>
-                          <Form.Item name="streetNo">
-                            <Input />
-                          </Form.Item>
-                        </div>
-                      </div>
 
-                      <div className="grid grid-cols-2 gap-x-5">
-                        <div>
-                          <div>Avenue</div>
-                          <Form.Item name="avenue">
-                            <Input />
-                          </Form.Item>
-                        </div>
-                        <div>
-                          <div>City</div>
-                          <Form.Item name="city">
-                            <Input />
-                          </Form.Item>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-x-5">
                         <div>
                           <div>Country</div>
                           <Form.Item name="country">
@@ -575,6 +549,7 @@ const SignupForm = () => {
                           </Form.Item>
                         </div>
                       </div>
+
                     </div>
 
                     <Typography.Title className="" level={4}>
