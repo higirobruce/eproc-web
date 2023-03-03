@@ -246,7 +246,7 @@ export default function PurchaseOrders({ user }) {
           <div className="grid grid-cols-3 gap-5">
             {po?.signatories?.map((s, index) => {
               return (
-                <div className="flex flex-col ring-1 ring-gray-300 rounded pt-5 space-y-3 justify-between">
+                <div key={s?.email} className="flex flex-col ring-1 ring-gray-300 rounded pt-5 space-y-3 justify-between">
                   <div className="px-5 flex flex-col space-y-6">
                     <div className="flex flex-col">
                       <Typography.Text type="secondary">
@@ -514,7 +514,7 @@ export default function PurchaseOrders({ user }) {
                     <div className="flex flex-col space-y-3 text-gray-600">
                       {po?.signatories?.map((s) => {
                         return (
-                          <div className="flex flex-row items-center space-x-2">
+                          <div key={s?.email} className="flex flex-row items-center space-x-2">
                             <div>
                               {s?.signed ? (
                                 <Popover
