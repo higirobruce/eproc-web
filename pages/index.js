@@ -21,18 +21,33 @@ export default function Home() {
       </Head>
 
       <main className="grid md:grid-cols-3 bg-blue-500 w-screen h-screen text-white">
-        <div className="col-span-2 hidden md:flex flex-col px-10 items-start justify-center">
-          {/* <Image alt="" src="/irembo-gov.svg" width={150} height={150} /> */}
-          <Typography.Title level={3}>
-            <div className="text-white">Welcome to Irembo Procure</div>
-          </Typography.Title>
-          <Typography.Title level={1}>
-            <div className="text-white font-bold">Best and Easiest way to be a Sourcing Partner with Irembo.</div>
-          </Typography.Title>
-          <Typography.Text>
-            <div className="text-white">Procurex helps in detaios and jooeprok oj akjjsjdsk lk lkas lllksd. Oooisdl kjdfj</div>
-          </Typography.Text>
-          {/* <Image alt="" src="/login.svg" width={500} height={500} /> */}
+        <div className="col-span-2 hidden md:flex flex-col px-10 pt-10 items-start">
+          <Image alt="" src="/icons/white icon.png" width={150} height={135}/>
+          <div className="grid grid-cols-2 content-center">
+            
+            <div className="self-center">
+              <Typography.Title level={2}>
+                <div className="text-white">Welcome to</div>
+              </Typography.Title>
+              <Typography.Title level={1}>
+                <div className="text-white">Irembo Procure</div>
+              </Typography.Title>
+              <Typography.Title level={4}>
+                <div className="text-white font-bold">
+                A tool that aims to simplify the procurement process for suppliers looking to work with Irembo.
+                </div>
+              </Typography.Title>
+             
+            </div>
+
+            <Image
+              alt=""
+              src="/login.svg"
+              width={500}
+              height={500}
+              className=""
+            />
+          </div>
         </div>
         <div>
           {" "}
