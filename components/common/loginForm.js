@@ -191,18 +191,23 @@ const LoginForm = () => {
             scrollToFirstError
             style={{ width: "100%" }}
           >
-            <Row className="flex flex-row items-center justify-between pb-5">
-              <Typography.Title className="" level={2}>
+            <Row className="flex flex-col items-center justify-between pb-5">
+              <div className="flex flex-row items-center">
+                
+                <div>
+                  <Image
+                    alt=""
+                    className="pt-3"
+                    src="/icons/blue icon.png"
+                    width={43}
+                    height={40}
+                  />{" "}
+                </div>
+                <div className="font-bold text-lg">Irembo Procure</div>
+              </div>
+              <Typography.Title className="" level={3}>
                 Login
               </Typography.Title>
-
-              <Image
-                alt=""
-                className="pt-3"
-                src="/favicon.png"
-                width={40}
-                height={40}
-              />
             </Row>
 
             <div>
@@ -253,16 +258,14 @@ const LoginForm = () => {
                 </div>
               )}
             </Form.Item>
-
-            
           </Form>
 
           <div className="flex flex-row space-x-2 self-start">
-              <Typography.Text level={5}>New User? </Typography.Text>
-              <Typography.Link onClick={() => Router.push("/signup")}>
-                Sign up
-              </Typography.Link>
-            </div>
+            <Typography.Text level={5}>New User? </Typography.Text>
+            <Typography.Link onClick={() => Router.push("/signup")}>
+              Sign up
+            </Typography.Link>
+          </div>
         </div>
       ) : (
         <Skeleton />
