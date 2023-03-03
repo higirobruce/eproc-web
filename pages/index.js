@@ -22,7 +22,7 @@ export default function Home() {
 
       <main className="grid md:grid-cols-3 bg-blue-500 w-screen h-screen text-white">
         <div className="col-span-2 hidden md:flex flex-col px-10 pt-10 items-start">
-          <Image alt="" src="/icons/white icon.png" width={150} height={135} />
+          <Image alt="" src="/icons/white icon.png" width={86} height={80} />
           <div className="grid grid-cols-2 px-10 content-center">
             <div className="self-center flex flex-col">
               <Typography.Title level={2}>
