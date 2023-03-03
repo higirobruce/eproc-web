@@ -8,6 +8,7 @@ import {
   List,
   message,
   Modal,
+  Popover,
   Tag,
   Typography,
 } from "antd";
@@ -24,8 +25,12 @@ import {
   MinusCircleIcon,
   UserCircleIcon,
   UserIcon,
+  UsersIcon,
   XCircleIcon,
 } from "@heroicons/react/24/outline";
+import { LockClosedIcon, LockOpenIcon } from "@heroicons/react/24/solid";
+import UploadEvaluationReport from "./uploadEvaluationReport";
+import { v4 } from "uuid";
 const fakeDataUrl =
   "https://randomuser.me/api/?results=20&inc=name,gender,email,nat,picture&noinfo";
 
@@ -37,7 +42,9 @@ const BidList = ({
   handleSetBidList,
   canSelectBid,
   comitee,
-  user
+  user,
+  setPreviewAttachment,
+  setAttachmentId,
 }) => {
   const [data, setData] = useState(null);
   let url = process.env.NEXT_PUBLIC_BKEND_URL;
@@ -46,6 +53,7 @@ const BidList = ({
   let [selectedBid, setSelectedBid] = useState(null);
   let [ContainerHeight, setContainerHeight] = useState(0);
   let [openSelectBid, setOpenSelectBid] = useState(false);
+  let [evaluationReportId, setEvaluationRptId] = useState(v4());
 
   const appendData = () => {
     fetch(`${url}/submissions/byTender/${tenderId}`, {
@@ -70,6 +78,7 @@ const BidList = ({
   }, [refresh]);
   useEffect(() => {
     appendData();
+    setEvaluationRptId(v4());
   }, [tenderId]);
   const onScroll = (e) => {
     if (
@@ -97,31 +106,54 @@ const BidList = ({
                   //   avatar={<Avatar src={item.picture.large} />}
                   title={<a href="#">{item.number}</a>}
                   description={
-                    <div className="grid grid-cols-6">
-                      <div>
+                    <div className="grid md:grid-cols-7">
+                      <div className="self-center">
                         <div className="text-xs text-gray-600">
                           {item?.createdBy?.companyName}
                         </div>
-                        <a href="#">
-                          <FileTextOutlined />{" "}
-                        </a>
+                        <div>
+                          <a
+                            href="#"
+                            onClick={() => {
+                              setAttachmentId(
+                                `bidDocs/${item?.proposalDocId}.pdf`
+                              );
+                              setPreviewAttachment(true);
+                            }}
+                          >
+                            <FileTextOutlined /> Proposal
+                          </a>
+                        </div>
+                        <div>
+                          <a
+                            href="#"
+                            onClick={() => {
+                              setAttachmentId(
+                                `bidDocs/${item?.otherDocId}.pdf`
+                              );
+                              setPreviewAttachment(true);
+                            }}
+                          >
+                            <FileTextOutlined /> Other Doc
+                          </a>
+                        </div>
                       </div>
 
-                      <div className="">
+                      <div className="self-center">
                         <div className="text-xs text-gray-400">Price</div>
                         <div className="text-xs text-gray-600">
                           {item?.price.toLocaleString() + " " + item?.currency}
                         </div>
                       </div>
 
-                      <div className="">
+                      <div className="self-center">
                         <div className="text-xs text-gray-400">Discount</div>
                         <div className="text-xs text-gray-600">
                           {item?.discount}%
                         </div>
                       </div>
 
-                      <div className="">
+                      <div className="self-center">
                         <div className="text-xs text-gray-400">
                           Delivery date
                         </div>
@@ -130,7 +162,7 @@ const BidList = ({
                         </div>
                       </div>
 
-                      <div className="">
+                      <div className="self-center">
                         <div>
                           {item?.status === "pending" && (
                             <Tag color="blue">{item?.status}</Tag>
@@ -154,25 +186,27 @@ const BidList = ({
                       </div>
 
                       {item?.status === "pending" && (
-                        <>
-                          <Button
-                            size="small"
-                            type="primary"
-                            disabled={!canSelectBid || !user?.permissions?.canApproveBids}
-                            onClick={() => {
-                              setSelectedBid(item._id);
-                              setOpenSelectBid(true);
-                            }}
-                          >
-                            Select Bid
-                          </Button>
-                        </>
+                        <Button
+                          className="self-center"
+                          size="small"
+                          type="primary"
+                          disabled={
+                            !canSelectBid || !user?.permissions?.canApproveBids
+                          }
+                          onClick={() => {
+                            setSelectedBid(item._id);
+                            setOpenSelectBid(true);
+                          }}
+                        >
+                          Select Bid
+                        </Button>
                       )}
 
                       {item?.status === "selected" && (
                         <>
                           <Button
                             size="small"
+                            disabled={!documentFullyApproved(data)}
                             type="primary"
                             onClick={() => handleAwardBid(item._id)}
                           >
@@ -218,7 +252,7 @@ const BidList = ({
         open={openSelectBid}
         onOk={() => {
           setOpenSelectBid(false);
-          handleSelectBid(selectedBid);
+          handleSelectBid(selectedBid, evaluationReportId);
         }}
         width={"30%"}
         okText="Save and Submit"
@@ -231,7 +265,10 @@ const BidList = ({
               Please upload the evaluation report.
             </Typography.Title>
             <Form.Item>
-              <UploadFiles label="Select the file!" />
+              <UploadEvaluationReport
+                uuid={evaluationReportId}
+                label="Select evaluation report!"
+              />
             </Form.Item>
 
             <Alert
@@ -268,6 +305,13 @@ const BidList = ({
         </Form>
       </Modal>
     );
+  }
+
+  function documentFullyApproved(document) {
+    let totIvitees = comitee;
+    let approvals = comitee?.filter((s) => s.approved);
+
+    return totIvitees?.length === approvals?.length;
   }
 };
 export default BidList;

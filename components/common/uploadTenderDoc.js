@@ -2,19 +2,14 @@ import React from "react";
 import { UploadOutlined } from "@ant-design/icons";
 import { Button, Upload, message, UploadFile } from "antd";
 
-function UploadTORs({ label, uuid, fileList, setFileList }) {
+function UploadTenderDoc({ label, uuid}) {
   const [messageApi, contextHolder] = message.useMessage();
   let url = process.env.NEXT_PUBLIC_BKEND_URL;
   let apiUsername = process.env.NEXT_PUBLIC_API_USERNAME;
   let apiPassword = process.env.NEXT_PUBLIC_API_PASSWORD;
 
   const props = {
-    onRemove: (file) => {
-      const index = fileList.indexOf(file);
-      const newFileList = fileList.slice();
-      newFileList.splice(index, 1);
-      setFileList(newFileList, uuid);
-    },
+    
     multiple: false,
     showUploadList: {
       showDownloadIcon: false,
@@ -27,7 +22,7 @@ function UploadTORs({ label, uuid, fileList, setFileList }) {
 
       return isPDF || Upload.LIST_IGNORE;
     },
-    action: `${url}/uploads/termsOfReference?id=${uuid}`,
+    action: `${url}/uploads/tenderDocs?id=${uuid}`,
     headers: {
       Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
       "Content-Type": "application/json",
@@ -58,4 +53,4 @@ function UploadTORs({ label, uuid, fileList, setFileList }) {
     </>
   );
 }
-export default UploadTORs;
+export default UploadTenderDoc;

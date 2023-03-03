@@ -229,7 +229,8 @@ export default function Tenders({ user }) {
   }
 
   function createSubmission(data) {
-    console.log(data);
+    alert(JSON.stringify(data));
+
     setLoadingRowData(true);
     fetch(`${url}/submissions/`, {
       method: "POST",
@@ -271,7 +272,15 @@ export default function Tenders({ user }) {
       });
   }
 
-  function createPO(vendor, tender, createdBy, sections, items, B1Data) {
+  function createPO(
+    vendor,
+    tender,
+    createdBy,
+    sections,
+    items,
+    B1Data,
+    signatories
+  ) {
     return fetch(`${url}/purchaseOrders/`, {
       method: "POST",
       headers: {
@@ -285,6 +294,7 @@ export default function Tenders({ user }) {
         sections,
         items,
         B1Data,
+        signatories,
       }),
     })
       .then((res) => res.json())
@@ -292,7 +302,9 @@ export default function Tenders({ user }) {
         if (res1.error) {
           messageApi.open({
             type: "error",
-            content: res1.message,
+            content: res1?.error?.message?.value
+              ? res1?.error?.message?.value
+              : res1?.message,
           });
         } else {
           loadTenders()
@@ -337,6 +349,7 @@ export default function Tenders({ user }) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          sendInvitation: true,
           newTender: tenderUpdate,
         }),
       })
@@ -369,6 +382,49 @@ export default function Tenders({ user }) {
           });
         });
     }, 2000);
+  }
+
+  function sendEvalApproval(tenderUpdate, invitees) {
+    setLoadingRowData(true);
+    tenderUpdate.invitees = invitees;
+
+    fetch(`${url}/tenders/${tenderUpdate?._id}`, {
+      method: "PUT",
+      headers: {
+        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        newTender: tenderUpdate,
+      }),
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        loadTenders()
+          .then((res) => res.json())
+          .then((res) => {
+            setDataset(res);
+            let r = res.filter((d) => {
+              return d._id === tenderUpdate?._id;
+            });
+            setRowData(r[0]);
+            setLoadingRowData(false);
+          })
+          .catch((err) => {
+            setLoadingRowData(false);
+            messageApi.open({
+              type: "error",
+              content: "Something happened! Please try again.",
+            });
+          });
+      })
+      .catch((err) => {
+        setLoadingRowData(false);
+        messageApi.open({
+          type: "error",
+          content: "Something happened! Please try again.",
+        });
+      });
   }
 
   return !rowData ? (
@@ -458,7 +514,9 @@ export default function Tenders({ user }) {
       refresh,
       createPO,
       sendInvitation,
-      user
+      user,
+      sendEvalApproval,
+      contextHolder
     )
   );
 }
@@ -471,10 +529,13 @@ function buildTender(
   refresh,
   createPO,
   sendInvitation,
-  user
+  user,
+  sendEvalApproval,
+  contextHolder
 ) {
   return (
     <div className="flex flex-col transition-opacity ease-in-out duration-1000 px-36 py-5 flex-1 space-y-3">
+      {contextHolder}
       <div className="flex flex-row items-center space-x-5">
         <Button icon={<ArrowLeftOutlined />} onClick={() => setRowData(null)}>
           Back
@@ -493,6 +554,7 @@ function buildTender(
         handleRefreshData={refresh}
         handleCreatePO={createPO}
         handleSendInvitation={sendInvitation}
+        handleSendEvalApproval={sendEvalApproval}
         user={user}
       />
     </div>

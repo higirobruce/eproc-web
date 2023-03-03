@@ -24,6 +24,7 @@ import {
   Tag,
   Upload,
 } from "antd";
+import moment from "moment/moment";
 import Image from "next/image";
 import React, { useState, useEffect, useRef } from "react";
 import ItemList from "../common/itemList";
@@ -175,23 +176,30 @@ export default function UserRequests({ user }) {
       })
         .then((res) => res.json())
         .then(async (res) => {
-          loadRequests()
-            .then((res) => res.json())
-            .then((res) => {
-              setDataLoaded(true);
-              setDataset(res);
-              setConfirmLoading(false);
-              setOpen(false);
-            })
-            .catch((err) => {
-              setConfirmLoading(false);
-              setOpen(false);
-              console.log(err);
-              messageApi.open({
-                type: "error",
-                content: "Something happened! Please try again.",
+          setDueDate(null),
+            setDescription(""),
+            setServiceCategory(""),
+            setValues([]),
+            setBudgeted(true),
+            setBudgetLine(""),
+            setTitle(""),
+            loadRequests()
+              .then((res) => res.json())
+              .then((res) => {
+                setDataLoaded(true);
+                setDataset(res);
+                setConfirmLoading(false);
+                setOpen(false);
+              })
+              .catch((err) => {
+                setConfirmLoading(false);
+                setOpen(false);
+                console.log(err);
+                messageApi.open({
+                  type: "error",
+                  content: "Something happened! Please try again.",
+                });
               });
-            });
         })
         .catch((err) => {
           setConfirmLoading(false);
@@ -509,12 +517,23 @@ export default function UserRequests({ user }) {
             handleDeclineRequest={declineRequest}
             updatingId={updatingId}
           />
+
           <Modal
             title="Create a User Purchase request"
             centered
             open={open}
             onOk={() => save()}
-            onCancel={() => setOpen(false)}
+            onCancel={() => {
+              setOpen(false);
+              setFileList([]);
+              setDueDate(null);
+              setDescription("");
+              setServiceCategory("");
+              setValues([]);
+              setBudgeted(true);
+              setBudgetLine("");
+              setTitle("");
+            }}
             okText="Save"
             okButtonProps={{ size: "small" }}
             cancelButtonProps={{ size: "small" }}
@@ -531,16 +550,18 @@ export default function UserRequests({ user }) {
               onFinish={save}
             >
               <Form.Item label="Due date">
-                <DatePicker onChange={(v, dstr) => setDueDate(dstr)} />
+                <DatePicker defaultValue={null} onChange={(v, dstr) => setDueDate(dstr)} />
               </Form.Item>
               <Form.Item label="Request title">
                 <Input
+                  value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="How would you name your request?"
                 />
               </Form.Item>
               <Form.Item label="Request Description">
                 <Input.TextArea
+                  value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Briefly describe your request"
                   showCount
@@ -549,6 +570,7 @@ export default function UserRequests({ user }) {
               </Form.Item>
               <Form.Item label="Request Category" name="serviceCategory">
                 <Select
+                  defaultValue={serviceCategory}
                   placeholder="Select service category"
                   showSearch
                   onChange={(value) => {
@@ -602,6 +624,7 @@ export default function UserRequests({ user }) {
 
                 <Form.Item label="Budget Line" name="budgetLine">
                   <Select
+                    defaultValue={budgetLine}
                     placeholder="Select service category"
                     showSearch
                     onChange={(value) => {

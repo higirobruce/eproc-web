@@ -3,7 +3,13 @@ import dynamic from "next/dynamic";
 import parse from "html-react-parser";
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 import "react-quill/dist/quill.snow.css";
-import { PaperAirplaneIcon } from "@heroicons/react/24/outline";
+import {
+  HandThumbUpIcon,
+  PaperAirplaneIcon,
+  PaperClipIcon,
+  UsersIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/outline";
 import {
   Button,
   DatePicker,
@@ -20,7 +26,6 @@ import {
   message,
   List,
   Typography,
-  Upload,
   Modal,
   Table,
   Divider,
@@ -29,20 +34,24 @@ import {
 } from "antd";
 import UploadFiles from "./uploadFiles";
 import {
-  CheckOutlined,
+  CloseCircleOutlined,
   CloseOutlined,
+  DislikeOutlined,
   FileDoneOutlined,
   FileTextOutlined,
+  LikeOutlined,
   LoadingOutlined,
   PlusOutlined,
   PrinterOutlined,
-  SendOutlined,
 } from "@ant-design/icons";
-import moment from "moment";
-import dayjs from "dayjs";
+import moment from "moment-timezone";
 import BidList from "./bidList";
 import Image from "next/image";
 import ItemsTable from "./itemsTableB1";
+import { PDFObject } from "react-pdfobject";
+import UploadBidDoc from "./uploadBidDoc";
+import { v4 } from "uuid";
+import { LockClosedIcon, LockOpenIcon } from "@heroicons/react/24/solid";
 
 let modules = {
   toolbar: [
@@ -82,6 +91,7 @@ const TenderDetails = ({
   handleCreatePO,
   handleSendInvitation,
   user,
+  handleSendEvalApproval,
 }) => {
   let url = process.env.NEXT_PUBLIC_BKEND_URL;
   let apiUsername = process.env.NEXT_PUBLIC_API_USERNAME;
@@ -146,6 +156,52 @@ const TenderDetails = ({
       }
     },
   };
+  const itemColumns = [
+    {
+      title: "Description",
+      dataIndex: "title",
+      key: "title",
+      render: (_, item) => (
+        <>
+          <Typography.Link
+            className="flex flex-row items-center space-x-2"
+            onClick={() => {
+              setPreviewAttachment(true);
+              setAttachmentId("termsOfReference/" + item?.id + ".pdf");
+            }}
+          >
+            <div>{item.title}</div>{" "}
+            <div>
+              <PaperClipIcon className="h-4 w-4" />
+            </div>
+          </Typography.Link>
+        </>
+      ),
+    },
+    {
+      title: "Quantity",
+      dataIndex: "quantity",
+      key: "quantity",
+      render: (_, item) => <>{(item?.quantity).toLocaleString()}</>,
+    },
+    {
+      title: "Unit Price (RWF)",
+      dataIndex: "estimatedUnitCost",
+      key: "estimatedUnitCost",
+      render: (_, item) => (
+        <>{(item?.estimatedUnitCost * 1).toLocaleString()}</>
+      ),
+    },
+
+    {
+      title: "Total Amount (Rwf)",
+      dataIndex: "totalAmount",
+      key: "totalAmount",
+      render: (_, item) => (
+        <>{(item?.quantity * item?.estimatedUnitCost).toLocaleString()}</>
+      ),
+    },
+  ];
   const columns = [
     {
       title: "Description",
@@ -176,6 +232,14 @@ const TenderDetails = ({
   const [signatories, setSignatories] = useState([]);
   const [docDate, setDocDate] = useState(moment());
   const [docType, setDocType] = useState("dDocument_Service");
+  const [bankName, setBankName] = useState("");
+  const [bankAccountNumber, setBankAccountNumber] = useState("");
+  const [signing, setSigning] = useState(false);
+
+  const [previewAttachment, setPreviewAttachment] = useState(false);
+  const [attachmentId, setAttachmentId] = useState("");
+  const [proposalDocId, setProposalDocId] = useState(v4());
+  const [otherDocId, setOtherDocId] = useState(v4());
 
   useEffect(() => {
     let statusCode = getRequestStatusCode(data?.status);
@@ -184,6 +248,8 @@ const TenderDetails = ({
     getUsers();
     if (data) checkSubmission();
     updateBidList();
+    setProposalDocId(v4());
+    setOtherDocId(v4());
   }, [data]);
 
   useEffect(() => {
@@ -208,7 +274,8 @@ const TenderDetails = ({
     createdBy,
     sections,
     contractStartDate,
-    contractEndDate
+    contractEndDate,
+    signatories
   ) {
     fetch(`${url}/contracts/`, {
       method: "POST",
@@ -223,14 +290,16 @@ const TenderDetails = ({
         sections,
         contractStartDate,
         contractEndDate,
+        signatories,
       }),
     })
       .then((res) => res.json())
       .then((res1) => {
+        setSignatories([]);
+        setSections([{ title: "Set section title", body: "" }]);
         updateBidList();
       })
       .catch((err) => {
-        alert(JSON.stringify(err));
         console.error(err);
         messageApi.open({
           type: "error",
@@ -353,6 +422,7 @@ const TenderDetails = ({
 
   function createSubmission(submissionData) {
     handleCreateSubmission(submissionData);
+    // alert(JSON.stringify(submissionData))
   }
 
   function submitSubmissionData() {
@@ -368,17 +438,24 @@ const TenderDetails = ({
       createdBy: user?._id,
       tender: data._id,
       warrantyDuration,
+      bankName,
+      bankAccountNumber,
+      proposalDocId,
+      otherDocId,
     };
     createSubmission(subData);
   }
 
-  function handleSelectBid(bidId) {
+  function handleSelectBid(bidId, evaluationReportId) {
     fetch(`${url}/submissions/select/${bidId}?tenderId=${data._id}`, {
       method: "POST",
       headers: {
         Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
         "Content-Type": "application/json",
       },
+      body: JSON.stringify({
+        evaluationReportId,
+      }),
     })
       .then((res) => res.json())
       .then((res) => {
@@ -401,6 +478,7 @@ const TenderDetails = ({
         setRefresh(refresh + 1);
       });
   }
+
   function sendInvitation() {
     let _data = data;
     _data.invitees = selectionComitee.map((s) => {
@@ -413,6 +491,184 @@ const TenderDetails = ({
 
     handleSendInvitation(_data);
   }
+
+  function documentFullySigned(document) {
+    let totSignatories = document?.signatories;
+    let signatures = document?.signatories?.filter((s) => s.signed);
+
+    return totSignatories?.length === signatures?.length;
+  }
+
+  function iBelongToEvaluators() {
+    let approvers = data?.invitees;
+    return approvers?.filter((a) => a.approver === user?.email)?.length >= 1;
+  }
+
+  function iHaveApprovedEvalReport() {
+    let approvers = data?.invitees;
+    return (
+      approvers?.filter((a) => a.approver === user?.email && a.approved)
+        ?.length >= 1
+    );
+  }
+
+  const buildSubmissionForm = (
+    <div className="">
+      <div className="grid md:grid-cols-2 gap-5 ">
+        <div className="flex flex-col">
+          <div>Delivery date</div>
+          <Form.Item
+            name="deliveryDate"
+            // label="Delivery date"
+            className="w-full"
+          >
+            <DatePicker
+              className="w-full"
+              onChange={(value) => setDeliveryDate(value)}
+            />
+          </Form.Item>
+        </div>
+
+        <div className="flex flex-col">
+          <div>Total Bid Amount</div>
+          <Form.Item>
+            <Form.Item name="price" noStyle>
+              <InputNumber
+                style={{ width: "100%" }}
+                addonBefore={
+                  <Form.Item noStyle name="currency">
+                    <Select
+                      onChange={(value) => setCurrency(value)}
+                      defaultValue="RWF"
+                      options={[
+                        {
+                          value: "RWF",
+                          label: "RWF",
+                        },
+                        {
+                          value: "USD",
+                          label: "USD",
+                        },
+                      ]}
+                    ></Select>
+                  </Form.Item>
+                }
+                onChange={(value) => setPrice(value)}
+              />
+            </Form.Item>
+          </Form.Item>
+        </div>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-5">
+        <div className="flex flex-col">
+          <div>Warranty (where applicable)</div>
+          <Form.Item name="warranty" noStyle>
+            <InputNumber
+              style={{ width: "100%" }}
+              addonBefore={
+                <Form.Item noStyle name="warrantyDuration">
+                  <Select
+                    onChange={(value) => setWarrantyDuration(value)}
+                    defaultValue="months"
+                    options={[
+                      {
+                        value: "days",
+                        label: "Days",
+                      },
+                      {
+                        value: "months",
+                        label: "Months",
+                      },
+                      {
+                        value: "years",
+                        label: "Years",
+                      },
+                    ]}
+                  ></Select>
+                </Form.Item>
+              }
+              onChange={(value) => setWarranty(value)}
+            />
+          </Form.Item>
+        </div>
+
+        <div className="flex flex-col">
+          <div>Discount (%)</div>
+          <Form.Item name="discount">
+            <InputNumber
+              style={{ width: "100%" }}
+              onChange={(value) => setDiscount(value)}
+            />
+          </Form.Item>
+        </div>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-5">
+        <div className="grid grid-cols-2">
+          <div className="flex flex-col">
+            <div>My proposal</div>
+            <Form.Item name="proposal">
+              <UploadBidDoc uuid={proposalDocId} />
+            </Form.Item>
+          </div>
+
+          <div className="flex flex-col">
+            <div>Other documents</div>
+            <Form.Item name="otherDocs">
+              <UploadBidDoc uuid={otherDocId} />
+            </Form.Item>
+          </div>
+        </div>
+        <div className="flex flex-col">
+          <div>Comment</div>
+          <Form.Item name="comment">
+            <Input.TextArea onChange={(e) => setComment(e.target.value)} />
+          </Form.Item>
+        </div>
+      </div>
+    </div>
+  );
+  const buildBankDetailsForm = (
+    <div className="grid md:grid-cols-2">
+      <div>
+        <div className="flex flex-col">
+          <div>My Banking details</div>
+          <Form.Item name="bankAccountNumber" noStyle>
+            <Input
+              placeholder="1892-0092-0900"
+              style={{ width: "100%" }}
+              onChange={(v) => {
+                setBankAccountNumber(v.target.value);
+              }}
+              addonBefore={
+                <Form.Item noStyle name="bankName">
+                  <Select
+                    onChange={(value) => setBankName(value)}
+                    defaultValue="BK"
+                    options={[
+                      {
+                        value: "BK",
+                        label: "Bank of Kigali",
+                      },
+                      {
+                        value: "I&M",
+                        label: "I&M Bank",
+                      },
+                      {
+                        value: "Access",
+                        label: "Access Bank",
+                      },
+                    ]}
+                  ></Select>
+                </Form.Item>
+              }
+            />
+          </Form.Item>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="flex flex-col ring-1 ring-gray-200 p-3 rounded shadow-md bg-white">
@@ -430,72 +686,14 @@ const TenderDetails = ({
                     {/* TItle */}
                     {buildTabHeader()}
 
-                    <Divider></Divider>
-
-                    <div>
-                      {data.items.map((i, index) => {
-                        return (
-                          <div
-                            className="mt-2 flex flex-row justify-between ring-1 ring-gray-200 rounded p-1"
-                            key={index}
-                          >
-                            <div>
-                              <div className="text-xs font-semibold ml-3 text-gray-800">
-                                Item {index + 1}
-                              </div>
-                              <div className="flex flex-row space-x-1 items-center">
-                                <div className="text-xs font-semibold ml-3 text-gray-500">
-                                  Description:
-                                </div>
-                                <div className="text-sm font-semibold text-gray-600">
-                                  {i?.title}
-                                </div>
-                              </div>
-                              <div className="flex flex-row space-x-1 items-center">
-                                <div className="text-xs font-semibold ml-3 text-gray-500">
-                                  Quantity:
-                                </div>
-                                <div className="text-sm font-semibold text-gray-600">
-                                  {i?.quantity}
-                                </div>
-                              </div>
-
-                              {user?.userType !== "VENDOR" && (
-                                <div className="flex flex-row space-x-1 items-center">
-                                  <div className="text-xs font-semibold ml-3 text-gray-500">
-                                    Estimated cost:
-                                  </div>
-                                  <div className="text-sm font-semibold text-gray-600">
-                                    {i?.currency}{" "}
-                                    {(
-                                      i?.estimatedUnitCost * i?.quantity
-                                    ).toLocaleString()}
-                                  </div>
-                                </div>
-                              )}
-
-                              {/* {po &&
-                              buildConfirmDeliveryForm(
-                                po,
-                                handleGetProgress,
-                                handleUpdateProgress,
-                                progress
-                              )} */}
-                            </div>
-
-                            <div className="self-center">
-                              <Popover content="TOR">
-                                <Image
-                                  className=" cursor-pointer hover:opacity-60"
-                                  width={40}
-                                  height={40}
-                                  src="/icons/icons8-file-64.png"
-                                />
-                              </Popover>
-                            </div>
-                          </div>
-                        );
-                      })}
+                    <div className="">
+                      <Table
+                        size="small"
+                        dataSource={data.items}
+                        columns={itemColumns}
+                        bordered
+                        pagination={false}
+                      />
                     </div>
 
                     {user?.userType === "VENDOR" &&
@@ -506,119 +704,18 @@ const TenderDetails = ({
                           <Form onFinish={submitSubmissionData}>
                             <div className="ml-3 mt-5 items-center">
                               <Divider></Divider>
+
                               <Typography.Title className="pb-4" level={5}>
                                 Submit Proposal
                               </Typography.Title>
-                              <Form.Item
-                                name="proposal"
-                                label="My proposal"
-                                // rules={[
-                                //   {
-                                //     required: true,
-                                //     message: "Please attach the TORs as a document!",
-                                //   },
-                                // ]}
-                              >
-                                <UploadFiles {...props} />
-                              </Form.Item>
 
-                              <Form.Item
-                                name="otherDocs"
-                                label="Other Supporting documents"
-                                // rules={[
-                                //   {
-                                //     required: true,
-                                //     message: "Please attach the TORs as a document!",
-                                //   },
-                                // ]}
-                              >
-                                <UploadFiles {...props} />
-                              </Form.Item>
-                              <Form.Item
-                                name="deliveryDate"
-                                label="Delivery date"
-                              >
-                                <DatePicker
-                                  onChange={(value) => setDeliveryDate(value)}
-                                />
-                              </Form.Item>
+                              <div className="grid grid-cols-2 gap-20">
+                                {/* Bid information */}
+                                {buildSubmissionForm}
 
-                              <Form.Item label="Total Bid Amount">
-                                <Input.Group compact>
-                                  <Form.Item noStyle name="currency">
-                                    <Select
-                                      onChange={(value) => setCurrency(value)}
-                                      defaultValue="RWF"
-                                      options={[
-                                        {
-                                          value: "RWF",
-                                          label: "RWF",
-                                        },
-                                        {
-                                          value: "USD",
-                                          label: "USD",
-                                        },
-                                      ]}
-                                    ></Select>
-                                  </Form.Item>
-                                  <Form.Item name="price" noStyle>
-                                    <InputNumber
-                                      onChange={(value) => setPrice(value)}
-                                    />
-                                  </Form.Item>
-                                </Input.Group>
-                              </Form.Item>
-
-                              <Form.Item
-                                name="warranty"
-                                label="Warranty - where applicable"
-                              >
-                                <Input.Group compact>
-                                  <Form.Item noStyle name="warrantyDuration">
-                                    <Select
-                                      onChange={(value) =>
-                                        setWarrantyDuration(value)
-                                      }
-                                      defaultValue="months"
-                                      options={[
-                                        {
-                                          value: "days",
-                                          label: "Days",
-                                        },
-                                        {
-                                          value: "months",
-                                          label: "Months",
-                                        },
-                                        {
-                                          value: "years",
-                                          label: "Years",
-                                        },
-                                      ]}
-                                    ></Select>
-                                  </Form.Item>
-                                  <Form.Item name="warranty" noStyle>
-                                    <InputNumber
-                                      onChange={(value) => setWarranty(value)}
-                                    />
-                                  </Form.Item>
-                                </Input.Group>
-                              </Form.Item>
-
-                              <Form.Item name="discount" label="Discount (%)">
-                                <InputNumber
-                                  onChange={(value) => setDiscount(value)}
-                                />
-                              </Form.Item>
-
-                              <Form.Item
-                                name="comment"
-                                label="Any other comment"
-                              >
-                                <Input.TextArea
-                                  className="w-56"
-                                  onChange={(e) => setComment(e.target.value)}
-                                />
-                              </Form.Item>
+                                {/* Bank details */}
+                                {buildBankDetailsForm}
+                              </div>
                             </div>
                             <div className="flex flex-row space-x-1 ml-3 mt-5 items-center">
                               <Form.Item>
@@ -645,6 +742,94 @@ const TenderDetails = ({
                 <Tabs.TabPane tab="Bidding" key="2">
                   <div className="flex flex-col space-y-5 p-3">
                     {buildTabHeader()}
+                    {/* Evaluators section */}
+                    {data?.invitees && (
+                      <div className="ml-3 flex flex-col space-y-2">
+                        <div className="flex flex-row space-x-1 items-center border border-b-2 border-gray-600">
+                          <UsersIcon className="h-5" /> <div>Evaluators</div>
+                        </div>
+                        <div className="flex flex-row space-x-2">
+                          <a
+                            href="#"
+                            onClick={() => {
+                              setAttachmentId(
+                                `evaluationReports/${data?.evaluationReportId}.pdf`
+                              );
+                              setPreviewAttachment(true);
+                            }}
+                          >
+                            <FileTextOutlined /> Evaluation report
+                          </a>
+                          {
+                          iBelongToEvaluators() &&
+                            !iHaveApprovedEvalReport() && 
+                            (
+                              <>
+                                <Button
+                                  size="small"
+                                  type="primary"
+                                  icon={<LikeOutlined />}
+                                  onClick={() => {
+                                    let invitees = [...data?.invitees];
+                                    let inv = invitees?.filter(
+                                      (i) => i?.approver === user?.email
+                                    );
+                                    let invIndex = invitees?.filter(
+                                      (i, index) => index
+                                    );
+                                    let objToUpdate =
+                                      inv?.length >= 1 ? inv[0] : {};
+                                    objToUpdate.approved = true;
+                                    objToUpdate.approvedAt = moment().toDate();
+                                    invitees[invIndex] = objToUpdate
+                                    handleSendEvalApproval(data, invitees)
+                                  }}
+                                >
+                                  Approve
+                                </Button>
+                                <Button
+                                  size="small"
+                                  type="text"
+                                  danger
+                                  icon={<DislikeOutlined />}
+                                >
+                                  Reject
+                                </Button>
+                              </>
+                            )}
+                        </div>
+                        <div className="flex flex-row space-x-3 text-gray-600">
+                          {data?.invitees?.map((c) => {
+                            return (
+                              <div className="flex flex-row items-center space-x-1">
+                                <div>
+                                  {c?.approved ? (
+                                    <Popover
+                                      content={`approved: ${moment(
+                                        c?.approvedAt
+                                      ).format("DD MMM YYYY")} at ${moment(
+                                        c?.approvedAt
+                                      )
+                                        .tz("Africa/Kigali")
+                                        .format("h:mm a z z")}`}
+                                    >
+                                      <LockClosedIcon className="h-5 text-green-500" />
+                                    </Popover>
+                                  ) : (
+                                    <Popover content="Approval still pending">
+                                      <LockOpenIcon className="h-5 text-yellow-500" />
+                                    </Popover>
+                                  )}
+                                </div>
+                                <div className="flex flex-col text-gray-600 text-sm">
+                                  <div>{c?.approver}</div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                     {!data?.invitationSent && (
                       <div className="ml-3 flex self-center">
                         <div className="">
@@ -700,6 +885,10 @@ const TenderDetails = ({
                         handleSetBidList={setBidList}
                         comitee={data?.invitees}
                         user={user}
+                        // previewAttachment={previewAttachment}
+                        setPreviewAttachment={setPreviewAttachment}
+                        // attachmentId={attachmentId}
+                        setAttachmentId={setAttachmentId}
                       />
                     </div>
                   </div>
@@ -809,24 +998,29 @@ const TenderDetails = ({
                                                 </Form.Item>
                                               )}
 
-                                              {contractCreated && (
-                                                <Form.Item>
-                                                  <Button
-                                                    // size="small"
-                                                    type="primary"
-                                                    icon={<FileDoneOutlined />}
-                                                    onClick={() => {
-                                                      setOpenCreatePO(true);
-                                                      setVendor(
-                                                        item?.createdBy
-                                                      );
-                                                      setTendor(item?.tender);
-                                                    }}
-                                                  >
-                                                    Create PO
-                                                  </Button>
-                                                </Form.Item>
-                                              )}
+                                              {contractCreated &&
+                                                documentFullySigned(
+                                                  contract
+                                                ) && (
+                                                  <Form.Item>
+                                                    <Button
+                                                      // size="small"
+                                                      type="primary"
+                                                      icon={
+                                                        <FileDoneOutlined />
+                                                      }
+                                                      onClick={() => {
+                                                        setOpenCreatePO(true);
+                                                        setVendor(
+                                                          item?.createdBy
+                                                        );
+                                                        setTendor(item?.tender);
+                                                      }}
+                                                    >
+                                                      Create PO
+                                                    </Button>
+                                                  </Form.Item>
+                                                )}
                                             </Form>
                                           </div>
                                         </div>
@@ -1025,6 +1219,7 @@ const TenderDetails = ({
       {viewPOMOdal()}
       {createContractMOdal()}
       {viewContractMOdal()}
+      {previewAttachmentModal()}
     </div>
   );
 
@@ -1054,7 +1249,8 @@ const TenderDetails = ({
             user?._id,
             sections,
             items,
-            B1Data
+            B1Data,
+            signatories
           );
           setOpenCreatePO(false);
         }}
@@ -1067,11 +1263,15 @@ const TenderDetails = ({
           <Typography.Title level={4}>
             PURCHASE ORDER: {vendor?.companyName}
           </Typography.Title>
+          {/* header */}
           <div className="grid grid-cols-2 w-1/2">
+            {/* PO Document date */}
             <div>
               <div>Document date</div>
               <DatePicker onChange={(v, dstr) => setDocDate(dstr)} />
             </div>
+
+            {/* PO type */}
             <div>
               <div>PO Type</div>
               <Select
@@ -1081,6 +1281,313 @@ const TenderDetails = ({
                   { value: "dDocument_Service", label: "Service" },
                   { value: "dDocument_Item", label: "Item" },
                 ]}
+              />
+            </div>
+          </div>
+
+          {/* Parties */}
+          <div className="grid grid-cols-2 gap-5">
+            <div className="flex flex-col ring-1 ring-gray-300 rounded p-5 space-y-3">
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Company Name</div>
+                </Typography.Text>
+                <Typography.Text strong>Irembo ltd</Typography.Text>
+              </div>
+
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Company Address</div>
+                </Typography.Text>
+                <Typography.Text strong>
+                  Irembo Campass Nyarutarama KG 9 Ave
+                </Typography.Text>
+              </div>
+
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Company TIN no.</div>
+                </Typography.Text>
+                <Typography.Text strong>102911562</Typography.Text>
+              </div>
+
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Hereinafter refferd to as</div>
+                </Typography.Text>
+                <Typography.Text strong>Sender</Typography.Text>
+              </div>
+            </div>
+
+            <div className="flex flex-col ring-1 ring-gray-300 rounded p-5 space-y-3">
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Company Name</div>
+                </Typography.Text>
+                <Typography.Text strong>{vendor?.companyName}</Typography.Text>
+              </div>
+
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Company Address</div>
+                </Typography.Text>
+                <Typography.Text strong>
+                  {vendor?.building}-{vendor?.street}-{vendor?.avenue}
+                </Typography.Text>
+              </div>
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Company TIN no.</div>
+                </Typography.Text>
+                <Typography.Text strong>{vendor?.tin}</Typography.Text>
+              </div>
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Hereinafter refferd to as</div>
+                </Typography.Text>
+                <Typography.Text strong>Receiver</Typography.Text>
+              </div>
+            </div>
+          </div>
+
+          {/* PO Details */}
+          <div className="flex flex-col space-y-5">
+            <ItemsTable dataSource={items} setDataSource={setItems} />
+            <Typography.Title level={5} className="self-end">
+              Total (Tax Excl.): {totalVal?.toLocaleString()} RWF
+            </Typography.Title>
+            <Typography.Title level={5} className="self-end">
+              Total Tax: {totalTax?.toLocaleString()} RWF
+            </Typography.Title>
+            <Typography.Title level={4} className="self-end">
+              Gross Total: {grossTotal?.toLocaleString()} RWF
+            </Typography.Title>
+
+            {/* Sections */}
+            <div className="flex flex-col space-y-5">
+              <Typography.Title level={4}>Contents</Typography.Title>
+
+              {sections.map((s, index) => {
+                let section = sections[index]
+                  ? sections[index]
+                  : { title: "", body: "" };
+                let _sections = [...sections];
+                return (
+                  <>
+                    <div className="flex flex-row justify-between items-center">
+                      <Typography.Title
+                        level={5}
+                        editable={{
+                          onChange: (e) => {
+                            section.title = e;
+                            _sections[index]
+                              ? (_sections[index] = section)
+                              : _sections.push(section);
+                            setSections(_sections);
+                          },
+                          text: s.title,
+                        }}
+                      >
+                        {s.title}
+                      </Typography.Title>
+                      <Popconfirm
+                        onConfirm={() => {
+                          let _sections = [...sections];
+                          _sections.splice(index, 1);
+                          setSections(_sections);
+                        }}
+                        title="You can not undo this!"
+                      >
+                        <div>
+                          <CloseCircleOutlined className="h-3 text-red-400 cursor-pointer" />
+                        </div>
+                      </Popconfirm>
+                    </div>
+                    <ReactQuill
+                      theme="snow"
+                      modules={modules}
+                      formats={formats}
+                      onChange={(value) => {
+                        section.body = value;
+                        _sections[index]
+                          ? (_sections[index] = section)
+                          : _sections.push(section);
+                        setSections(_sections);
+                      }}
+                    />
+                  </>
+                );
+              })}
+
+              <Button
+                icon={<PlusOutlined />}
+                onClick={() => {
+                  let _sections = [...sections];
+                  _sections.push({
+                    title: `Set section ${sections?.length + 1} Title`,
+                    body: "",
+                  });
+                  setSections(_sections);
+                }}
+              >
+                Add section
+              </Button>
+            </div>
+
+            {/* Signatories */}
+            <div className="grid grid-cols-3 gap-5">
+              {signatories.map((s, index) => {
+                return (
+                  <div
+                    key={index}
+                    className="flex flex-col ring-1 ring-gray-300 rounded py-5"
+                  >
+                    <div className="flex flex-row items-start justify-between">
+                      <div className="flex flex-col space-y-3 px-5">
+                        <div className="flex flex-col space-y-1">
+                          <Typography.Text type="secondary">
+                            <div className="text-xs">On Behalf of</div>
+                          </Typography.Text>
+                          <Typography.Text
+                            editable={{
+                              text: s.onBehalfOf,
+                              onChange: (e) => {
+                                let _signatories = [...signatories];
+                                _signatories[index].onBehalfOf = e;
+                                setSignatories(_signatories);
+                              },
+                            }}
+                          >
+                            {s.onBehalfOf}
+                          </Typography.Text>
+                        </div>
+
+                        <div className="flex flex-col space-y-1">
+                          <Typography.Text type="secondary">
+                            <div className="text-xs">Representative Title</div>
+                          </Typography.Text>
+                          <Typography.Text
+                            editable={{
+                              text: s.title,
+                              onChange: (e) => {
+                                let _signatories = [...signatories];
+                                _signatories[index].title = e;
+                                setSignatories(_signatories);
+                              },
+                            }}
+                          >
+                            {s.title}
+                          </Typography.Text>
+                        </div>
+
+                        <div className="flex flex-col space-y-1">
+                          <Typography.Text type="secondary">
+                            <div className="text-xs">
+                              Company Representative
+                            </div>
+                          </Typography.Text>
+                          <Typography.Text
+                            editable={{
+                              text: s.names,
+                              onChange: (e) => {
+                                let _signatories = [...signatories];
+                                _signatories[index].names = e;
+                                setSignatories(_signatories);
+                              },
+                            }}
+                          >
+                            {s.names}
+                          </Typography.Text>
+                        </div>
+
+                        <div className="flex flex-col space-y-1">
+                          <Typography.Text type="secondary">
+                            <div className="text-xs">Email</div>
+                          </Typography.Text>
+                          <Typography.Text
+                            editable={{
+                              text: s.email,
+                              onChange: (e) => {
+                                let _signatories = [...signatories];
+                                _signatories[index].email = e;
+                                setSignatories(_signatories);
+                              },
+                            }}
+                          >
+                            {s.email}
+                          </Typography.Text>
+                        </div>
+                      </div>
+                      <div
+                        onClick={() => {
+                          let _signatories = [...signatories];
+                          _signatories.splice(index, 1);
+                          setSignatories(_signatories);
+                        }}
+                      >
+                        <XMarkIcon className="h-3 px-5 cursor-pointer" />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+              <div
+                onClick={() => {
+                  let signs = [...signatories];
+                  signs.push({});
+                  setSignatories(signs);
+                }}
+                className="flex flex-col ring-1 ring-gray-300 rounded pt-5 space-y-3 items-center justify-center cursor-pointer hover:bg-gray-50"
+              >
+                <Image
+                  src="/icons/icons8-stamp-64.png"
+                  width={40}
+                  height={40}
+                />
+                <div>Add new Signatory</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Modal>
+    );
+  }
+
+  function createContractMOdal() {
+    return (
+      <Modal
+        title="New Contract"
+        centered
+        open={openCreateContract}
+        onOk={() => {
+          handleCreateContract(
+            vendor?._id,
+            tendor?._id,
+            user?._id,
+            sections,
+            contractStartDate,
+            contractEndDate,
+            signatories
+          );
+          setOpenCreateContract(false);
+        }}
+        okText="Save and Submit"
+        onCancel={() => setOpenCreateContract(false)}
+        width={"80%"}
+        bodyStyle={{ maxHeight: "700px", overflow: "scroll" }}
+      >
+        <div className="space-y-10 px-20 py-5">
+          <Typography.Title level={4}>
+            CONTRACTOR: {vendor?.companyName}
+          </Typography.Title>
+          <div className="grid grid-cols-2 w-1/2">
+            <div>
+              <div>Contract validity</div>
+              <DatePicker.RangePicker
+                onChange={(v, dates) => {
+                  setContractStartDate(dates[0]);
+                  setContractEndDate(dates[1]);
+                }}
               />
             </div>
           </div>
@@ -1148,19 +1655,9 @@ const TenderDetails = ({
             </div>
           </div>
 
+          {/* Sections */}
           <div className="flex flex-col space-y-5">
-            <ItemsTable dataSource={items} setDataSource={setItems} />
-            <Typography.Title level={5} className="self-end">
-              Total (Tax Excl.): {totalVal?.toLocaleString()} RWF
-            </Typography.Title>
-            <Typography.Title level={5} className="self-end">
-              Total Tax: {totalTax?.toLocaleString()} RWF
-            </Typography.Title>
-            <Typography.Title level={4} className="self-end">
-              Gross Total: {grossTotal?.toLocaleString()} RWF
-            </Typography.Title>
-
-            <Typography.Title level={4}>Details</Typography.Title>
+            <Typography.Title level={4}>Contents</Typography.Title>
 
             {sections.map((s, index) => {
               let section = sections[index]
@@ -1169,21 +1666,35 @@ const TenderDetails = ({
               let _sections = [...sections];
               return (
                 <>
-                  <Typography.Title
-                    level={5}
-                    editable={{
-                      onChange: (e) => {
-                        section.title = e;
-                        _sections[index]
-                          ? (_sections[index] = section)
-                          : _sections.push(section);
+                  <div className="flex flex-row justify-between items-center">
+                    <Typography.Title
+                      level={5}
+                      editable={{
+                        onChange: (e) => {
+                          section.title = e;
+                          _sections[index]
+                            ? (_sections[index] = section)
+                            : _sections.push(section);
+                          setSections(_sections);
+                        },
+                        text: s.title,
+                      }}
+                    >
+                      {s.title}
+                    </Typography.Title>
+                    <Popconfirm
+                      onConfirm={() => {
+                        let _sections = [...sections];
+                        _sections.splice(index, 1);
                         setSections(_sections);
-                      },
-                      text: s.title,
-                    }}
-                  >
-                    {s.title}
-                  </Typography.Title>
+                      }}
+                      title="You can not undo this!"
+                    >
+                      <div>
+                        <CloseCircleOutlined className="h-3 text-red-400 cursor-pointer" />
+                      </div>
+                    </Popconfirm>
+                  </div>
                   <ReactQuill
                     theme="snow"
                     modules={modules}
@@ -1214,10 +1725,8 @@ const TenderDetails = ({
               Add section
             </Button>
           </div>
-
-          <div className="text-lg font-semibold">Reviews</div>
           {/* Initiator and Reviewers */}
-          <div className="grid grid-cols-3 gap-5">
+          {/* <div className="grid grid-cols-3 gap-5">
             <div className="flex flex-col ring-1 ring-gray-300 rounded py-5 space-y-3">
               <div className="px-5">
                 <Typography.Text type="secondary">Initiated by</Typography.Text>
@@ -1237,51 +1746,98 @@ const TenderDetails = ({
                 </div>
               </div>
             </div>
-          </div>
-
-          <div className="text-lg font-semibold">Signatories</div>
+          </div> */}
 
           {/* Signatories */}
           <div className="grid grid-cols-3 gap-5">
-            {signatories.map((s) => {
+            {signatories.map((s, index) => {
               return (
                 <div
-                  key={s}
-                  className="flex flex-col ring-1 ring-gray-300 rounded py-5 space-y-3"
+                  key={index}
+                  className="flex flex-col ring-1 ring-gray-300 rounded py-5"
                 >
-                  <div className="flex flex-col space-y-3 px-5">
-                    <div className="flex flex-col space-y-1">
-                      <Typography.Text type="secondary">
-                        <div className="text-xs">On Behalf of</div>
-                      </Typography.Text>
-                      <Typography.Text editable>Irembo ltd</Typography.Text>
-                    </div>
+                  <div className="flex flex-row items-start justify-between">
+                    <div className="flex flex-col space-y-3 px-5">
+                      <div className="flex flex-col space-y-1">
+                        <Typography.Text type="secondary">
+                          <div className="text-xs">On Behalf of</div>
+                        </Typography.Text>
+                        <Typography.Text
+                          editable={{
+                            text: s.onBehalfOf,
+                            onChange: (e) => {
+                              let _signatories = [...signatories];
+                              _signatories[index].onBehalfOf = e;
+                              setSignatories(_signatories);
+                            },
+                          }}
+                        >
+                          {s.onBehalfOf}
+                        </Typography.Text>
+                      </div>
 
-                    <div className="flex flex-col space-y-1">
-                      <Typography.Text type="secondary">
-                        <div className="text-xs">Representative Title</div>
-                      </Typography.Text>
-                      <Typography.Text editable>
-                        Procurement Manager
-                      </Typography.Text>
-                    </div>
+                      <div className="flex flex-col space-y-1">
+                        <Typography.Text type="secondary">
+                          <div className="text-xs">Representative Title</div>
+                        </Typography.Text>
+                        <Typography.Text
+                          editable={{
+                            text: s.title,
+                            onChange: (e) => {
+                              let _signatories = [...signatories];
+                              _signatories[index].title = e;
+                              setSignatories(_signatories);
+                            },
+                          }}
+                        >
+                          {s.title}
+                        </Typography.Text>
+                      </div>
 
-                    <div className="flex flex-col space-y-1">
-                      <Typography.Text type="secondary">
-                        <div className="text-xs">Company Representative</div>
-                      </Typography.Text>
-                      <Typography.Text editable>
-                        Manirakiza Edouard
-                      </Typography.Text>
-                    </div>
+                      <div className="flex flex-col space-y-1">
+                        <Typography.Text type="secondary">
+                          <div className="text-xs">Company Representative</div>
+                        </Typography.Text>
+                        <Typography.Text
+                          editable={{
+                            text: s.names,
+                            onChange: (e) => {
+                              let _signatories = [...signatories];
+                              _signatories[index].names = e;
+                              setSignatories(_signatories);
+                            },
+                          }}
+                        >
+                          {s.names}
+                        </Typography.Text>
+                      </div>
 
-                    <div className="flex flex-col space-y-1">
-                      <Typography.Text type="secondary">
-                        <div className="text-xs">Email</div>
-                      </Typography.Text>
-                      <Typography.Text editable>
-                        e.manirakiza@irembo.com
-                      </Typography.Text>
+                      <div className="flex flex-col space-y-1">
+                        <Typography.Text type="secondary">
+                          <div className="text-xs">Email</div>
+                        </Typography.Text>
+                        <Typography.Text
+                          editable={{
+                            text: s.email,
+                            onChange: (e) => {
+                              let _signatories = [...signatories];
+                              _signatories[index].email = e;
+                              setSignatories(_signatories);
+                            },
+                          }}
+                        >
+                          {s.email}
+                        </Typography.Text>
+                      </div>
+                    </div>
+                    <div
+                      onClick={() => {
+                        let _signatories = [...signatories];
+                        _signatories.splice(index, 1);
+                        setSignatories(_signatories);
+                      }}
+                    >
+                      <XMarkIcon className="h-3 px-5 cursor-pointer" />
                     </div>
                   </div>
                 </div>
@@ -1290,7 +1846,7 @@ const TenderDetails = ({
             <div
               onClick={() => {
                 let signs = [...signatories];
-                signs.push([]);
+                signs.push({});
                 setSignatories(signs);
               }}
               className="flex flex-col ring-1 ring-gray-300 rounded pt-5 space-y-3 items-center justify-center cursor-pointer hover:bg-gray-50"
@@ -1423,297 +1979,102 @@ const TenderDetails = ({
             })}
           </div>
 
-          <div className="grid grid-cols-3 gap-5">
-            <div className="flex flex-col ring-1 ring-gray-300 rounded pt-5 space-y-3">
-              <div className="px-5">
-                <div className="flex flex-col">
-                  <Typography.Text type="secondary">
-                    <div className="text-xs">On Behalf of</div>
-                  </Typography.Text>
-                  <Typography.Text strong>Irembo ltd</Typography.Text>
-                </div>
-
-                <div className="flex flex-col">
-                  <Typography.Text type="secondary">
-                    <div className="text-xs">Representative Title</div>
-                  </Typography.Text>
-                  <Typography.Text strong>Procurement Manager</Typography.Text>
-                </div>
-
-                <div className="flex flex-col">
-                  <Typography.Text type="secondary">
-                    <div className="text-xs">Company Representative</div>
-                  </Typography.Text>
-                  <Typography.Text strong>Manirakiza Edouard</Typography.Text>
-                </div>
-
-                <div className="flex flex-col">
-                  <Typography.Text type="secondary">
-                    <div className="text-xs">Email</div>
-                  </Typography.Text>
-                  <Typography.Text strong>
-                    e.manirakiza@irembo.com
-                  </Typography.Text>
-                </div>
-              </div>
-
-              <Popconfirm title="Confirm PO Signature">
-                <div className="flex flex-row justify-center space-x-5 items-center border-t-2 bg-violet-50 p-5 cursor-pointer hover:opacity-75">
-                  <Image
-                    width={40}
-                    height={40}
-                    src="/icons/icons8-stamp-64.png"
-                  />
-
-                  <div className="text-violet-400 text-lg">
-                    Sign with one click
-                  </div>
-                </div>
-              </Popconfirm>
-            </div>
-          </div>
-        </div>
-      </Modal>
-    );
-  }
-
-  function createContractMOdal() {
-    return (
-      <Modal
-        title="New Contract"
-        centered
-        open={openCreateContract}
-        onOk={() => {
-          handleCreateContract(
-            vendor?._id,
-            tendor?._id,
-            user?._id,
-            sections,
-            contractStartDate,
-            contractEndDate
-          );
-          setOpenCreateContract(false);
-        }}
-        okText="Save and Submit"
-        onCancel={() => setOpenCreateContract(false)}
-        width={"80%"}
-        bodyStyle={{ maxHeight: "700px", overflow: "scroll" }}
-      >
-        <div className="space-y-10 px-20 py-5">
-          <Typography.Title level={4}>
-            CONTRACTOR: {vendor?.companyName}
-          </Typography.Title>
-          <div className="grid grid-cols-2 w-1/2">
-            <div>
-              <div>Contract validity</div>
-              <DatePicker.RangePicker
-                onChange={(v, dates) => {
-                  setContractStartDate(dates[0]);
-                  setContractEndDate(dates[1]);
-                }}
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-5">
-            <div className="flex flex-col ring-1 ring-gray-300 rounded p-5 space-y-3">
-              <div className="flex flex-col">
-                <Typography.Text type="secondary">
-                  <div className="text-xs">Company Name</div>
-                </Typography.Text>
-                <Typography.Text strong>Irembo ltd</Typography.Text>
-              </div>
-
-              <div className="flex flex-col">
-                <Typography.Text type="secondary">
-                  <div className="text-xs">Company Address</div>
-                </Typography.Text>
-                <Typography.Text strong>
-                  Irembo Campass Nyarutarama KG 9 Ave
-                </Typography.Text>
-              </div>
-
-              <div className="flex flex-col">
-                <Typography.Text type="secondary">
-                  <div className="text-xs">Company TIN no.</div>
-                </Typography.Text>
-                <Typography.Text strong>102911562</Typography.Text>
-              </div>
-
-              <div className="flex flex-col">
-                <Typography.Text type="secondary">
-                  <div className="text-xs">Hereinafter refferd to as</div>
-                </Typography.Text>
-                <Typography.Text strong>Sender</Typography.Text>
-              </div>
-            </div>
-
-            <div className="flex flex-col ring-1 ring-gray-300 rounded p-5 space-y-3">
-              <div className="flex flex-col">
-                <Typography.Text type="secondary">
-                  <div className="text-xs">Company Name</div>
-                </Typography.Text>
-                <Typography.Text strong>{vendor?.companyName}</Typography.Text>
-              </div>
-
-              <div className="flex flex-col">
-                <Typography.Text type="secondary">
-                  <div className="text-xs">Company Address</div>
-                </Typography.Text>
-                <Typography.Text strong>
-                  {vendor?.building}-{vendor?.street}-{vendor?.avenue}
-                </Typography.Text>
-              </div>
-              <div className="flex flex-col">
-                <Typography.Text type="secondary">
-                  <div className="text-xs">Company TIN no.</div>
-                </Typography.Text>
-                <Typography.Text strong>{vendor?.tin}</Typography.Text>
-              </div>
-              <div className="flex flex-col">
-                <Typography.Text type="secondary">
-                  <div className="text-xs">Hereinafter refferd to as</div>
-                </Typography.Text>
-                <Typography.Text strong>Receiver</Typography.Text>
-              </div>
-            </div>
-          </div>
-
-          {/* Sections */}
-          <div className="flex flex-col space-y-5">
-            <Typography.Title level={4}>Details</Typography.Title>
-
-            {sections.map((s, index) => {
-              let section = sections[index]
-                ? sections[index]
-                : { title: "", body: "" };
-              let _sections = [...sections];
-              return (
-                <>
-                  <Typography.Title
-                    level={5}
-                    editable={{
-                      onChange: (e) => {
-                        section.title = e;
-                        _sections[index]
-                          ? (_sections[index] = section)
-                          : _sections.push(section);
-                        setSections(_sections);
-                      },
-                      text: s.title,
-                    }}
-                  >
-                    {s.title}
-                  </Typography.Title>
-                  <ReactQuill
-                    theme="snow"
-                    modules={modules}
-                    formats={formats}
-                    onChange={(value) => {
-                      section.body = value;
-                      _sections[index]
-                        ? (_sections[index] = section)
-                        : _sections.push(section);
-                      setSections(_sections);
-                    }}
-                  />
-                </>
-              );
-            })}
-
-            <Button
-              icon={<PlusOutlined />}
-              onClick={() => {
-                let _sections = [...sections];
-                _sections.push({
-                  title: `Set section ${sections?.length + 1} Title`,
-                  body: "",
-                });
-                setSections(_sections);
-              }}
-            >
-              Add section
-            </Button>
-          </div>
-          {/* Initiator and Reviewers */}
-          <div className="grid grid-cols-3 gap-5">
-            <div className="flex flex-col ring-1 ring-gray-300 rounded py-5 space-y-3">
-              <div className="px-5">
-                <Typography.Text type="secondary">Initiated by</Typography.Text>
-                <div className="flex flex-col">
-                  <Typography.Text strong>
-                    e.manirakiza@irembo.com
-                  </Typography.Text>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex flex-col ring-1 ring-gray-300 rounded py-5 space-y-3">
-              <div className="px-5">
-                <Typography.Text type="secondary">Reviewed by</Typography.Text>
-                <div className="flex flex-col">
-                  <Typography.Text strong>{user?.email}</Typography.Text>
-                </div>
-              </div>
-            </div>
-          </div>
-
           {/* Signatories */}
           <div className="grid grid-cols-3 gap-5">
-            {signatories.map((s) => {
+            {po?.signatories?.map((s, index) => {
               return (
-                <div
-                  key={s}
-                  className="flex flex-col ring-1 ring-gray-300 rounded py-5 space-y-3"
-                >
-                  <div className="flex flex-col space-y-3 px-5">
-                    <div className="flex flex-col space-y-1">
+                <div className="flex flex-col ring-1 ring-gray-300 rounded pt-5 space-y-3 justify-between">
+                  <div className="px-5 flex flex-col space-y-6">
+                    <div className="flex flex-col">
                       <Typography.Text type="secondary">
                         <div className="text-xs">On Behalf of</div>
                       </Typography.Text>
-                      <Typography.Text editable>Irembo ltd</Typography.Text>
+                      <Typography.Text strong>{s.onBehalfOf}</Typography.Text>
                     </div>
 
-                    <div className="flex flex-col space-y-1">
+                    <div className="flex flex-col">
                       <Typography.Text type="secondary">
                         <div className="text-xs">Representative Title</div>
                       </Typography.Text>
-                      <Typography.Text editable>
-                        Procurement Manager
-                      </Typography.Text>
+                      <Typography.Text strong>{s.title}</Typography.Text>
                     </div>
 
-                    <div className="flex flex-col space-y-1">
+                    <div className="flex flex-col">
                       <Typography.Text type="secondary">
                         <div className="text-xs">Company Representative</div>
                       </Typography.Text>
-                      <Typography.Text editable>
-                        Manirakiza Edouard
-                      </Typography.Text>
+                      <Typography.Text strong>{s.names}</Typography.Text>
                     </div>
 
-                    <div className="flex flex-col space-y-1">
+                    <div className="flex flex-col">
                       <Typography.Text type="secondary">
                         <div className="text-xs">Email</div>
                       </Typography.Text>
-                      <Typography.Text editable>
-                        e.manirakiza@irembo.com
-                      </Typography.Text>
+                      <Typography.Text strong>{s.email}</Typography.Text>
                     </div>
+
+                    {s.signed && (
+                      <div className="flex flex-col">
+                        <Typography.Text type="secondary">
+                          <div className="text-xs">IP address</div>
+                        </Typography.Text>
+                        <Typography.Text strong>{s?.ipAddress}</Typography.Text>
+                      </div>
+                    )}
                   </div>
+                  {s?.signed && (
+                    <div className="flex flex-row justify-center space-x-10 items-center border-t-2 bg-violet-50 p-5">
+                      <Image
+                        width={40}
+                        height={40}
+                        src="/icons/icons8-stamp-64.png"
+                      />
+
+                      <div className="text-violet-500 flex flex-col">
+                        <div className="text-lg">Signed digitaly</div>
+                        <div>{moment(s.signedAt).format("DD MMM YYYY")} at</div>
+                        <div>
+                          {moment(s.signedAt)
+                            .tz("Africa/Kigali")
+                            .format("h:mm a z")}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {user?.email === s?.email && !s?.signed && (
+                    <Popconfirm
+                      title="Confirm Contract Signature"
+                      onConfirm={() => handleSignPo(s, index)}
+                    >
+                      <div className="flex flex-row justify-center space-x-5 items-center border-t-2 bg-violet-50 p-5 cursor-pointer hover:opacity-75">
+                        <Image
+                          width={40}
+                          height={40}
+                          src="/icons/icons8-stamp-64.png"
+                        />
+
+                        <div className="text-violet-400 text-lg">
+                          Sign with one click
+                        </div>
+                      </div>
+                    </Popconfirm>
+                  )}
+                  {user?.email !== s?.email && !s.signed && (
+                    <div className="flex flex-row justify-center space-x-5 items-center border-t-2 bg-gray-50 p-5">
+                      <Image
+                        width={40}
+                        height={40}
+                        src="/icons/icons8-stamp-64-2.png"
+                      />
+                      <div className="text-gray-400 text-lg">
+                        {s.signed ? "Signed" : "Waiting for signature"}
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}
-            <div
-              onClick={() => {
-                let signs = [...signatories];
-                signs.push([]);
-                setSignatories(signs);
-              }}
-              className="flex flex-col ring-1 ring-gray-300 rounded pt-5 space-y-3 items-center justify-center cursor-pointer hover:bg-gray-50"
-            >
-              <Image src="/icons/icons8-stamp-64.png" width={40} height={40} />
-              <div>Add new Signatory</div>
-            </div>
           </div>
         </div>
       </Modal>
@@ -1734,6 +2095,7 @@ const TenderDetails = ({
         bodyStyle={{ maxHeight: "700px", overflow: "scroll" }}
       >
         <div className="space-y-10 px-20 py-5 overflow-x-scroll">
+          {/* Header */}
           <div className="flex flex-row justify-between items-center">
             <Typography.Title level={4} className="flex flex-row items-center">
               <div>
@@ -1751,10 +2113,10 @@ const TenderDetails = ({
                   </Popover>
                 </div>
               </div>
-              
             </Typography.Title>
             <Button icon={<PrinterOutlined />}>Print</Button>
           </div>
+          {/* Parties */}
           <div className="grid grid-cols-2 gap-5 ">
             <div className="flex flex-col ring-1 ring-gray-300 rounded p-5 space-y-3">
               <div className="flex flex-col">
@@ -1823,6 +2185,7 @@ const TenderDetails = ({
               </div>
             </div>
           </div>
+          {/* Details */}
           <div className="flex flex-col space-y-5">
             <Typography.Title level={3}>Details</Typography.Title>
             {contract?.sections?.map((section) => {
@@ -1834,55 +2197,102 @@ const TenderDetails = ({
               );
             })}
           </div>
-
+          {/* Signatories */}
           <div className="grid grid-cols-3 gap-5">
-            <div className="flex flex-col ring-1 ring-gray-300 rounded pt-5 space-y-3">
-              <div className="px-5">
-                <div className="flex flex-col">
-                  <Typography.Text type="secondary">
-                    <div className="text-xs">On Behalf of</div>
-                  </Typography.Text>
-                  <Typography.Text strong>Irembo ltd</Typography.Text>
-                </div>
+            {contract?.signatories?.map((s, index) => {
+              return (
+                <div className="flex flex-col ring-1 ring-gray-300 rounded pt-5 space-y-3 justify-between">
+                  <div className="px-5 flex flex-col space-y-6">
+                    <div className="flex flex-col">
+                      <Typography.Text type="secondary">
+                        <div className="text-xs">On Behalf of</div>
+                      </Typography.Text>
+                      <Typography.Text strong>{s.onBehalfOf}</Typography.Text>
+                    </div>
 
-                <div className="flex flex-col">
-                  <Typography.Text type="secondary">
-                    <div className="text-xs">Representative Title</div>
-                  </Typography.Text>
-                  <Typography.Text strong>Procurement Manager</Typography.Text>
-                </div>
+                    <div className="flex flex-col">
+                      <Typography.Text type="secondary">
+                        <div className="text-xs">Representative Title</div>
+                      </Typography.Text>
+                      <Typography.Text strong>{s.title}</Typography.Text>
+                    </div>
 
-                <div className="flex flex-col">
-                  <Typography.Text type="secondary">
-                    <div className="text-xs">Company Representative</div>
-                  </Typography.Text>
-                  <Typography.Text strong>Manirakiza Edouard</Typography.Text>
-                </div>
+                    <div className="flex flex-col">
+                      <Typography.Text type="secondary">
+                        <div className="text-xs">Company Representative</div>
+                      </Typography.Text>
+                      <Typography.Text strong>{s.names}</Typography.Text>
+                    </div>
 
-                <div className="flex flex-col">
-                  <Typography.Text type="secondary">
-                    <div className="text-xs">Email</div>
-                  </Typography.Text>
-                  <Typography.Text strong>
-                    e.manirakiza@irembo.com
-                  </Typography.Text>
-                </div>
-              </div>
+                    <div className="flex flex-col">
+                      <Typography.Text type="secondary">
+                        <div className="text-xs">Email</div>
+                      </Typography.Text>
+                      <Typography.Text strong>{s.email}</Typography.Text>
+                    </div>
 
-              <Popconfirm title="Confirm Contract Signature">
-                <div className="flex flex-row justify-center space-x-5 items-center border-t-2 bg-violet-50 p-5 cursor-pointer hover:opacity-75">
-                  <Image
-                    width={40}
-                    height={40}
-                    src="/icons/icons8-stamp-64.png"
-                  />
-
-                  <div className="text-violet-400 text-lg">
-                    Sign with one click
+                    {s.signed && (
+                      <div className="flex flex-col">
+                        <Typography.Text type="secondary">
+                          <div className="text-xs">IP address</div>
+                        </Typography.Text>
+                        <Typography.Text strong>{s?.ipAddress}</Typography.Text>
+                      </div>
+                    )}
                   </div>
+                  {s?.signed && (
+                    <div className="flex flex-row justify-center space-x-10 items-center border-t-2 bg-violet-50 p-5">
+                      <Image
+                        width={40}
+                        height={40}
+                        src="/icons/icons8-stamp-64.png"
+                      />
+
+                      <div className="text-violet-500 flex flex-col">
+                        <div className="text-lg">Signed digitaly</div>
+                        <div>{moment(s.signedAt).format("DD MMM YYYY")} at</div>
+                        <div>
+                          {moment(s.signedAt)
+                            .tz("Africa/Kigali")
+                            .format("h:mm a z")}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {user?.email === s?.email && !s?.signed && (
+                    <Popconfirm
+                      title="Confirm Contract Signature"
+                      onConfirm={() => handleSignContract(s, index)}
+                    >
+                      <div className="flex flex-row justify-center space-x-5 items-center border-t-2 bg-violet-50 p-5 cursor-pointer hover:opacity-75">
+                        <Image
+                          width={40}
+                          height={40}
+                          src="/icons/icons8-stamp-64.png"
+                        />
+
+                        <div className="text-violet-400 text-lg">
+                          Sign with one click
+                        </div>
+                      </div>
+                    </Popconfirm>
+                  )}
+                  {user?.email !== s?.email && !s.signed && (
+                    <div className="flex flex-row justify-center space-x-5 items-center border-t-2 bg-gray-50 p-5">
+                      <Image
+                        width={40}
+                        height={40}
+                        src="/icons/icons8-stamp-64-2.png"
+                      />
+                      <div className="text-gray-400 text-lg">
+                        {s.signed ? "Signed" : "Waiting for signature"}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </Popconfirm>
-            </div>
+              );
+            })}
           </div>
         </div>
       </Modal>
@@ -1920,7 +2330,13 @@ const TenderDetails = ({
             </div>
           </div>
 
-          <div className="">
+          <div
+            className=""
+            onClick={() => {
+              setAttachmentId(`tenderDocs/${data?.docId}.pdf`);
+              setPreviewAttachment(true);
+            }}
+          >
             <Typography.Link>
               <FileTextOutlined /> Tender document for {data?.number}{" "}
             </Typography.Link>
@@ -1961,6 +2377,106 @@ const TenderDetails = ({
       totalTax: tax,
       grossTotal: t + tax,
     };
+  }
+
+  function handleSignContract(signatory, index) {
+    // alert(JSON.stringify({signatory, index}))
+    setSigning(true);
+    let myIpObj = "";
+    signatory.signed = true;
+    let _contract = { ...contract };
+
+    fetch("https://api.db-ip.com/v2/free/self")
+      .then((res) => res.json())
+      .then((res) => {
+        myIpObj = res;
+        signatory.ipAddress = res?.ipAddress;
+        signatory.signedAt = moment();
+        _contract.signatories[index] = signatory;
+        setContract(_contract);
+
+        fetch(`${url}/contracts/${contract?._id}`, {
+          method: "PUT",
+          headers: {
+            Authorization:
+              "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            newContract: contract,
+          }),
+        })
+          .then((res) => res.json())
+          .then((res) => {
+            setSignatories([]);
+            setSections([{ title: "Set section title", body: "" }]);
+            setContract(res);
+          });
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+
+    //call API to sign
+  }
+
+  function handleSignPo(signatory, index) {
+    // alert(JSON.stringify({signatory, index}))
+    setSigning(true);
+    let myIpObj = "";
+    signatory.signed = true;
+    let _po = { ...po };
+
+    fetch("https://api.db-ip.com/v2/free/self")
+      .then((res) => res.json())
+      .then((res) => {
+        myIpObj = res;
+        signatory.ipAddress = res?.ipAddress;
+        signatory.signedAt = moment();
+        _po.signatories[index] = signatory;
+        setPO(_po);
+
+        fetch(`${url}/purchaseOrders/${po?._id}`, {
+          method: "PUT",
+          headers: {
+            Authorization:
+              "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            newPo: po,
+          }),
+        })
+          .then((res) => res.json())
+          .then((res) => {
+            setSignatories([]);
+            setSections([{ title: "Set section title", body: "" }]);
+            setPO(res);
+          });
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+
+    //call API to sign
+  }
+
+  function previewAttachmentModal() {
+    return (
+      <Modal
+        title="Attachment view"
+        centered
+        open={previewAttachment}
+        onOk={() => setPreviewAttachment(false)}
+        onCancel={() => setPreviewAttachment(false)}
+        width={"80%"}
+        bodyStyle={{ maxHeight: "700px", overflow: "scroll" }}
+      >
+        <div>
+          <PDFObject url={`${url}/file/${attachmentId}`} height="40rem" />
+        </div>
+      </Modal>
+    );
   }
 };
 export default TenderDetails;

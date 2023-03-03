@@ -44,7 +44,16 @@ import parse from "html-react-parser";
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 import "react-quill/dist/quill.snow.css";
 import { PDFObject } from "react-pdfobject";
-import { PaperClipIcon } from "@heroicons/react/24/outline";
+import {
+  BanknotesIcon,
+  CheckCircleIcon,
+  ClipboardDocumentCheckIcon,
+  ClipboardDocumentIcon,
+  PaperClipIcon,
+  UserGroupIcon,
+} from "@heroicons/react/24/outline";
+import { v4 } from "uuid";
+import UploadTenderDoc from "./uploadTenderDoc";
 
 let modules = {
   toolbar: [
@@ -104,7 +113,6 @@ const RequestDetails = ({
   let [selectedContract, setSelectedContract] = useState(null);
   let [openCreatePO, setOpenCreatePO] = useState(false);
   let [sections, setSections] = useState([]);
-
   let [poItems, setPOItems] = useState();
   let [totalVal, setTotVal] = useState(0);
   let [totalTax, setTotTax] = useState(0);
@@ -115,6 +123,7 @@ const RequestDetails = ({
   const [docType, setDocType] = useState("dDocument_Service");
   const [previewAttachment, setPreviewAttachment] = useState(false);
   const [attachmentId, setAttachmentId] = useState("TOR-id.pdf");
+  const [docId, setDocId] = useState(v4())
 
   const showPopconfirm = () => {
     setOpen(true);
@@ -165,7 +174,7 @@ const RequestDetails = ({
       title: "Unit Price (RWF)",
       dataIndex: "estimatedUnitCost",
       key: "estimatedUnitCost",
-      render: (_, item) => <>{(item?.estimatedUnitCost).toLocaleString()}</>,
+      render: (_, item) => <>{(item?.estimatedUnitCost*1).toLocaleString()}</>,
     },
 
     {
@@ -216,6 +225,10 @@ const RequestDetails = ({
     setTotVal(t);
     // updateBidList();
   }, [selectedContract]);
+
+  useEffect(()=>{
+    setDocId(v4())
+  },[framework])
 
   function refresh() {
     let statusCode = getRequestStatusCode(data?.status);
@@ -275,6 +288,7 @@ const RequestDetails = ({
       submissionDeadLine: new Date(deadLine),
       torsUrl: "url",
       purchaseRequest: data._id,
+      docId
     };
     createTender(tData);
   }
@@ -453,7 +467,8 @@ const RequestDetails = ({
                         setFramework,
                         contracts,
                         submitPOData,
-                        setSelectedContract
+                        setSelectedContract,
+                        data
                       )}
 
                     {po?.status === "started" &&
@@ -510,12 +525,7 @@ const RequestDetails = ({
           </Tabs>
         </div>
         {createPOMOdal()}
-        {previewAttachment && (
-          <PDFObject
-            url={`${url}/file/termsOfReference/${attachmentId}`}
-            height="40rem"
-          />
-        )}
+        {previewAttachmentModal()}
       </div>
       <div className="flex flex-col px-10 py-4 rounded ring-1 ring-gray-200 bg-white h-full">
         <Typography.Title level={5}>Workflow tracker (V2)</Typography.Title>
@@ -572,7 +582,8 @@ const RequestDetails = ({
     setFramework,
     contracts,
     submitPOData,
-    setSelectedContract
+    setSelectedContract,
+    data
   ) {
     // alert(date)
     return (
@@ -583,31 +594,132 @@ const RequestDetails = ({
           <Steps
             direction="vertical"
             current={currentCode}
-            progressDot
-            // type="default"
-            onChange={(v) => {
-              changeStatus(v);
-            }}
             items={[
-              // {
-              //   // title: "Finished",
-              //   description: "Verified",
-              // },
               {
-                // title: "In Progress",
-                title: "Approved by Head of the Department",
-                description: `${
-                  currentCode === 0 ? moment(date).fromNow() : ""
-                }`,
+                title: "Level 1 (Department)",
+                icon: <UserGroupIcon className="h-6" />,
+                subTitle: currentCode >= 0 && (
+                  <div className="flex flex-row items-center space-x-1">
+                    <div>
+                      <CheckOutlined className="h-5 w-5 text-green-500" />{" "}
+                    </div>
+                    <div>
+                      Approved {moment(data?.hod_approvalDate).fromNow()}
+                    </div>
+                  </div>
+                ),
+                description: (!user?.permissions?.canApproveAsHod ||
+                  currentCode == -1) && (
+                  <div className="flex flex-col">
+                    <div>
+                      Kindly check if the request is relevant and take action
+                      accordingly.
+                    </div>
+                    <div className="flex flex-row space-x-5">
+                      <div>
+                        <Button
+                          disabled={
+                            !user?.permissions?.canApproveAsHod ||
+                            currentCode > 0
+                          }
+                          onClick={() => changeStatus(0)}
+                          type="primary"
+                          size="small"
+                        >
+                          Approve
+                        </Button>
+                      </div>
+                      <div>
+                        <Popconfirm
+                          title="Reject request"
+                          open={open}
+                          icon={
+                            <QuestionCircleOutlined style={{ color: "red" }} />
+                          }
+                          onConfirm={handleOk}
+                          description={
+                            <>
+                              <Typography.Text>Are you sure?</Typography.Text>
+                              <Input
+                                onChange={(v) => setReason(v.target.value)}
+                                placeholder="Reason for rejection"
+                              ></Input>
+                            </>
+                          }
+                          okButtonProps={{
+                            loading: confirmRejectLoading,
+                          }}
+                          onCancel={handleCancel}
+                        >
+                          <Button
+                            icon={<DislikeOutlined />}
+                            danger
+                            size="small"
+                            type="text"
+                            onClick={showPopconfirm}
+                          >
+                            Reject
+                          </Button>
+                        </Popconfirm>
+                      </div>
+                    </div>
+                  </div>
+                ),
                 disabled:
                   !user?.permissions?.canApproveAsHod || currentCode > 0,
               },
               {
-                // title: "Waiting",
-                title: "Approved by the Head of finance",
-                description: `${
-                  currentCode === 1 ? moment(date).fromNow() : ""
-                }`,
+                title: "Level 2 (Finance)",
+                icon: <BanknotesIcon className="h-6" />,
+                subTitle: currentCode >= 1 && (
+                  <div className="flex flex-row items-center space-x-1">
+                    <div>
+                      <CheckOutlined className="h-5 w-5 text-green-500" />{" "}
+                    </div>
+                    <div>
+                      Approved {moment(data?.hof_approvalDate).fromNow()}
+                    </div>
+                  </div>
+                ),
+                description: (!user?.permissions?.canApproveAsHof ||
+                  currentCode === 0) && (
+                  <div className="flex flex-col">
+                    <div>
+                      Kindly check if the request is relevant and take action
+                      accordingly.
+                    </div>
+                    <div className="flex flex-row space-x-5">
+                      <div>
+                        <Button
+                          disabled={
+                            !user?.permissions?.canApproveAsHof ||
+                            currentCode > 1 ||
+                            currentCode < 0
+                          }
+                          onClick={() => changeStatus(1)}
+                          type="primary"
+                          size="small"
+                        >
+                          Approve
+                        </Button>
+                      </div>
+                      <div>
+                        <Button
+                          disabled={
+                            !user?.permissions?.canApproveAsHof ||
+                            currentCode > 1 ||
+                            currentCode < 0
+                          }
+                          type="primary"
+                          danger
+                          size="small"
+                        >
+                          Reject
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ),
                 disabled:
                   !user?.permissions?.canApproveAsHof ||
                   currentCode > 1 ||
@@ -615,10 +727,57 @@ const RequestDetails = ({
               },
               {
                 // title: "Waiting",
-                title: "Approved by the Procurement Manager",
-                description: `${
-                  currentCode === 2 ? moment(date).fromNow() : ""
-                }`,
+                title: "Level 3 (Procurement)",
+                icon: <ClipboardDocumentCheckIcon className="h-6" />,
+                subTitle: currentCode == 2 && (
+                  <div className="flex flex-row items-center space-x-1">
+                    <div>
+                      <CheckOutlined className="h-5 w-5 text-green-500" />{" "}
+                    </div>
+                    <div>
+                      Approved {moment(data?.pm_approvalDate).fromNow()}
+                    </div>
+                  </div>
+                ),
+                description: (!user?.permissions?.canApproveAsPM ||
+                  currentCode === 1) && (
+                  <div className="flex flex-col">
+                    <div>
+                      Kindly check if the request is relevant and take action
+                      accordingly.
+                    </div>
+                    <div className="flex flex-row space-x-5">
+                      <div>
+                        <Button
+                          disabled={
+                            !user?.permissions?.canApproveAsPM ||
+                            currentCode > 2 ||
+                            currentCode < 1
+                          }
+                          onClick={() => changeStatus(2)}
+                          type="primary"
+                          size="small"
+                        >
+                          Approve
+                        </Button>
+                      </div>
+                      <div>
+                        <Button
+                          disabled={
+                            !user?.permissions?.canApproveAsPM ||
+                            currentCode > 2 ||
+                            currentCode < 1
+                          }
+                          type="primary"
+                          danger
+                          size="small"
+                        >
+                          Reject
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ),
                 disabled:
                   !user?.permissions?.canApproveAsPM ||
                   currentCode > 2 ||
@@ -654,42 +813,11 @@ const RequestDetails = ({
               </Form.Item>
             </div>
 
-            {!framework && buildTenderForm(setDeadLine, user)}
+            {!framework && buildTenderForm(setDeadLine, user, docId)}
 
             {framework && buildPOForm(setSelectedContract, contracts, user)}
           </Form>
         )}
-
-        <Divider>Or</Divider>
-
-        <Popconfirm
-          title="Reject request"
-          open={open}
-          icon={<QuestionCircleOutlined style={{ color: "red" }} />}
-          onConfirm={handleOk}
-          description={
-            <>
-              <Typography.Text>Are you sure?</Typography.Text>
-              <Input
-                onChange={(v) => setReason(v.target.value)}
-                placeholder="Reason for rejection"
-              ></Input>
-            </>
-          }
-          okButtonProps={{
-            loading: confirmRejectLoading,
-          }}
-          onCancel={handleCancel}
-        >
-          <Button
-            icon={<DislikeOutlined />}
-            danger
-            type="text"
-            onClick={showPopconfirm}
-          >
-            Reject
-          </Button>
-        </Popconfirm>
       </>
     );
   }
@@ -1447,6 +1575,27 @@ const RequestDetails = ({
       grossTotal: t + tax,
     };
   }
+
+  function previewAttachmentModal() {
+    return (
+      <Modal
+        title="Attachment view"
+        centered
+        open={previewAttachment}
+        onOk={()=>setPreviewAttachment(false)}
+        onCancel={() => setPreviewAttachment(false)}
+        width={"80%"}
+        bodyStyle={{ maxHeight: "700px", overflow: "scroll" }}
+      >
+        <div>
+          <PDFObject
+            url={`${url}/file/termsOfReference/${attachmentId}`}
+            height="40rem"
+          />
+        </div>
+      </Modal>
+    );
+  }
 };
 
 export default RequestDetails;
@@ -1537,13 +1686,13 @@ function contractParty(companyName, companyAdress, companyTin, partyType) {
   );
 }
 
-function buildTenderForm(setDeadLine, user) {
+function buildTenderForm(setDeadLine, user, docId) {
   return (
     <>
       <div className=" ml-3 items-center">
         <Typography.Title level={5}>Create Tender</Typography.Title>
         <Form.Item name="tenderDocUrl" label="Tender Document (RFP/RFQ)">
-          <UploadFiles />
+          <UploadTenderDoc uuid={docId} />
         </Form.Item>
         <Form.Item
           name="deadLine"

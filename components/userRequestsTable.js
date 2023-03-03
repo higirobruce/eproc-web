@@ -159,6 +159,15 @@ const UsersRequestsTable = ({
     setEditingKey("");
   };
 
+  const getTagColor = (status)=>{
+    if(status==='pending') return 'yellow'
+    else if(status==='approved (hod)') return 'blue'
+    else if(status==='approved (fd)') return 'cyan'
+    else if(status==='approved (pm)') return 'geekblue'
+    else if(status==='completed') return 'green'
+    else if(status==='declined') return 'red'
+  }
+
   useEffect(() => {
     setData(dataSet);
   }, [dataSet]);
@@ -267,7 +276,9 @@ const UsersRequestsTable = ({
       key: "status",
       render: (_, record) => (
         <>
-          <Tag color="blue">{record?.status.toUpperCase()}</Tag>
+          <Tag color={
+            getTagColor(record?.status)
+          }>{record?.status.toUpperCase()}</Tag>
         </>
       ),
     },

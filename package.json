@@ -22,6 +22,7 @@
     "html-react-parser": "^3.0.8",
     "lodash": "^4.17.21",
     "moment": "^2.29.4",
+    "moment-timezone": "^0.5.41",
     "next": "13.0.7",
     "postcss": "^8.4.20",
     "rc-virtual-list": "^3.4.13",
