@@ -243,7 +243,12 @@ const TenderDetails = ({
   const [attachmentId, setAttachmentId] = useState("");
   const [proposalDocId, setProposalDocId] = useState(v4());
   const [otherDocId, setOtherDocId] = useState(v4());
-  const [editContract, setEditContract] = useState(user?.permissions?.canReviewContracts);
+  const [editContract, setEditContract] = useState(
+    user?.permissions?.canReviewContracts
+  );
+  const [assets, setAssets] = useState([]);
+  const [assetList, setAssetList] = useState([]);
+  const [assetOptions, setAssetOptions] = useState([]);
 
   useEffect(() => {
     let statusCode = getRequestStatusCode(data?.status);
@@ -254,6 +259,7 @@ const TenderDetails = ({
     updateBidList();
     setProposalDocId(v4());
     setOtherDocId(v4());
+    getFixedAssets();
   }, [data]);
 
   useEffect(() => {
@@ -271,6 +277,17 @@ const TenderDetails = ({
 
     updateBidList();
   }, [items]);
+
+  useEffect(()=>{
+    let list = []
+    assets.map(alist=>{
+      alist.map(a=>{
+        list.push(a)
+      })
+    })
+
+    alert(JSON.stringify(list))
+  },[assets])
 
   useEffect(() => {
     if (openViewContract) {
@@ -367,6 +384,38 @@ const TenderDetails = ({
       .then((res) => res.json())
       .then((body) => {
         setUsers(body);
+      })
+      .catch((err) => {
+        messageApi.error({
+          content: "Could not fetch users!",
+        });
+      });
+  }
+
+  function getFixedAssets() {
+    fetch(`${url}/b1/fixedAssets`, {
+      method: "GET",
+      headers: {
+        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+        "Content-Type": "application/json",
+      },
+    })
+      .then((res) => res.json())
+      .then((body) => {
+        if (body?.error) {
+          messageApi.error({
+            content: body?.error?.message?.value,
+          });
+        } else {
+          let value = body?.value;
+          let assetOptions = value?.map((v) => {
+            return {
+              value: v?.ItemCode,
+              label: v?.ItemName,
+            };
+          });
+          setAssetOptions(assetOptions);
+        }
       })
       .catch((err) => {
         messageApi.error({
@@ -962,7 +1011,9 @@ const TenderDetails = ({
                   <div className="flex flex-col space-y-5 p-3">
                     {buildTabHeader()}
                     <Divider></Divider>
-                    {(contract?.status === "reviewed" || (contract?.status === "draft" && user?.permissions?.canReviewContracts)) &&
+                    {(contract?.status === "reviewed" ||
+                      (contract?.status === "draft" &&
+                        user?.permissions?.canReviewContracts)) &&
                     bidList?.filter((d) => d.status === "awarded").length >=
                       1 ? (
                       !poCreated || !contractCreated ? (
@@ -1304,14 +1355,17 @@ const TenderDetails = ({
             CardName: vendor?.companyName,
             DocType: docType,
             DocDate: docDate,
-            DocumentLines: items.map((i) => {
-              return {
-                ItemDescription: i.title,
-                Quantity: i.quantity,
-                UnitPrice: i.estimatedUnitCost,
-                VatGroup: i.taxGroup ? i.taxGroup : "X1",
-              };
-            }),
+            DocumentLines:
+              docType === "dDocument_Service"
+                ? items.map((i) => {
+                    return {
+                      ItemDescription: i.title,
+                      Quantity: i.quantity,
+                      UnitPrice: i.estimatedUnitCost,
+                      VatGroup: i.taxGroup ? i.taxGroup : "X1",
+                    };
+                  })
+                : {},
           };
           await handleCreatePO(
             vendor?._id,
@@ -1422,6 +1476,34 @@ const TenderDetails = ({
 
           {/* PO Details */}
           <div className="flex flex-col space-y-5">
+            {docType === "dDocument_Item" && (
+              <div className="flex flex-col">
+                <Typography.Title level={4}>Asset assignment</Typography.Title>
+                <div className="p-5 rounded ring-1 ring-gray-200 grid md:grid-cols-3 gap-2">
+                  {items?.map((i, index) => {
+                    return (
+                      <div key={i?.key}>
+                        Select asset(s) for {i?.title}
+                        <div>
+                          <Select
+                            mode="tags"
+                            showArrow
+                            style={{ width: "100%" }}
+                            onChange={(value) => {
+                              let _v = [...assets];
+                              _v[index] = value;
+                              setAssets(_v);
+                            }}
+                            options={assetOptions}
+                            showSearch
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
             <ItemsTable dataSource={items} setDataSource={setItems} />
             <Typography.Title level={5} className="self-end">
               Total (Tax Excl.): {totalVal?.toLocaleString()} RWF
@@ -1432,7 +1514,6 @@ const TenderDetails = ({
             <Typography.Title level={4} className="self-end">
               Gross Total: {grossTotal?.toLocaleString()} RWF
             </Typography.Title>
-            
 
             {/* Sections */}
             <div className="flex flex-col space-y-5">
@@ -2211,14 +2292,15 @@ const TenderDetails = ({
             {contract?.status !== "draft" && (
               <Button icon={<PrinterOutlined />}>Print</Button>
             )}
-            {contract?.status === "draft" && user?.permissions?.canReviewContracts && (
-              <Switch
-                checkedChildren={<EditOutlined />}
-                unCheckedChildren={<EyeOutlined />}
-                defaultChecked = {editContract}
-                onChange={(checked) => setEditContract(checked)}
-              />
-            )}
+            {contract?.status === "draft" &&
+              user?.permissions?.canReviewContracts && (
+                <Switch
+                  checkedChildren={<EditOutlined />}
+                  unCheckedChildren={<EyeOutlined />}
+                  defaultChecked={editContract}
+                  onChange={(checked) => setEditContract(checked)}
+                />
+              )}
           </div>
           {/* Parties */}
           <div className="grid grid-cols-2 gap-5 ">
