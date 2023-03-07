@@ -27,7 +27,9 @@ import parse from "html-react-parser";
 import * as _ from "lodash";
 import moment from "moment-timezone";
 import { LockClosedIcon, LockOpenIcon, PaperClipIcon } from "@heroicons/react/24/solid";
-import ReactQuill from "react-quill";
+import dynamic from "next/dynamic";
+const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
+import "react-quill/dist/quill.snow.css";
 import { PDFObject } from "react-pdfobject";
 let modules = {
   toolbar: [

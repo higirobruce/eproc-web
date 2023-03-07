@@ -1432,6 +1432,7 @@ const TenderDetails = ({
             <Typography.Title level={4} className="self-end">
               Gross Total: {grossTotal?.toLocaleString()} RWF
             </Typography.Title>
+            
 
             {/* Sections */}
             <div className="flex flex-col space-y-5">
