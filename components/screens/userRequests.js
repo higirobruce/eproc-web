@@ -73,6 +73,9 @@ export default function UserRequests({ user }) {
   let [budgetLine, setBudgetLine] = useState("");
   let [reload, setReload] = useState(false);
   let [fileList, setFileList] = useState([]);
+  let [level1Approvers, setLevel1Approvers] = useState([]);
+  let [level1Approver, setLevel1Approver] = useState("");
+  let [defaultApprover, setDefaultApprover] = useState({});
 
   let [selectedReqId, setSelectedReqId] = useState(null);
 
@@ -100,6 +103,39 @@ export default function UserRequests({ user }) {
       .then((res) => res.json())
       .then((res) => {
         setServiceCategories(res);
+      })
+      .catch((err) => {
+        messageApi.open({
+          type: "error",
+          content: "Something happened! Please try again.",
+        });
+      });
+
+    fetch(`${url}/users/level1Approvers`, {
+      method: "GET",
+      headers: {
+        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+        "Content-Type": "application/json",
+      },
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        let approversList = res?.filter((a) => a?._id !== user?._id);
+        setLevel1Approvers(approversList);
+        let hod = approversList?.filter(
+          (a) => a?.department?._id === user?.department
+        );
+
+        setLevel1Approver(hod[0]?._id);
+
+        setDefaultApprover(
+          hod?.length >= 1
+            ? {
+                value: hod[0]?._id,
+                label: hod[0].firstName + " " + hod[0].lastName,
+              }
+            : approversList[0]
+        );
       })
       .catch((err) => {
         messageApi.open({
@@ -172,6 +208,7 @@ export default function UserRequests({ user }) {
           budgeted,
           budgetLine: budgetLine,
           title,
+          level1Approver,
         }),
       })
         .then((res) => res.json())
@@ -437,6 +474,50 @@ export default function UserRequests({ user }) {
       });
   }
 
+  function createContract(
+    vendor,
+    tender,
+    createdBy,
+    sections,
+    contractStartDate,
+    contractEndDate,
+    signatories,
+    reqAttachmentDocId
+  ) {
+    fetch(`${url}/contracts/`, {
+      method: "POST",
+      headers: {
+        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        vendor,
+        tender,
+        createdBy,
+        sections,
+        contractStartDate,
+        contractEndDate,
+        signatories,
+        reqAttachmentDocId,
+        request: rowData?._id,
+      }),
+    })
+      .then((res) => res.json())
+      .then((res1) => {
+        updateStatus(rowData._id, "completed");
+        messageApi.open({
+          type: "success",
+          content: "PO created!",
+        });
+      })
+      .catch((err) => {
+        messageApi.open({
+          type: "error",
+          content: JSON.stringify(err),
+        });
+      });
+  }
+
   function _setFileList(list, id) {
     setFileList(list);
   }
@@ -541,109 +622,185 @@ export default function UserRequests({ user }) {
             confirmLoading={confirmLoading}
           >
             <Form
-              labelCol={{ span: 8 }}
-              wrapperCol={{ span: 16 }}
-              style={{ maxWidth: 600 }}
+              // labelCol={{ span: 8 }}
+              // wrapperCol={{ span: 16 }}
+              // style={{ maxWidth: 600 }}
               className="mt-5"
               // layout="horizontal"
-
               onFinish={save}
             >
-              <Form.Item label="Due date">
-                <DatePicker defaultValue={null} onChange={(v, dstr) => setDueDate(dstr)} />
-              </Form.Item>
-              <Form.Item label="Request title">
-                <Input
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="How would you name your request?"
-                />
-              </Form.Item>
-              <Form.Item label="Request Description">
-                <Input.TextArea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Briefly describe your request"
-                  showCount
-                  maxLength={100}
-                />
-              </Form.Item>
-              <Form.Item label="Request Category" name="serviceCategory">
-                <Select
-                  defaultValue={serviceCategory}
-                  placeholder="Select service category"
-                  showSearch
-                  onChange={(value) => {
-                    setServiceCategory(value);
-                  }}
-                  filterSort={(optionA, optionB) =>
-                    (optionA?.label ?? "")
-                      .toLowerCase()
-                      .localeCompare((optionB?.label ?? "").toLowerCase())
-                  }
-                  filterOption={(inputValue, option) =>
-                    option.label
-                      .toLowerCase()
-                      .includes(inputValue.toLowerCase())
-                  }
-                  // defaultValue="RWF"
-                  options={serviceCategories.map((s) => {
-                    return {
-                      value: s.description,
-                      label: s.description,
-                    };
-                  })}
-                ></Select>
-              </Form.Item>
+              <div className="grid md:grid-cols-3 gap-10">
+                {/* Form grid 1 */}
+                <div>
+                  {/* Due date */}
+                  <div>
+                    <div>
+                      <div>Due Date</div>
+                    </div>
+                    <div>
+                      <Form.Item>
+                        <DatePicker
+                          style={{ width: "100%" }}
+                          defaultValue={null}
+                          onChange={(v, dstr) => setDueDate(dstr)}
+                        />
+                      </Form.Item>
+                    </div>
+                  </div>
 
-              <Form.Item
-                name="budgeted"
-                valuePropName="checked"
-                wrapperCol={{ offset: 8, span: 16 }}
-              >
-                <Radio.Group
-                  onChange={(e) => {
-                    setBudgeted(e.target.value);
-                  }}
-                  value={budgeted}
-                >
-                  <Radio value={true}>Budgeted</Radio>
-                  <Radio value={false}>Not Budgeted</Radio>
-                </Radio.Group>
-              </Form.Item>
+                  {/* Title */}
+                  <div>
+                    <div> Request title</div>
+                    <div>
+                      <Form.Item>
+                        <Input
+                          value={title}
+                          onChange={(e) => setTitle(e.target.value)}
+                          placeholder="How would you name your request?"
+                        />
+                      </Form.Item>
+                    </div>
+                  </div>
 
-              {budgeted && (
-                // <Form.Item label="Budget Line" name="budgetLine">
-                //   <Input
-                //     onChange={(e) => {
-                //       setBudgetLine(e.target.value);
-                //     }}
-                //     placeholder=""
-                //   />
-                // </Form.Item>
+                  {/* Category */}
+                  <div>
+                    <div>Request Category</div>
+                    <div>
+                      <Form.Item name="serviceCategory">
+                        <Select
+                          defaultValue={serviceCategory}
+                          placeholder="Select service category"
+                          showSearch
+                          onChange={(value) => {
+                            setServiceCategory(value);
+                          }}
+                          filterSort={(optionA, optionB) =>
+                            (optionA?.label ?? "")
+                              .toLowerCase()
+                              .localeCompare(
+                                (optionB?.label ?? "").toLowerCase()
+                              )
+                          }
+                          filterOption={(inputValue, option) =>
+                            option.label
+                              .toLowerCase()
+                              .includes(inputValue.toLowerCase())
+                          }
+                          // defaultValue="RWF"
+                          options={serviceCategories.map((s) => {
+                            return {
+                              value: s.description,
+                              label: s.description,
+                            };
+                          })}
+                        ></Select>
+                      </Form.Item>
+                    </div>
+                  </div>
+                </div>
+                {/* Form grid 2 */}
+                <div>
+                  {/* Approver */}
+                  <div>
+                    <div>Level 1 Approver</div>
+                    <div>
+                      <Form.Item name="level1Approver">
+                        <Select
+                          defaultValue={defaultApprover}
+                          placeholder="Select Level1 Approver"
+                          showSearch
+                          onChange={(value) => {
+                            setLevel1Approver(value);
+                          }}
+                          options={level1Approvers.map((l) => {
+                            return {
+                              label: l?.firstName + " " + l?.lastName,
+                              value: l?._id,
+                            };
+                          })}
+                        ></Select>
+                      </Form.Item>
+                    </div>
+                  </div>
+                  {/* Description */}
+                  <div>
+                    <div>Request Description</div>
+                    <div>
+                      <Form.Item>
+                        <Input.TextArea
+                          value={description}
+                          onChange={(e) => setDescription(e.target.value)}
+                          placeholder="Briefly describe your request"
+                          showCount
+                          maxLength={100}
+                        />
+                      </Form.Item>
+                    </div>
+                  </div>
+                </div>
 
-                <Form.Item label="Budget Line" name="budgetLine">
-                  <Select
-                    defaultValue={budgetLine}
-                    placeholder="Select service category"
-                    showSearch
-                    onChange={(value) => {
-                      setBudgetLine(value);
-                    }}
-                    options={budgetLines.map((s) => {
-                      return {
-                        label: s.title.toUpperCase(),
-                        options: s.subLines.map((sub) => {
-                          return {
-                            label: sub,
-                            value: sub,
-                          };
-                        }),
-                      };
-                    })}
-                  ></Select>
-                </Form.Item>
-              )}
+                <div>
+                  {/* Budgeted */}
+                  <div>
+                    <div>
+                      <Form.Item
+                        name="budgeted"
+                        valuePropName="checked"
+                        // wrapperCol={{ offset: 8, span: 16 }}
+                      >
+                        <Radio.Group
+                          onChange={(e) => {
+                            setBudgeted(e.target.value);
+                          }}
+                          value={budgeted}
+                        >
+                          <Radio value={true}>Budgeted</Radio>
+                          <Radio value={false}>Not Budgeted</Radio>
+                        </Radio.Group>
+                      </Form.Item>
+                    </div>
+                  </div>
+
+                  {/* Budget Lines */}
+                  {budgeted && (
+                    // <Form.Item label="Budget Line" name="budgetLine">
+                    //   <Input
+                    //     onChange={(e) => {
+                    //       setBudgetLine(e.target.value);
+                    //     }}
+                    //     placeholder=""
+                    //   />
+                    // </Form.Item>
+
+                    <div>
+                      <div>Budget Line</div>
+                      <div>
+                        <Form.Item name="budgetLine">
+                          <Select
+                            defaultValue={budgetLine}
+                            placeholder="Select service category"
+                            showSearch
+                            onChange={(value) => {
+                              setBudgetLine(value);
+                            }}
+                            options={budgetLines.map((s) => {
+                              return {
+                                label: s.title.toUpperCase(),
+                                options: s.subLines.map((sub) => {
+                                  return {
+                                    label: sub,
+                                    value: sub,
+                                  };
+                                }),
+                              };
+                            })}
+                          ></Select>
+                        </Form.Item>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
             </Form>
 
             <div>
@@ -677,7 +834,8 @@ export default function UserRequests({ user }) {
       confirmRejectLoading,
       updateProgress,
       reload,
-      createPO
+      createPO,
+      createContract
     )
   );
 }
@@ -693,7 +851,8 @@ function buildRequest(
   confirmRejectLoading,
   updateProgress,
   reload,
-  createPO
+  createPO,
+  createContract
 ) {
   return (
     <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 px-10 py-5 flex-1 space-y-3 h-full">
@@ -718,6 +877,7 @@ function buildRequest(
         handleUpdateProgress={updateProgress}
         reload={reload}
         handleCreatePO={createPO}
+        handleCreateContract={createContract}
       />
     </div>
   );

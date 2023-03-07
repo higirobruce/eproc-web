@@ -13,6 +13,10 @@ function PermissionsTable({
   canCreateBids,
   canEditBids,
   canApproveBids,
+  canViewContracts,
+  canCreateContracts,
+  canEditContracts,
+  canApproveContracts,
   canViewPurchaseOrders,
   canCreatePurchaseOrders,
   canEditPurchaseOrders,
@@ -105,6 +109,15 @@ function PermissionsTable({
     },
     {
       key: "4",
+      module: "Contracts",
+      alias: "Contracts",
+      view: canViewContracts,
+      create: canCreateContracts,
+      edit: canEditContracts,
+      approve: canApproveContracts,
+    },
+    {
+      key: "5",
       module: "Purchase Orders",
       alias: "PurchaseOrders",
       view: canViewPurchaseOrders,
@@ -113,7 +126,7 @@ function PermissionsTable({
       approve: canApprovePurchaseOrders,
     },
     {
-      key: "5",
+      key: "6",
       module: "Vendors",
       alias: "Vendors",
       view: canViewVendors,
@@ -122,7 +135,7 @@ function PermissionsTable({
       approve: canApproveVendors,
     },
     {
-      key: "6",
+      key: "7",
       module: "Users",
       alias: "Users",
       view: canViewUsers,
@@ -131,7 +144,7 @@ function PermissionsTable({
       approve: canApproveUsers,
     },
     {
-      key: "7",
+      key: "8",
       module: "Dashboard",
       alias: "Dashboard",
       view: canViewDashboard,

@@ -341,7 +341,7 @@ export default function PurchaseOrders({ user }) {
   }
 
   function handleSignPo(signatory, index) {
-    // alert(JSON.stringify({signatory, index}))
+    
     setSigning(true);
     let myIpObj = "";
     signatory.signed = true;
@@ -376,7 +376,6 @@ export default function PurchaseOrders({ user }) {
       })
       .catch((err) => {
         console.log(err);
-        alert(JSON.stringify(err));
       });
 
     //call API to sign

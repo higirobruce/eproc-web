@@ -22,6 +22,7 @@ import {
   Select,
   Modal,
   Table,
+  message,
 } from "antd";
 import UploadFiles from "./uploadFiles";
 import {
@@ -34,6 +35,7 @@ import {
   PlusOutlined,
   PlusCircleOutlined,
   PrinterOutlined,
+  CloseCircleOutlined,
 } from "@ant-design/icons";
 import moment from "moment";
 import dayjs from "dayjs";
@@ -51,9 +53,11 @@ import {
   ClipboardDocumentIcon,
   PaperClipIcon,
   UserGroupIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { v4 } from "uuid";
 import UploadTenderDoc from "./uploadTenderDoc";
+import UploadReqAttach from "./uploadReqAttach";
 
 let modules = {
   toolbar: [
@@ -94,12 +98,14 @@ const RequestDetails = ({
   handleUpdateProgress,
   reload,
   handleCreatePO,
+  handleCreateContract,
 }) => {
   const [size, setSize] = useState("small");
   const [currentCode, setCurrentCode] = useState(-1);
   let [deadLine, setDeadLine] = useState(null);
   const [open, setOpen] = useState(false);
   let [reason, setReason] = useState("");
+  const [messageApi, contextHolder] = message.useMessage();
   let user = JSON.parse(localStorage.getItem("user"));
   let url = process.env.NEXT_PUBLIC_BKEND_URL;
   let apiUsername = process.env.NEXT_PUBLIC_API_USERNAME;
@@ -108,12 +114,15 @@ const RequestDetails = ({
   let [po, setPO] = useState(null);
   let [currentStep, setCurrentStep] = useState(-1);
   let [progress, setProgress] = useState(0);
-  let [framework, setFramework] = useState(false);
+  let [refDoc, setRefDoc] = useState(false);
   let [contracts, setContracts] = useState([]);
   let [selectedContract, setSelectedContract] = useState(null);
+  let [vendor, setVendor] = useState(null);
   let [openCreatePO, setOpenCreatePO] = useState(false);
+  let [openCreateContract, setOpenCreateContract] = useState(false);
   let [sections, setSections] = useState([]);
-  let [poItems, setPOItems] = useState();
+  let [poItems, setPOItems] = useState([]);
+  let [items, setItems] = useState([]);
   let [totalVal, setTotVal] = useState(0);
   let [totalTax, setTotTax] = useState(0);
   let [grossTotal, setGrossTotal] = useState(0);
@@ -123,7 +132,11 @@ const RequestDetails = ({
   const [docType, setDocType] = useState("dDocument_Service");
   const [previewAttachment, setPreviewAttachment] = useState(false);
   const [attachmentId, setAttachmentId] = useState("TOR-id.pdf");
-  const [docId, setDocId] = useState(v4())
+  const [docId, setDocId] = useState(v4());
+  const [vendors, setVendors] = useState([]);
+  let [contractStartDate, setContractStartDate] = useState(moment());
+  let [contractEndDate, setContractEndDate] = useState(moment());
+  let [reqAttachId, setReqAttachId] = useState(v4());
 
   const showPopconfirm = () => {
     setOpen(true);
@@ -174,7 +187,9 @@ const RequestDetails = ({
       title: "Unit Price (RWF)",
       dataIndex: "estimatedUnitCost",
       key: "estimatedUnitCost",
-      render: (_, item) => <>{(item?.estimatedUnitCost*1).toLocaleString()}</>,
+      render: (_, item) => (
+        <>{(item?.estimatedUnitCost * 1).toLocaleString()}</>
+      ),
     },
 
     {
@@ -193,16 +208,30 @@ const RequestDetails = ({
     setCurrentCode(statusCode);
     getContracts();
     setPOItems(data?.items);
+    setItems(data?.items);
     checkDirectPOExists(data);
+    setReqAttachId(v4());
     if (data) {
       checkTenderExists(data);
     }
+    fetch(`${url}/users/vendors`, {
+      method: "GET",
+      headers: {
+        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+        "Content-Type": "application/json",
+      },
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        setVendors(res);
+      })
+      .catch((err) => {});
   }, [data]);
 
   useEffect(() => {
     let t = 0;
     let tax = 0;
-    poItems?.map((i) => {
+    items?.map((i) => {
       t = t + i?.quantity * i?.estimatedUnitCost;
       if (i.taxGroup === "I1")
         tax = tax + (i?.quantity * i?.estimatedUnitCost * 18) / 100;
@@ -211,7 +240,7 @@ const RequestDetails = ({
     setTotVal(t);
     setTotTax(tax);
     setGrossTotal(t + tax);
-  }, [poItems]);
+  }, [poItems, items]);
 
   useEffect(() => {
     refresh();
@@ -226,9 +255,9 @@ const RequestDetails = ({
     // updateBidList();
   }, [selectedContract]);
 
-  useEffect(()=>{
-    setDocId(v4())
-  },[framework])
+  useEffect(() => {
+    setDocId(v4());
+  }, [refDoc]);
 
   function refresh() {
     let statusCode = getRequestStatusCode(data?.status);
@@ -288,26 +317,18 @@ const RequestDetails = ({
       submissionDeadLine: new Date(deadLine),
       torsUrl: "url",
       purchaseRequest: data._id,
-      docId
+      docId,
+      reqAttachmentDocId: refDoc === "external" ? reqAttachId : "",
     };
     createTender(tData);
   }
 
   function submitPOData(values) {
-    // vendor, tender, request, createdBy, sections, status, deliveryProgress;
-    let user = JSON.parse(localStorage.getItem("user"));
-    let poData = {
-      createdBy: user._id,
-      vendor: selectedContract?.vendor?._id,
-      tender: selectedContract?.tender?._id,
-      request: selectedContract?.request?._id,
-      sections: [{}],
-      status: "open",
-      deliveryProgress: 0,
-    };
-    // handleCreatePO(poData)
-    // alert(JSON.stringify(poData))
     setOpenCreatePO(true);
+  }
+
+  function submitContractData() {
+    setOpenCreateContract(true);
   }
 
   function getContracts() {
@@ -381,6 +402,7 @@ const RequestDetails = ({
 
   return (
     <div className="flex flex-row justify-between space-x-5">
+      {contextHolder}
       <div className="flex flex-1 flex-col ring-1 ring-gray-200 p-3 rounded shadow-md bg-white">
         <div>
           <Tabs defaultActiveKey="1" type="card" size={size}>
@@ -463,12 +485,13 @@ const RequestDetails = ({
                         handleCancel,
                         showPopconfirm,
                         data?.approvalDate,
-                        framework,
-                        setFramework,
+                        refDoc,
+                        setRefDoc,
                         contracts,
                         submitPOData,
                         setSelectedContract,
-                        data
+                        data,
+                        submitContractData
                       )}
 
                     {po?.status === "started" &&
@@ -526,6 +549,7 @@ const RequestDetails = ({
         </div>
         {createPOMOdal()}
         {previewAttachmentModal()}
+        {createContractMOdal()}
       </div>
       <div className="flex flex-col px-10 py-4 rounded ring-1 ring-gray-200 bg-white h-full">
         <Typography.Title level={5}>Workflow tracker (V2)</Typography.Title>
@@ -578,246 +602,352 @@ const RequestDetails = ({
     handleCancel,
     showPopconfirm,
     date,
-    framework,
-    setFramework,
+    refDoc,
+    setRefDoc,
     contracts,
     submitPOData,
     setSelectedContract,
-    data
+    data,
+    submitContractData
   ) {
-    // alert(date)
     return (
       <>
         <Divider></Divider>
-        <div className="text-lg font-semibold">Approval Queue</div>
-        <div className="mx-3">
-          <Steps
-            direction="vertical"
-            current={currentCode}
-            items={[
-              {
-                title: "Level 1 (Department)",
-                icon: <UserGroupIcon className="h-6" />,
-                subTitle: currentCode >= 0 && (
-                  <div className="flex flex-row items-center space-x-1">
-                    <div>
-                      <CheckOutlined className="h-5 w-5 text-green-500" />{" "}
-                    </div>
-                    <div>
-                      Approved {moment(data?.hod_approvalDate).fromNow()}
-                    </div>
-                  </div>
-                ),
-                description: (!user?.permissions?.canApproveAsHod ||
-                  currentCode == -1) && (
-                  <div className="flex flex-col">
-                    <div>
-                      Kindly check if the request is relevant and take action
-                      accordingly.
-                    </div>
-                    <div className="flex flex-row space-x-5">
-                      <div>
-                        <Button
-                          disabled={
-                            !user?.permissions?.canApproveAsHod ||
-                            currentCode > 0
-                          }
-                          onClick={() => changeStatus(0)}
-                          type="primary"
-                          size="small"
-                        >
-                          Approve
-                        </Button>
+        <div className="grid md:grid-cols-2">
+          <div>
+            <div className="ml-3 text-lg font-semibold">Approval Queue</div>
+            <div className="mx-3 mt-5 ">
+              <Steps
+                direction="vertical"
+                current={currentCode}
+                items={[
+                  {
+                    title: "Level 1 (Department)",
+                    icon: <UserGroupIcon className="h-6" />,
+                    subTitle: currentCode >= 0 && (
+                      <div className="flex flex-row items-center space-x-1">
+                        <div>
+                          <CheckOutlined className="h-5 w-5 text-green-500" />{" "}
+                        </div>
+                        <div>
+                          Approved {moment(data?.hod_approvalDate).fromNow()}
+                        </div>
                       </div>
-                      <div>
-                        <Popconfirm
-                          title="Reject request"
-                          open={open}
-                          icon={
-                            <QuestionCircleOutlined style={{ color: "red" }} />
-                          }
-                          onConfirm={handleOk}
-                          description={
-                            <>
-                              <Typography.Text>Are you sure?</Typography.Text>
-                              <Input
-                                onChange={(v) => setReason(v.target.value)}
-                                placeholder="Reason for rejection"
-                              ></Input>
-                            </>
-                          }
-                          okButtonProps={{
-                            loading: confirmRejectLoading,
-                          }}
-                          onCancel={handleCancel}
-                        >
-                          <Button
-                            icon={<DislikeOutlined />}
-                            danger
-                            size="small"
-                            type="text"
-                            onClick={showPopconfirm}
-                          >
-                            Reject
-                          </Button>
-                        </Popconfirm>
+                    ),
+                    description: currentCode == -1 && (
+                      <div className="flex flex-col">
+                        <div>
+                          Kindly check if the request is relevant and take
+                          action accordingly.
+                        </div>
+                        <div className="flex flex-row space-x-5">
+                          <div>
+                            <Button
+                              disabled={
+                                !user?.permissions?.canApproveAsHod ||
+                                user?._id !== data?.level1Approver ||
+                                currentCode > 0
+                              }
+                              onClick={() => changeStatus(0)}
+                              type="primary"
+                              size="small"
+                            >
+                              Approve
+                            </Button>
+                          </div>
+                          <div>
+                            <Popconfirm
+                              title="Reject request"
+                              open={open}
+                              icon={
+                                <QuestionCircleOutlined
+                                  style={{ color: "red" }}
+                                />
+                              }
+                              onConfirm={handleOk}
+                              description={
+                                <>
+                                  <Typography.Text>
+                                    Are you sure?
+                                  </Typography.Text>
+                                  <Input
+                                    onChange={(v) => setReason(v.target.value)}
+                                    placeholder="Reason for rejection"
+                                  ></Input>
+                                </>
+                              }
+                              okButtonProps={{
+                                loading: confirmRejectLoading,
+                              }}
+                              onCancel={handleCancel}
+                            >
+                              <Button
+                                icon={<DislikeOutlined />}
+                                disabled={
+                                  !user?.permissions?.canApproveAsHod ||
+                                  user?._id !== data?.level1Approver ||
+                                  currentCode > 0
+                                }
+                                danger
+                                size="small"
+                                type="text"
+                                onClick={showPopconfirm}
+                              >
+                                Reject
+                              </Button>
+                            </Popconfirm>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                ),
-                disabled:
-                  !user?.permissions?.canApproveAsHod || currentCode > 0,
-              },
-              {
-                title: "Level 2 (Finance)",
-                icon: <BanknotesIcon className="h-6" />,
-                subTitle: currentCode >= 1 && (
-                  <div className="flex flex-row items-center space-x-1">
-                    <div>
-                      <CheckOutlined className="h-5 w-5 text-green-500" />{" "}
-                    </div>
-                    <div>
-                      Approved {moment(data?.hof_approvalDate).fromNow()}
-                    </div>
-                  </div>
-                ),
-                description: (!user?.permissions?.canApproveAsHof ||
-                  currentCode === 0) && (
-                  <div className="flex flex-col">
-                    <div>
-                      Kindly check if the request is relevant and take action
-                      accordingly.
-                    </div>
-                    <div className="flex flex-row space-x-5">
-                      <div>
-                        <Button
-                          disabled={
-                            !user?.permissions?.canApproveAsHof ||
-                            currentCode > 1 ||
-                            currentCode < 0
-                          }
-                          onClick={() => changeStatus(1)}
-                          type="primary"
-                          size="small"
-                        >
-                          Approve
-                        </Button>
+                    ),
+                    disabled:
+                      !user?.permissions?.canApproveAsHod || currentCode > 0,
+                  },
+                  {
+                    title: "Level 2 (Finance)",
+                    icon: <BanknotesIcon className="h-6" />,
+                    subTitle: currentCode >= 1 && (
+                      <div className="flex flex-row items-center space-x-1">
+                        <div>
+                          <CheckOutlined className="h-5 w-5 text-green-500" />{" "}
+                        </div>
+                        <div>
+                          Approved {moment(data?.hof_approvalDate).fromNow()}
+                        </div>
                       </div>
-                      <div>
-                        <Button
-                          disabled={
-                            !user?.permissions?.canApproveAsHof ||
-                            currentCode > 1 ||
-                            currentCode < 0
-                          }
-                          type="primary"
-                          danger
-                          size="small"
-                        >
-                          Reject
-                        </Button>
+                    ),
+                    description: currentCode === 0 && (
+                      <div className="flex flex-col">
+                        <div>
+                          Kindly check if the request is relevant and take
+                          action accordingly.
+                        </div>
+                        <div className="flex flex-row space-x-5">
+                          <div>
+                            <Button
+                              disabled={
+                                !user?.permissions?.canApproveAsHof ||
+                                currentCode > 1 ||
+                                currentCode < 0
+                              }
+                              onClick={() => changeStatus(1)}
+                              type="primary"
+                              size="small"
+                            >
+                              Approve
+                            </Button>
+                          </div>
+                          <div>
+                            <Button
+                              disabled={
+                                !user?.permissions?.canApproveAsHof ||
+                                currentCode > 1 ||
+                                currentCode < 0
+                              }
+                              type="primary"
+                              danger
+                              size="small"
+                            >
+                              Reject
+                            </Button>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                ),
-                disabled:
-                  !user?.permissions?.canApproveAsHof ||
-                  currentCode > 1 ||
-                  currentCode < 0,
-              },
-              {
-                // title: "Waiting",
-                title: "Level 3 (Procurement)",
-                icon: <ClipboardDocumentCheckIcon className="h-6" />,
-                subTitle: currentCode == 2 && (
-                  <div className="flex flex-row items-center space-x-1">
-                    <div>
-                      <CheckOutlined className="h-5 w-5 text-green-500" />{" "}
-                    </div>
-                    <div>
-                      Approved {moment(data?.pm_approvalDate).fromNow()}
-                    </div>
-                  </div>
-                ),
-                description: (!user?.permissions?.canApproveAsPM ||
-                  currentCode === 1) && (
-                  <div className="flex flex-col">
-                    <div>
-                      Kindly check if the request is relevant and take action
-                      accordingly.
-                    </div>
-                    <div className="flex flex-row space-x-5">
-                      <div>
-                        <Button
-                          disabled={
-                            !user?.permissions?.canApproveAsPM ||
-                            currentCode > 2 ||
-                            currentCode < 1
-                          }
-                          onClick={() => changeStatus(2)}
-                          type="primary"
-                          size="small"
-                        >
-                          Approve
-                        </Button>
+                    ),
+                    disabled:
+                      !user?.permissions?.canApproveAsHof ||
+                      currentCode > 1 ||
+                      currentCode < 0,
+                  },
+                  {
+                    // title: "Waiting",
+                    title: "Level 3 (Procurement)",
+                    icon: <ClipboardDocumentCheckIcon className="h-6" />,
+                    subTitle: currentCode == 2 && (
+                      <div className="flex flex-row items-center space-x-1">
+                        <div>
+                          <CheckOutlined className="h-5 w-5 text-green-500" />{" "}
+                        </div>
+                        <div>
+                          Approved {moment(data?.pm_approvalDate).fromNow()}
+                        </div>
                       </div>
-                      <div>
-                        <Button
-                          disabled={
-                            !user?.permissions?.canApproveAsPM ||
-                            currentCode > 2 ||
-                            currentCode < 1
-                          }
-                          type="primary"
-                          danger
-                          size="small"
-                        >
-                          Reject
-                        </Button>
+                    ),
+                    description: currentCode === 1 && (
+                      <div className="flex flex-col">
+                        <div>
+                          Kindly check if the request is relevant and take
+                          action accordingly.
+                        </div>
+                        <div className="flex flex-row space-x-5">
+                          <div>
+                            <Button
+                              disabled={
+                                !user?.permissions?.canApproveAsPM ||
+                                currentCode > 2 ||
+                                currentCode < 1
+                              }
+                              onClick={() => changeStatus(2)}
+                              type="primary"
+                              size="small"
+                            >
+                              Approve
+                            </Button>
+                          </div>
+                          <div>
+                            <Button
+                              disabled={
+                                !user?.permissions?.canApproveAsPM ||
+                                currentCode > 2 ||
+                                currentCode < 1
+                              }
+                              type="primary"
+                              danger
+                              size="small"
+                            >
+                              Reject
+                            </Button>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                ),
-                disabled:
-                  !user?.permissions?.canApproveAsPM ||
-                  currentCode > 2 ||
-                  currentCode < 1,
-              },
-            ]}
-          />
-        </div>
-
-        {currentCode === 2 && (
-          <Form onFinish={framework ? submitPOData : submitTenderData}>
-            <Divider></Divider>
-            <div className=" ml-3 mt-5 items-center">
-              <Form.Item
-                name="framework"
-                label="Is there a framework contract for this request?"
-              >
-                <Select
-                  onChange={(value) => setFramework(value)}
-                  style={{ width: "20%" }}
-                  defaultValue={false}
-                  options={[
-                    {
-                      value: true,
-                      label: "Yes",
-                    },
-                    {
-                      value: false,
-                      label: "No",
-                    },
-                  ]}
-                />
-              </Form.Item>
+                    ),
+                    disabled:
+                      !user?.permissions?.canApproveAsPM ||
+                      currentCode > 2 ||
+                      currentCode < 1,
+                  },
+                ]}
+              />
             </div>
+          </div>
+          <div>
+            {currentCode === 2 && (
+              <>
+                <Form>
+                  <div className="text-lg font-semibold">
+                    Next Procurement Steps
+                  </div>
+                  <div className="mt-5 items-center">
+                    <div>Reference</div>
+                    <Form.Item name="refDoc">
+                      <Select
+                        onChange={(value) => setRefDoc(value)}
+                        style={{ width: "50%" }}
+                        defaultValue={false}
+                        options={[
+                          {
+                            value: "none",
+                            label: "None",
+                          },
+                          {
+                            value: "external",
+                            label: "External Document",
+                          },
+                          {
+                            value: "contract",
+                            label: "Contract (on going)",
+                          },
+                        ]}
+                      />
+                    </Form.Item>
+                  </div>
 
-            {!framework && buildTenderForm(setDeadLine, user, docId)}
+                  {refDoc === "none" &&
+                    buildTenderForm(setDeadLine, user, docId, submitTenderData)}
 
-            {framework && buildPOForm(setSelectedContract, contracts, user)}
-          </Form>
-        )}
+                  {refDoc === "contract" &&
+                    buildPOForm(
+                      setSelectedContract,
+                      contracts,
+                      user,
+                      submitPOData,
+                      setVendor,
+                      selectedContract
+                    )}
+
+                  {refDoc === "external" && (
+                    <div>
+                      <div className="items-center">
+                        <div>Select Vendor</div>
+                        <Form.Item name="vendor">
+                          <Select
+                            onChange={(value, option) => {
+                              setVendor(option.payload);
+                            }}
+                            style={{ width: "50%" }}
+                            showSearch
+                            filterSort={(optionA, optionB) =>
+                              (optionA?.label ?? "")
+                                .toLowerCase()
+                                .localeCompare(
+                                  (optionB?.label ?? "").toLowerCase()
+                                )
+                            }
+                            filterOption={(inputValue, option) =>
+                              option.label
+                                .toLowerCase()
+                                .includes(inputValue.toLowerCase())
+                            }
+                            options={vendors?.map((v) => {
+                              return {
+                                value: v?._id,
+                                label: v?.companyName,
+                                payload: v,
+                              };
+                            })}
+                          />
+                        </Form.Item>
+                      </div>
+                      <div className="items-center">
+                        <div>Upload file</div>
+                        <Form.Item name="vendor">
+                          <UploadReqAttach uuid={reqAttachId} />
+                        </Form.Item>
+                      </div>
+                      <div>
+                        <div className="flex flex-row items-center space-x-5">
+                          <div className="flex flex-row space-x-1 items-center">
+                            <Form.Item>
+                              <Button
+                                icon={<FileDoneOutlined />}
+                                type="primary"
+                                htmlType="submit"
+                                onClick={submitContractData}
+                                disabled={
+                                  !user?.permissions?.canCreateTenders ||
+                                  !vendor
+                                }
+                              >
+                                Create Contract
+                              </Button>
+                            </Form.Item>
+                          </div>
+
+                          <div className="flex flex-row space-x-1 items-center">
+                            <Form.Item>
+                              <Button
+                                icon={<FileDoneOutlined />}
+                                type="primary"
+                                htmlType="submit"
+                                onClick={submitPOData}
+                                disabled={
+                                  !user?.permissions?.canCreateTenders ||
+                                  !vendor
+                                }
+                              >
+                                Create PO
+                              </Button>
+                            </Form.Item>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </Form>
+              </>
+            )}
+          </div>
+        </div>
       </>
     );
   }
@@ -961,159 +1091,6 @@ const RequestDetails = ({
   }
 
   function createPOMOdal__() {
-    return (
-      <Modal
-        title="New Purchase Order"
-        centered
-        open={openCreatePO}
-        onOk={() => {
-          setOpenCreatePO(false);
-          handleCreatePO(
-            selectedContract?.vendor?._id,
-            selectedContract?.tendor?._id,
-            user?._id,
-            sections,
-            poItems
-          );
-        }}
-        okText="Save and Submit"
-        onCancel={() => setOpenCreatePO(false)}
-        width={"80%"}
-        bodyStyle={{ maxHeight: "700px", overflow: "scroll" }}
-      >
-        <div className="space-y-10 px-28 py-5">
-          <Typography.Title level={4}>
-            PURCHASE ORDER: {selectedContract?.vendor?.companyName}
-          </Typography.Title>
-          <div className="grid lg:grid-cols-2 grid-cols-1 gap-6">
-            {contractParty(
-              "Irembo Ltd",
-              "Irembo Campass Nyarutarama KG 9 Ave",
-              "102911562",
-              "Sender"
-            )}
-            {contractParty(
-              selectedContract?.vendor?.companyName,
-              `${selectedContract?.vendor?.building}-
-                  ${selectedContract?.vendor?.street}-
-                  ${selectedContract?.vendor?.avenue}`,
-              selectedContract?.vendor?.tin,
-              "Receiver"
-            )}
-
-            {/* <div className="flex flex-col ring-1 ring-gray-300 rounded p-5 space-y-3">
-              <div className="flex flex-col">
-                <Typography.Text type="secondary">
-                  <div className="text-xs">Company Name</div>
-                </Typography.Text>
-                <Typography.Text strong>
-                  {selectedContract?.vendor?.companyName}
-                </Typography.Text>
-              </div>
-
-              <div className="flex flex-col">
-                <Typography.Text type="secondary">
-                  <div className="text-xs">Company Address</div>
-                </Typography.Text>
-                <Typography.Text strong>
-                  {selectedContract?.vendor?.building}-
-                  {selectedContract?.vendor?.street}-
-                  {selectedContract?.vendor?.avenue}
-                </Typography.Text>
-              </div>
-              <div className="flex flex-col">
-                <Typography.Text type="secondary">
-                  <div className="text-xs">Company TIN no.</div>
-                </Typography.Text>
-                <Typography.Text strong>
-                  {selectedContract?.vendor?.tin}
-                </Typography.Text>
-              </div>
-              <div className="flex flex-col">
-                <Typography.Text type="secondary">
-                  <div className="text-xs">Hereinafter refferd to as</div>
-                </Typography.Text>
-                <Typography.Text strong>Receiver</Typography.Text>
-              </div>
-            </div> */}
-          </div>
-
-          <div className="flex flex-col space-y-5">
-            <ItemsTable setDataSource={setPOItems} dataSource={poItems} />
-            <Typography.Title level={5} className="self-end">
-              Total (Tax Excl.): {totalVal?.toLocaleString()} RWF
-            </Typography.Title>
-
-            <Typography.Title level={4}>Details</Typography.Title>
-
-            {sections.map((s, index) => {
-              let section = sections[index]
-                ? sections[index]
-                : { title: "", body: "" };
-              let _sections = [...sections];
-              return (
-                <>
-                  <Typography.Title
-                    level={5}
-                    editable={{
-                      onChange: (e) => {
-                        section.title = e;
-                        _sections[index]
-                          ? (_sections[index] = section)
-                          : _sections.push(section);
-                        setSections(_sections);
-                      },
-                      text: s.title,
-                    }}
-                  >
-                    {s.title}
-                  </Typography.Title>
-                  <ReactQuill
-                    theme="snow"
-                    modules={modules}
-                    formats={formats}
-                    onChange={(value) => {
-                      section.body = value;
-                      _sections[index]
-                        ? (_sections[index] = section)
-                        : _sections.push(section);
-                      setSections(_sections);
-                    }}
-                  />
-                </>
-              );
-            })}
-
-            <Button
-              icon={<PlusOutlined />}
-              onClick={() => {
-                let _sections = [...sections];
-                _sections.push({
-                  title: `Set section ${sections?.length + 1} Title`,
-                  body: "",
-                });
-                setSections(_sections);
-              }}
-            >
-              Add section
-            </Button>
-          </div>
-
-          <div className="grid grid-cols-3 gap-6 pt-2">
-            {buildSingatory(
-              "Irembo ltd",
-              "Procurement Manager",
-              "Manirakiza Edouard",
-              "e.manirakiza@irembo.com"
-            )}
-            {addSingatory()}
-          </div>
-        </div>
-      </Modal>
-    );
-  }
-
-  function createPOMOdal() {
     return (
       <Modal
         title="New Purchase Order"
@@ -1561,6 +1538,655 @@ const RequestDetails = ({
     );
   }
 
+  function createPOMOdal() {
+    return (
+      <Modal
+        title="New Purchase Order"
+        centered
+        open={openCreatePO}
+        onOk={async () => {
+          let B1Data = {
+            CardName: vendor?.companyName,
+            DocType: docType,
+            DocDate: docDate,
+            DocumentLines: items.map((i) => {
+              return {
+                ItemDescription: i.title,
+                Quantity: i.quantity,
+                UnitPrice: i.estimatedUnitCost,
+                VatGroup: i.taxGroup ? i.taxGroup : "X1",
+              };
+            }),
+          };
+          await handleCreatePO(
+            vendor?._id,
+            null,
+            user?._id,
+            sections,
+            items,
+            B1Data,
+            signatories
+          );
+          setOpenCreatePO(false);
+        }}
+        okText="Save and Submit"
+        onCancel={() => setOpenCreatePO(false)}
+        width={"80%"}
+        bodyStyle={{ maxHeight: "700px", overflow: "scroll" }}
+      >
+        <div className="space-y-5 px-20 py-5">
+          <Typography.Title level={4}>
+            PURCHASE ORDER: {vendor?.companyName}
+          </Typography.Title>
+          {/* header */}
+          <div className="grid grid-cols-2 w-1/2">
+            {/* PO Document date */}
+            <div>
+              <div>Document date</div>
+              <DatePicker onChange={(v, dstr) => setDocDate(dstr)} />
+            </div>
+
+            {/* PO type */}
+            <div>
+              <div>PO Type</div>
+              <Select
+                onChange={(value) => setDocType(value)}
+                defaultValue="dDocument_Service"
+                options={[
+                  { value: "dDocument_Service", label: "Service" },
+                  { value: "dDocument_Item", label: "Item" },
+                ]}
+              />
+            </div>
+          </div>
+
+          {/* Parties */}
+          <div className="grid grid-cols-2 gap-5">
+            <div className="flex flex-col ring-1 ring-gray-300 rounded p-5 space-y-3">
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Company Name</div>
+                </Typography.Text>
+                <Typography.Text strong>Irembo ltd</Typography.Text>
+              </div>
+
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Company Address</div>
+                </Typography.Text>
+                <Typography.Text strong>
+                  Irembo Campass Nyarutarama KG 9 Ave
+                </Typography.Text>
+              </div>
+
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Company TIN no.</div>
+                </Typography.Text>
+                <Typography.Text strong>102911562</Typography.Text>
+              </div>
+
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Hereinafter refferd to as</div>
+                </Typography.Text>
+                <Typography.Text strong>Sender</Typography.Text>
+              </div>
+            </div>
+
+            <div className="flex flex-col ring-1 ring-gray-300 rounded p-5 space-y-3">
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Company Name</div>
+                </Typography.Text>
+                <Typography.Text strong>{vendor?.companyName}</Typography.Text>
+              </div>
+
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Company Address</div>
+                </Typography.Text>
+                <Typography.Text strong>
+                  {vendor?.building}-{vendor?.street}-{vendor?.avenue}
+                </Typography.Text>
+              </div>
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Company TIN no.</div>
+                </Typography.Text>
+                <Typography.Text strong>{vendor?.tin}</Typography.Text>
+              </div>
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Hereinafter refferd to as</div>
+                </Typography.Text>
+                <Typography.Text strong>Receiver</Typography.Text>
+              </div>
+            </div>
+          </div>
+
+          {/* PO Details */}
+          <div className="flex flex-col space-y-5">
+            <ItemsTable dataSource={items} setDataSource={setItems} />
+            <Typography.Title level={5} className="self-end">
+              Total (Tax Excl.): {totalVal?.toLocaleString()} RWF
+            </Typography.Title>
+            <Typography.Title level={5} className="self-end">
+              Total Tax: {totalTax?.toLocaleString()} RWF
+            </Typography.Title>
+            <Typography.Title level={4} className="self-end">
+              Gross Total: {grossTotal?.toLocaleString()} RWF
+            </Typography.Title>
+
+            {/* Sections */}
+            <div className="flex flex-col space-y-5">
+              <Typography.Title level={4}>Contents</Typography.Title>
+
+              {sections.map((s, index) => {
+                let section = sections[index]
+                  ? sections[index]
+                  : { title: "", body: "" };
+                let _sections = [...sections];
+                return (
+                  <>
+                    <div className="flex flex-row justify-between items-center">
+                      <Typography.Title
+                        level={5}
+                        editable={{
+                          onChange: (e) => {
+                            section.title = e;
+                            _sections[index]
+                              ? (_sections[index] = section)
+                              : _sections.push(section);
+                            setSections(_sections);
+                          },
+                          text: s.title,
+                        }}
+                      >
+                        {s.title}
+                      </Typography.Title>
+                      <Popconfirm
+                        onConfirm={() => {
+                          let _sections = [...sections];
+                          _sections.splice(index, 1);
+                          setSections(_sections);
+                        }}
+                        title="You can not undo this!"
+                      >
+                        <div>
+                          <CloseCircleOutlined className="h-3 text-red-400 cursor-pointer" />
+                        </div>
+                      </Popconfirm>
+                    </div>
+                    <ReactQuill
+                      theme="snow"
+                      modules={modules}
+                      formats={formats}
+                      onChange={(value) => {
+                        section.body = value;
+                        _sections[index]
+                          ? (_sections[index] = section)
+                          : _sections.push(section);
+                        setSections(_sections);
+                      }}
+                    />
+                  </>
+                );
+              })}
+
+              <Button
+                icon={<PlusOutlined />}
+                onClick={() => {
+                  let _sections = [...sections];
+                  _sections.push({
+                    title: `Set section ${sections?.length + 1} Title`,
+                    body: "",
+                  });
+                  setSections(_sections);
+                }}
+              >
+                Add section
+              </Button>
+            </div>
+
+            {/* Signatories */}
+            <div className="grid grid-cols-3 gap-5">
+              {signatories.map((s, index) => {
+                return (
+                  <div
+                    key={index}
+                    className="flex flex-col ring-1 ring-gray-300 rounded py-5"
+                  >
+                    <div className="flex flex-row items-start justify-between">
+                      <div className="flex flex-col space-y-3 px-5">
+                        <div className="flex flex-col space-y-1">
+                          <Typography.Text type="secondary">
+                            <div className="text-xs">On Behalf of</div>
+                          </Typography.Text>
+                          <Typography.Text
+                            editable={{
+                              text: s.onBehalfOf,
+                              onChange: (e) => {
+                                let _signatories = [...signatories];
+                                _signatories[index].onBehalfOf = e;
+                                setSignatories(_signatories);
+                              },
+                            }}
+                          >
+                            {s.onBehalfOf}
+                          </Typography.Text>
+                        </div>
+
+                        <div className="flex flex-col space-y-1">
+                          <Typography.Text type="secondary">
+                            <div className="text-xs">Representative Title</div>
+                          </Typography.Text>
+                          <Typography.Text
+                            editable={{
+                              text: s.title,
+                              onChange: (e) => {
+                                let _signatories = [...signatories];
+                                _signatories[index].title = e;
+                                setSignatories(_signatories);
+                              },
+                            }}
+                          >
+                            {s.title}
+                          </Typography.Text>
+                        </div>
+
+                        <div className="flex flex-col space-y-1">
+                          <Typography.Text type="secondary">
+                            <div className="text-xs">
+                              Company Representative
+                            </div>
+                          </Typography.Text>
+                          <Typography.Text
+                            editable={{
+                              text: s.names,
+                              onChange: (e) => {
+                                let _signatories = [...signatories];
+                                _signatories[index].names = e;
+                                setSignatories(_signatories);
+                              },
+                            }}
+                          >
+                            {s.names}
+                          </Typography.Text>
+                        </div>
+
+                        <div className="flex flex-col space-y-1">
+                          <Typography.Text type="secondary">
+                            <div className="text-xs">Email</div>
+                          </Typography.Text>
+                          <Typography.Text
+                            editable={{
+                              text: s.email,
+                              onChange: (e) => {
+                                let _signatories = [...signatories];
+                                _signatories[index].email = e;
+                                setSignatories(_signatories);
+                              },
+                            }}
+                          >
+                            {s.email}
+                          </Typography.Text>
+                        </div>
+                      </div>
+                      <div
+                        onClick={() => {
+                          let _signatories = [...signatories];
+                          _signatories.splice(index, 1);
+                          setSignatories(_signatories);
+                        }}
+                      >
+                        <XMarkIcon className="h-3 px-5 cursor-pointer" />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+              <div
+                onClick={() => {
+                  let signs = [...signatories];
+                  signs.push({});
+                  setSignatories(signs);
+                }}
+                className="flex flex-col ring-1 ring-gray-300 rounded pt-5 space-y-3 items-center justify-center cursor-pointer hover:bg-gray-50"
+              >
+                <Image
+                  src="/icons/icons8-stamp-64.png"
+                  width={40}
+                  height={40}
+                />
+                <div>Add new Signatory</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Modal>
+    );
+  }
+
+  function createContractMOdal() {
+    return (
+      <Modal
+        title="New Contract"
+        centered
+        open={openCreateContract}
+        onOk={() => {
+          handleCreateContract(
+            vendor?._id,
+            null,
+            user?._id,
+            sections,
+            contractStartDate,
+            contractEndDate,
+            signatories,
+            refDoc === "external" ? reqAttachId : ""
+          );
+          setOpenCreateContract(false);
+          setSignatories([]);
+          setSections([{ title: "Set section title", body: "" }]);
+        }}
+        okText="Submit for review"
+        onCancel={() => setOpenCreateContract(false)}
+        width={"80%"}
+        bodyStyle={{ maxHeight: "700px", overflow: "scroll" }}
+      >
+        <div className="space-y-10 px-20 py-5">
+          <Typography.Title level={4}>
+            CONTRACTOR: {vendor?.companyName}
+          </Typography.Title>
+          <div className="grid grid-cols-2 w-1/2">
+            <div>
+              <div>Contract validity</div>
+              <DatePicker.RangePicker
+                onChange={(v, dates) => {
+                  setContractStartDate(dates[0]);
+                  setContractEndDate(dates[1]);
+                }}
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-5">
+            <div className="flex flex-col ring-1 ring-gray-300 rounded p-5 space-y-3">
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Company Name</div>
+                </Typography.Text>
+                <Typography.Text strong>Irembo ltd</Typography.Text>
+              </div>
+
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Company Address</div>
+                </Typography.Text>
+                <Typography.Text strong>
+                  Irembo Campass Nyarutarama KG 9 Ave
+                </Typography.Text>
+              </div>
+
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Company TIN no.</div>
+                </Typography.Text>
+                <Typography.Text strong>102911562</Typography.Text>
+              </div>
+
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Hereinafter refferd to as</div>
+                </Typography.Text>
+                <Typography.Text strong>Sender</Typography.Text>
+              </div>
+            </div>
+
+            <div className="flex flex-col ring-1 ring-gray-300 rounded p-5 space-y-3">
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Company Name</div>
+                </Typography.Text>
+                <Typography.Text strong>{vendor?.companyName}</Typography.Text>
+              </div>
+
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Company Address</div>
+                </Typography.Text>
+                <Typography.Text strong>
+                  {vendor?.building}-{vendor?.street}-{vendor?.avenue}
+                </Typography.Text>
+              </div>
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Company TIN no.</div>
+                </Typography.Text>
+                <Typography.Text strong>{vendor?.tin}</Typography.Text>
+              </div>
+              <div className="flex flex-col">
+                <Typography.Text type="secondary">
+                  <div className="text-xs">Hereinafter refferd to as</div>
+                </Typography.Text>
+                <Typography.Text strong>Receiver</Typography.Text>
+              </div>
+            </div>
+          </div>
+
+          {/* Sections */}
+          <div className="flex flex-col space-y-5">
+            <Typography.Title level={4}>Contents</Typography.Title>
+
+            {sections.map((s, index) => {
+              let section = sections[index]
+                ? sections[index]
+                : { title: "", body: "" };
+              let _sections = [...sections];
+              return (
+                <>
+                  <div className="flex flex-row justify-between items-center">
+                    <Typography.Title
+                      level={5}
+                      editable={{
+                        onChange: (e) => {
+                          section.title = e;
+                          _sections[index]
+                            ? (_sections[index] = section)
+                            : _sections.push(section);
+                          setSections(_sections);
+                        },
+                        text: s.title,
+                      }}
+                    >
+                      {s.title}
+                    </Typography.Title>
+                    <Popconfirm
+                      onConfirm={() => {
+                        let _sections = [...sections];
+                        _sections.splice(index, 1);
+                        setSections(_sections);
+                      }}
+                      title="You can not undo this!"
+                    >
+                      <div>
+                        <CloseCircleOutlined className="h-3 text-red-400 cursor-pointer" />
+                      </div>
+                    </Popconfirm>
+                  </div>
+                  <ReactQuill
+                    theme="snow"
+                    modules={modules}
+                    formats={formats}
+                    onChange={(value) => {
+                      section.body = value;
+                      _sections[index]
+                        ? (_sections[index] = section)
+                        : _sections.push(section);
+                      setSections(_sections);
+                    }}
+                  />
+                </>
+              );
+            })}
+
+            <Button
+              icon={<PlusOutlined />}
+              onClick={() => {
+                let _sections = [...sections];
+                _sections.push({
+                  title: `Set section ${sections?.length + 1} Title`,
+                  body: "",
+                });
+                setSections(_sections);
+              }}
+            >
+              Add section
+            </Button>
+          </div>
+          {/* Initiator and Reviewers */}
+          {/* <div className="grid grid-cols-3 gap-5">
+            <div className="flex flex-col ring-1 ring-gray-300 rounded py-5 space-y-3">
+              <div className="px-5">
+                <Typography.Text type="secondary">Initiated by</Typography.Text>
+                <div className="flex flex-col">
+                  <Typography.Text strong>
+                    e.manirakiza@irembo.com
+                  </Typography.Text>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col ring-1 ring-gray-300 rounded py-5 space-y-3">
+              <div className="px-5">
+                <Typography.Text type="secondary">Reviewed by</Typography.Text>
+                <div className="flex flex-col">
+                  <Typography.Text strong>{user?.email}</Typography.Text>
+                </div>
+              </div>
+            </div>
+          </div> */}
+
+          {/* Signatories */}
+          <div className="grid grid-cols-3 gap-5">
+            {signatories.map((s, index) => {
+              return (
+                <div
+                  key={index}
+                  className="flex flex-col ring-1 ring-gray-300 rounded py-5"
+                >
+                  <div className="flex flex-row items-start justify-between">
+                    <div className="flex flex-col space-y-3 px-5">
+                      <div className="flex flex-col space-y-1">
+                        <Typography.Text type="secondary">
+                          <div className="text-xs">On Behalf of</div>
+                        </Typography.Text>
+                        <Typography.Text
+                          editable={{
+                            text: s.onBehalfOf,
+                            onChange: (e) => {
+                              let _signatories = [...signatories];
+                              _signatories[index].onBehalfOf = e;
+                              setSignatories(_signatories);
+                            },
+                          }}
+                        >
+                          {s.onBehalfOf}
+                        </Typography.Text>
+                      </div>
+
+                      <div className="flex flex-col space-y-1">
+                        <Typography.Text type="secondary">
+                          <div className="text-xs">Representative Title</div>
+                        </Typography.Text>
+                        <Typography.Text
+                          editable={{
+                            text: s.title,
+                            onChange: (e) => {
+                              let _signatories = [...signatories];
+                              _signatories[index].title = e;
+                              setSignatories(_signatories);
+                            },
+                          }}
+                        >
+                          {s.title}
+                        </Typography.Text>
+                      </div>
+
+                      <div className="flex flex-col space-y-1">
+                        <Typography.Text type="secondary">
+                          <div className="text-xs">Company Representative</div>
+                        </Typography.Text>
+                        <Typography.Text
+                          editable={{
+                            text: s.names,
+                            onChange: (e) => {
+                              let _signatories = [...signatories];
+                              _signatories[index].names = e;
+                              setSignatories(_signatories);
+                            },
+                          }}
+                        >
+                          {s.names}
+                        </Typography.Text>
+                      </div>
+
+                      <div className="flex flex-col space-y-1">
+                        <Typography.Text type="secondary">
+                          <div className="text-xs">Email</div>
+                        </Typography.Text>
+                        <Typography.Text
+                          editable={{
+                            text: s.email,
+                            onChange: (e) => {
+                              let _signatories = [...signatories];
+                              _signatories[index].email = e;
+                              setSignatories(_signatories);
+                            },
+                          }}
+                        >
+                          {s.email}
+                        </Typography.Text>
+                      </div>
+                    </div>
+                    <div
+                      onClick={() => {
+                        let _signatories = [...signatories];
+                        _signatories.splice(index, 1);
+                        setSignatories(_signatories);
+                      }}
+                    >
+                      <XMarkIcon className="h-3 px-5 cursor-pointer" />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+            <div
+              onClick={() => {
+                let signs = [...signatories];
+                let newSignatory =
+                  signs?.length < 2
+                    ? { onBehalfOf: "Irembo Ltd" }
+                    : {
+                        onBehalfOf: vendor?.companyName,
+                        title: vendor?.title,
+                        names: vendor?.contactPersonNames,
+                        email: vendor?.email,
+                      };
+                signs.push(newSignatory);
+                setSignatories(signs);
+              }}
+              className="flex flex-col ring-1 ring-gray-300 rounded pt-5 space-y-3 items-center justify-center cursor-pointer hover:bg-gray-50"
+            >
+              <Image src="/icons/icons8-stamp-64.png" width={40} height={40} />
+              <div>Add new Signatory</div>
+            </div>
+          </div>
+        </div>
+      </Modal>
+    );
+  }
+
   function getPoTotalVal() {
     let t = 0;
     let tax = 0;
@@ -1582,7 +2208,7 @@ const RequestDetails = ({
         title="Attachment view"
         centered
         open={previewAttachment}
-        onOk={()=>setPreviewAttachment(false)}
+        onOk={() => setPreviewAttachment(false)}
         onCancel={() => setPreviewAttachment(false)}
         width={"80%"}
         bodyStyle={{ maxHeight: "700px", overflow: "scroll" }}
@@ -1686,10 +2312,10 @@ function contractParty(companyName, companyAdress, companyTin, partyType) {
   );
 }
 
-function buildTenderForm(setDeadLine, user, docId) {
+function buildTenderForm(setDeadLine, user, docId, submitTenderData) {
   return (
     <>
-      <div className=" ml-3 items-center">
+      <div className="items-center">
         <Typography.Title level={5}>Create Tender</Typography.Title>
         <Form.Item name="tenderDocUrl" label="Tender Document (RFP/RFQ)">
           <UploadTenderDoc uuid={docId} />
@@ -1711,12 +2337,13 @@ function buildTenderForm(setDeadLine, user, docId) {
           />
         </Form.Item>
       </div>
-      <div className="flex flex-row space-x-1 ml-3 mt-5 items-center">
+      <div className="flex flex-row space-x-1 mt-5 items-center">
         <Form.Item>
           <Button
             icon={<FileDoneOutlined />}
             type="primary"
             htmlType="submit"
+            onClick={submitTenderData}
             disabled={!user?.permissions?.canCreateTenders}
           >
             Create Tender
@@ -1727,9 +2354,16 @@ function buildTenderForm(setDeadLine, user, docId) {
   );
 }
 
-function buildPOForm(setSelectedContract, contracts, user) {
+function buildPOForm(
+  setSelectedContract,
+  contracts,
+  user,
+  submitPOData,
+  setVendor,
+  selectedContract
+) {
   return (
-    <div className="ml-3">
+    <div className="">
       <Typography.Title level={5}>
         Create PO from an existing contract
       </Typography.Title>
@@ -1744,6 +2378,7 @@ function buildPOForm(setSelectedContract, contracts, user) {
             showSearch
             onChange={(value, option) => {
               setSelectedContract(option.payload);
+              setVendor(option.payload.vendor);
             }}
             filterSort={(optionA, optionB) =>
               (optionA?.name ?? "")
@@ -1777,8 +2412,10 @@ function buildPOForm(setSelectedContract, contracts, user) {
           // size="small"
           type="primary"
           icon={<FileDoneOutlined />}
-          onClick={() => {}}
-          disabled={!user?.permissions?.canCreatePurchaseOrders}
+          onClick={submitPOData}
+          disabled={
+            !user?.permissions?.canCreatePurchaseOrders || !selectedContract
+          }
           htmlType="submit"
         >
           Create PO from contract

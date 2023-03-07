@@ -47,6 +47,14 @@ const SideMenu = ({ setScreen, screen, user }) => {
         });
       }
 
+      if (user?.permissions?.canViewContracts) {
+        _items.push({
+          label: "Contracts",
+          key: "contracts",
+          icon: <FileDoneOutlined />,
+        });
+      }
+
       if (user?.permissions?.canViewPurchaseOrders) {
         _items.push({
           label: "Purchase Orders",
@@ -82,6 +90,11 @@ const SideMenu = ({ setScreen, screen, user }) => {
           label: "Tenders",
           key: "tenders",
           icon: <MessageOutlined />,
+        },
+        {
+          label: "My Contracts",
+          key: "contracts",
+          icon: <FileDoneOutlined />,
         },
         {
           label: "My Purchase Orders",

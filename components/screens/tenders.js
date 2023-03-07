@@ -229,8 +229,6 @@ export default function Tenders({ user }) {
   }
 
   function createSubmission(data) {
-    alert(JSON.stringify(data));
-
     setLoadingRowData(true);
     fetch(`${url}/submissions/`, {
       method: "POST",

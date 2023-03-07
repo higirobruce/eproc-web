@@ -31,12 +31,15 @@ import {
   Divider,
   Popover,
   Popconfirm,
+  Switch,
 } from "antd";
 import UploadFiles from "./uploadFiles";
 import {
   CloseCircleOutlined,
   CloseOutlined,
   DislikeOutlined,
+  EditOutlined,
+  EyeOutlined,
   FileDoneOutlined,
   FileTextOutlined,
   LikeOutlined,
@@ -240,6 +243,7 @@ const TenderDetails = ({
   const [attachmentId, setAttachmentId] = useState("");
   const [proposalDocId, setProposalDocId] = useState(v4());
   const [otherDocId, setOtherDocId] = useState(v4());
+  const [editContract, setEditContract] = useState(user?.permissions?.canReviewContracts);
 
   useEffect(() => {
     let statusCode = getRequestStatusCode(data?.status);
@@ -267,6 +271,18 @@ const TenderDetails = ({
 
     updateBidList();
   }, [items]);
+
+  useEffect(() => {
+    if (openViewContract) {
+      setSections(contract?.sections);
+      setSignatories(contract?.signatories);
+    }
+  }, [openViewContract]);
+
+  useEffect(() => {
+    if (editContract) {
+    }
+  }, [editContract]);
 
   function handleCreateContract(
     vendor,
@@ -297,6 +313,38 @@ const TenderDetails = ({
       .then((res1) => {
         setSignatories([]);
         setSections([{ title: "Set section title", body: "" }]);
+        updateBidList();
+      })
+      .catch((err) => {
+        console.error(err);
+        messageApi.open({
+          type: "error",
+          content: JSON.stringify(err),
+        });
+      });
+  }
+
+  function handleUpdateContract(sections, signatories) {
+    let _contract = { ...contract };
+    _contract.sections = sections;
+    _contract.signatories = signatories;
+    _contract.status = "reviewed";
+
+    fetch(`${url}/contracts/${contract?._id}`, {
+      method: "PUT",
+      headers: {
+        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        newContract: _contract,
+      }),
+    })
+      .then((res) => res.json())
+      .then((res1) => {
+        setSignatories([]);
+        setSections([{ title: "Set section title", body: "" }]);
+        setEditContract(false);
         updateBidList();
       })
       .catch((err) => {
@@ -499,6 +547,17 @@ const TenderDetails = ({
     return totSignatories?.length === signatures?.length;
   }
 
+  function documentFullySignedInternally(document) {
+    let totIntenalSignatories = document?.signatories?.filter(
+      (s) => s.onBehalfOf === "Irembo Ltd"
+    );
+    let signatures = document?.signatories?.filter(
+      (s) => s.signed && s.onBehalfOf === "Irembo Ltd"
+    );
+
+    return totIntenalSignatories?.length === signatures?.length;
+  }
+
   function iBelongToEvaluators() {
     let approvers = data?.invitees;
     return approvers?.filter((a) => a.approver === user?.email)?.length >= 1;
@@ -510,6 +569,11 @@ const TenderDetails = ({
       approvers?.filter((a) => a.approver === user?.email && a.approved)
         ?.length >= 1
     );
+  }
+
+  function previousSignatorySigned(signatories, index) {
+    let signed = index == 0 ? true : signatories[index - 1]?.signed;
+    return signed;
   }
 
   const buildSubmissionForm = (
@@ -760,10 +824,8 @@ const TenderDetails = ({
                           >
                             <FileTextOutlined /> Evaluation report
                           </a>
-                          {
-                          iBelongToEvaluators() &&
-                            !iHaveApprovedEvalReport() && 
-                            (
+                          {iBelongToEvaluators() &&
+                            !iHaveApprovedEvalReport() && (
                               <>
                                 <Button
                                   size="small"
@@ -781,11 +843,11 @@ const TenderDetails = ({
                                       inv?.length >= 1 ? inv[0] : {};
                                     objToUpdate.approved = true;
                                     objToUpdate.approvedAt = moment().toDate();
-                                    invitees[invIndex] = objToUpdate
-                                    handleSendEvalApproval(data, invitees)
+                                    invitees[invIndex] = objToUpdate;
+                                    handleSendEvalApproval(data, invitees);
                                   }}
                                 >
-                                  Approve
+                                  I agree the recomendations
                                 </Button>
                                 <Button
                                   size="small"
@@ -793,7 +855,7 @@ const TenderDetails = ({
                                   danger
                                   icon={<DislikeOutlined />}
                                 >
-                                  Reject
+                                  I disagree
                                 </Button>
                               </>
                             )}
@@ -801,7 +863,10 @@ const TenderDetails = ({
                         <div className="flex flex-row space-x-3 text-gray-600">
                           {data?.invitees?.map((c) => {
                             return (
-                              <div key={c.approver} className="flex flex-row items-center space-x-1">
+                              <div
+                                key={c.approver}
+                                className="flex flex-row items-center space-x-1"
+                              >
                                 <div>
                                   {c?.approved ? (
                                     <Popover
@@ -897,8 +962,9 @@ const TenderDetails = ({
                   <div className="flex flex-col space-y-5 p-3">
                     {buildTabHeader()}
                     <Divider></Divider>
-                    {bidList?.filter((d) => d.status === "awarded").length >=
-                    1 ? (
+                    {(contract?.status === "reviewed" || (contract?.status === "draft" && user?.permissions?.canReviewContracts)) &&
+                    bidList?.filter((d) => d.status === "awarded").length >=
+                      1 ? (
                       !poCreated || !contractCreated ? (
                         <div>
                           {bidList
@@ -1078,7 +1144,9 @@ const TenderDetails = ({
                     {buildTabHeader()}
                     {bidList?.filter((d) => d.status === "awarded").length >=
                     1 ? (
-                      !poCreated || !contractCreated ? (
+                      (!poCreated || !contractCreated) &&
+                      contract?.status === "reviewed" &&
+                      documentFullySignedInternally(contract) ? (
                         <div>
                           {bidList
                             ?.filter(
@@ -1168,7 +1236,9 @@ const TenderDetails = ({
                               );
                             })}
                         </div>
-                      ) : contract?.vendor?._id === user?._id ? (
+                      ) : contract?.vendor?._id === user?._id &&
+                        contract?.status === "reviewed" &&
+                        documentFullySignedInternally(contract) ? (
                         <div className="mx-3 flex flex-row space-x-5 items-center justify-center">
                           <div className="flex flex-col items-center justify-center">
                             <Typography.Title level={5}>
@@ -1534,7 +1604,16 @@ const TenderDetails = ({
               <div
                 onClick={() => {
                   let signs = [...signatories];
-                  signs.push({});
+                  let newSignatory =
+                    signs?.length < 1
+                      ? { onBehalfOf: "Irembo Ltd" }
+                      : {
+                          onBehalfOf: vendor?.companyName,
+                          title: vendor?.title,
+                          names: vendor?.contactPersonNames,
+                          email: vendor?.email,
+                        };
+                  signs.push(newSignatory);
                   setSignatories(signs);
                 }}
                 className="flex flex-col ring-1 ring-gray-300 rounded pt-5 space-y-3 items-center justify-center cursor-pointer hover:bg-gray-50"
@@ -1571,7 +1650,7 @@ const TenderDetails = ({
           );
           setOpenCreateContract(false);
         }}
-        okText="Save and Submit"
+        okText="Submit for review"
         onCancel={() => setOpenCreateContract(false)}
         width={"80%"}
         bodyStyle={{ maxHeight: "700px", overflow: "scroll" }}
@@ -1846,7 +1925,16 @@ const TenderDetails = ({
             <div
               onClick={() => {
                 let signs = [...signatories];
-                signs.push({});
+                let newSignatory =
+                  signs?.length < 2
+                    ? { onBehalfOf: "Irembo Ltd" }
+                    : {
+                        onBehalfOf: vendor?.companyName,
+                        title: vendor?.title,
+                        names: vendor?.contactPersonNames,
+                        email: vendor?.email,
+                      };
+                signs.push(newSignatory);
                 setSignatories(signs);
               }}
               className="flex flex-col ring-1 ring-gray-300 rounded pt-5 space-y-3 items-center justify-center cursor-pointer hover:bg-gray-50"
@@ -1983,7 +2071,10 @@ const TenderDetails = ({
           <div className="grid grid-cols-3 gap-5">
             {po?.signatories?.map((s, index) => {
               return (
-                <div key={s?.email} className="flex flex-col ring-1 ring-gray-300 rounded pt-5 space-y-3 justify-between">
+                <div
+                  key={s?.email}
+                  className="flex flex-col ring-1 ring-gray-300 rounded pt-5 space-y-3 justify-between"
+                >
                   <div className="px-5 flex flex-col space-y-6">
                     <div className="flex flex-col">
                       <Typography.Text type="secondary">
@@ -2088,8 +2179,10 @@ const TenderDetails = ({
         centered
         open={openViewContract}
         onOk={() => {
+          editContract && handleUpdateContract(sections, signatories);
           setOpenViewContract(false);
         }}
+        okText={editContract ? "Save and Send contract" : "Ok"}
         onCancel={() => setOpenViewContract(false)}
         width={"80%"}
         bodyStyle={{ maxHeight: "700px", overflow: "scroll" }}
@@ -2114,7 +2207,17 @@ const TenderDetails = ({
                 </div>
               </div>
             </Typography.Title>
-            <Button icon={<PrinterOutlined />}>Print</Button>
+            {contract?.status !== "draft" && (
+              <Button icon={<PrinterOutlined />}>Print</Button>
+            )}
+            {contract?.status === "draft" && user?.permissions?.canReviewContracts && (
+              <Switch
+                checkedChildren={<EditOutlined />}
+                unCheckedChildren={<EyeOutlined />}
+                defaultChecked = {editContract}
+                onChange={(checked) => setEditContract(checked)}
+              />
+            )}
           </div>
           {/* Parties */}
           <div className="grid grid-cols-2 gap-5 ">
@@ -2188,47 +2291,172 @@ const TenderDetails = ({
           {/* Details */}
           <div className="flex flex-col space-y-5">
             <Typography.Title level={3}>Details</Typography.Title>
-            {contract?.sections?.map((section) => {
+            {sections?.map((s, index) => {
+              let section = sections[index]
+                ? sections[index]
+                : { title: "", body: "" };
+              let _sections = [...sections];
               return (
                 <>
-                  <Typography.Title level={4}>{section.title}</Typography.Title>
-                  <div>{parse(section?.body)}</div>
+                  <div className="flex flex-row justify-between items-center">
+                    <Typography.Title
+                      level={4}
+                      editable={
+                        editContract && {
+                          onChange: (e) => {
+                            section.title = e;
+                            _sections[index]
+                              ? (_sections[index] = section)
+                              : _sections.push(section);
+                            setSections(_sections);
+                          },
+                          text: s.title,
+                        }
+                      }
+                    >
+                      {s.title}
+                    </Typography.Title>
+                    {editContract && (
+                      <Popconfirm
+                        onConfirm={() => {
+                          let _sections = [...sections];
+                          _sections.splice(index, 1);
+                          setSections(_sections);
+                        }}
+                        title="You can not undo this!"
+                      >
+                        <div>
+                          <CloseCircleOutlined className="h-3 text-red-400 cursor-pointer" />
+                        </div>
+                      </Popconfirm>
+                    )}
+                  </div>
+                  {!editContract && <div>{parse(s?.body)}</div>}
+                  {editContract && (
+                    <ReactQuill
+                      theme="snow"
+                      modules={modules}
+                      formats={formats}
+                      value={s.body}
+                      onChange={(value) => {
+                        section.body = value;
+                        _sections[index]
+                          ? (_sections[index] = section)
+                          : _sections.push(section);
+                        setSections(_sections);
+                      }}
+                    />
+                  )}
                 </>
               );
             })}
+            {editContract && (
+              <Button
+                icon={<PlusOutlined />}
+                onClick={() => {
+                  let _sections = [...sections];
+                  _sections.push({
+                    title: `Set section ${sections?.length + 1} Title`,
+                    body: "",
+                  });
+                  setSections(_sections);
+                }}
+              >
+                Add section
+              </Button>
+            )}
           </div>
           {/* Signatories */}
           <div className="grid grid-cols-3 gap-5">
-            {contract?.signatories?.map((s, index) => {
+            {signatories?.map((s, index) => {
               return (
-                <div key={s?.email} className="flex flex-col ring-1 ring-gray-300 rounded pt-5 space-y-3 justify-between">
+                <div
+                  key={s?.email}
+                  className="flex flex-col ring-1 ring-gray-300 rounded pt-5 space-y-3 justify-between"
+                >
                   <div className="px-5 flex flex-col space-y-6">
                     <div className="flex flex-col">
                       <Typography.Text type="secondary">
                         <div className="text-xs">On Behalf of</div>
                       </Typography.Text>
-                      <Typography.Text strong>{s.onBehalfOf}</Typography.Text>
+                      <Typography.Text
+                        strong
+                        editable={
+                          editContract && {
+                            text: s.onBehalfOf,
+                            onChange: (e) => {
+                              let _signatories = [...signatories];
+                              _signatories[index].onBehalfOf = e;
+                              setSignatories(_signatories);
+                            },
+                          }
+                        }
+                      >
+                        {s.onBehalfOf}
+                      </Typography.Text>
                     </div>
 
                     <div className="flex flex-col">
                       <Typography.Text type="secondary">
                         <div className="text-xs">Representative Title</div>
                       </Typography.Text>
-                      <Typography.Text strong>{s.title}</Typography.Text>
+                      <Typography.Text
+                        strong
+                        editable={
+                          editContract && {
+                            text: s.title,
+                            onChange: (e) => {
+                              let _signatories = [...signatories];
+                              _signatories[index].title = e;
+                              setSignatories(_signatories);
+                            },
+                          }
+                        }
+                      >
+                        {s.title}
+                      </Typography.Text>
                     </div>
 
                     <div className="flex flex-col">
                       <Typography.Text type="secondary">
                         <div className="text-xs">Company Representative</div>
                       </Typography.Text>
-                      <Typography.Text strong>{s.names}</Typography.Text>
+                      <Typography.Text
+                        strong
+                        editable={
+                          editContract && {
+                            text: s.names,
+                            onChange: (e) => {
+                              let _signatories = [...signatories];
+                              _signatories[index].names = e;
+                              setSignatories(_signatories);
+                            },
+                          }
+                        }
+                      >
+                        {s.names}
+                      </Typography.Text>
                     </div>
 
                     <div className="flex flex-col">
                       <Typography.Text type="secondary">
                         <div className="text-xs">Email</div>
                       </Typography.Text>
-                      <Typography.Text strong>{s.email}</Typography.Text>
+                      <Typography.Text
+                        strong
+                        editable={
+                          editContract && {
+                            text: s.email,
+                            onChange: (e) => {
+                              let _signatories = [...signatories];
+                              _signatories[index].email = e;
+                              setSignatories(_signatories);
+                            },
+                          }
+                        }
+                      >
+                        {s.email}
+                      </Typography.Text>
                     </div>
 
                     {s.signed && (
@@ -2260,25 +2488,28 @@ const TenderDetails = ({
                     </div>
                   )}
 
-                  {user?.email === s?.email && !s?.signed && (
-                    <Popconfirm
-                      title="Confirm Contract Signature"
-                      onConfirm={() => handleSignContract(s, index)}
-                    >
-                      <div className="flex flex-row justify-center space-x-5 items-center border-t-2 bg-violet-50 p-5 cursor-pointer hover:opacity-75">
-                        <Image
-                          width={40}
-                          height={40}
-                          src="/icons/icons8-stamp-64.png"
-                        />
-
-                        <div className="text-violet-400 text-lg">
-                          Sign with one click
+                  {user?.email === s?.email &&
+                    !s?.signed &&
+                    previousSignatorySigned(signatories, index) && (
+                      <Popconfirm
+                        title="Confirm Contract Signature"
+                        onConfirm={() => handleSignContract(s, index)}
+                      >
+                        <div className="flex flex-row justify-center space-x-5 items-center border-t-2 bg-violet-50 p-5 cursor-pointer hover:opacity-75">
+                          <Image
+                            width={40}
+                            height={40}
+                            src="/icons/icons8-stamp-64.png"
+                          />
+                          <div className="text-violet-400 text-lg">
+                            Sign with one click
+                          </div>
                         </div>
-                      </div>
-                    </Popconfirm>
-                  )}
-                  {user?.email !== s?.email && !s.signed && (
+                      </Popconfirm>
+                    )}
+
+                  {((user?.email !== s?.email && !s.signed) ||
+                    !previousSignatorySigned(signatories, index)) && (
                     <div className="flex flex-row justify-center space-x-5 items-center border-t-2 bg-gray-50 p-5">
                       <Image
                         width={40}
@@ -2408,9 +2639,10 @@ const TenderDetails = ({
         })
           .then((res) => res.json())
           .then((res) => {
-            setSignatories([]);
-            setSections([{ title: "Set section title", body: "" }]);
+            // setSignatories([]);
+            // setSections([{ title: "Set section title", body: "" }]);
             setContract(res);
+            updateBidList();
           });
       })
       .catch((err) => {

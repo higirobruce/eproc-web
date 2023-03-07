@@ -182,7 +182,7 @@ export default function Users({ user }) {
     })
       .then((res) => res.json())
       .then((res) => {
-        // alert(JSON.stringify(res))
+       
         loadUsers();
       })
       .catch((err) => {
@@ -208,7 +208,7 @@ export default function Users({ user }) {
     })
       .then((res) => res.json())
       .then((res) => {
-        // alert(JSON.stringify(res))
+        
         loadUsers();
       })
       .catch((err) => {
@@ -234,7 +234,7 @@ export default function Users({ user }) {
     })
       .then((res) => res.json())
       .then((res) => {
-        // alert(JSON.stringify(res))
+        
         loadUsers();
       })
       .catch((err) => {
@@ -285,7 +285,7 @@ export default function Users({ user }) {
     })
       .then((res) => res.json())
       .then((res) => {
-        // alert(JSON.stringify(res))
+        
         loadUsers();
       })
       .catch((err) => {
@@ -311,7 +311,7 @@ export default function Users({ user }) {
     })
       .then((res) => res.json())
       .then((res) => {
-        // alert(JSON.stringify(res))
+        
         loadUsers();
       })
       .catch((err) => {
@@ -337,7 +337,7 @@ export default function Users({ user }) {
     })
       .then((res) => res.json())
       .then((res) => {
-        // alert(JSON.stringify(res))
+        
         loadUsers();
       })
       .catch((err) => {
@@ -467,6 +467,10 @@ export default function Users({ user }) {
                     canCreateBids={row?.permissions?.canCreateBids}
                     canEditBids={row?.permissions?.canEditBids}
                     canViewBids={row?.permissions?.canViewBids}
+                    canApproveContracts={row?.permissions?.canApproveContracts}
+                    canCreateContracts={row?.permissions?.canCreateContracts}
+                    canEditContracts={row?.permissions?.canEditContracts}
+                    canViewContracts={row?.permissions?.canViewContracts}
                     canApprovePurchaseOrders={
                       row?.permissions?.canApprovePurchaseOrders
                     }
@@ -496,7 +500,6 @@ export default function Users({ user }) {
                     handleSetCanEdit={setCanEdit}
                     handleSetCanApprove={setCanApprove}
                   />
-
                   <Form>
                     <Form.Item
                       name="canApproveAsHod"
