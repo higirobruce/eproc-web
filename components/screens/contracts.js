@@ -20,13 +20,18 @@ import {
   Tag,
   Switch,
   message,
+  Tooltip,
 } from "antd";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import parse from "html-react-parser";
 import * as _ from "lodash";
 import moment from "moment-timezone";
-import { LockClosedIcon, LockOpenIcon, PaperClipIcon } from "@heroicons/react/24/solid";
+import {
+  LockClosedIcon,
+  LockOpenIcon,
+  PaperClipIcon,
+} from "@heroicons/react/24/solid";
 import dynamic from "next/dynamic";
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 import "react-quill/dist/quill.snow.css";
@@ -70,7 +75,9 @@ export default function Contracts({ user }) {
   let [totalValue, setTotalValue] = useState(0);
   let [openViewContract, setOpenViewContract] = useState(false);
   let [startingDelivery, setStartingDelivery] = useState(false);
-  const [editContract, setEditContract] = useState(user?.permissions?.canReviewContracts);
+  const [editContract, setEditContract] = useState(
+    user?.permissions?.canReviewContracts
+  );
   const [previewAttachment, setPreviewAttachment] = useState(false);
   const [attachmentId, setAttachmentId] = useState("TOR-id.pdf");
   const items = [
@@ -194,14 +201,15 @@ export default function Contracts({ user }) {
             {contract?.status !== "draft" && (
               <Button icon={<PrinterOutlined />}>Print</Button>
             )}
-            {contract?.status === "draft" && user?.permissions?.canReviewContracts && (
-              <Switch
-                checkedChildren={<EditOutlined />}
-                unCheckedChildren={<EyeOutlined />}
-                defaultChecked={editContract}
-                onChange={(checked) => setEditContract(checked)}
-              />
-            )}
+            {contract?.status === "draft" &&
+              user?.permissions?.canReviewContracts && (
+                <Switch
+                  checkedChildren={<EditOutlined />}
+                  unCheckedChildren={<EyeOutlined />}
+                  defaultChecked={editContract}
+                  onChange={(checked) => setEditContract(checked)}
+                />
+              )}
           </div>
           {/* Parties */}
           <div className="grid grid-cols-2 gap-5 ">
@@ -453,14 +461,14 @@ export default function Contracts({ user }) {
                     )}
                   </div>
                   {s?.signed && (
-                    <div className="flex flex-row justify-center space-x-10 items-center border-t-2 bg-violet-50 p-5">
+                    <div className="flex flex-row justify-center space-x-10 items-center border-t-2 bg-blue-50 p-5">
                       <Image
                         width={40}
                         height={40}
-                        src="/icons/icons8-stamp-64.png"
+                        src="/icons/icons8-signature-80.png"
                       />
 
-                      <div className="text-violet-500 flex flex-col">
+                      <div className="text-blue-500 flex flex-col">
                         <div className="text-lg">Signed digitaly</div>
                         <div>{moment(s.signedAt).format("DD MMM YYYY")} at</div>
                         <div>
@@ -479,13 +487,13 @@ export default function Contracts({ user }) {
                         title="Confirm Contract Signature"
                         onConfirm={() => handleSignContract(s, index)}
                       >
-                        <div className="flex flex-row justify-center space-x-5 items-center border-t-2 bg-violet-50 p-5 cursor-pointer hover:opacity-75">
+                        <div className="flex flex-row justify-center space-x-5 items-center border-t-2 bg-blue-50 p-5 cursor-pointer hover:opacity-75">
                           <Image
                             width={40}
                             height={40}
-                            src="/icons/icons8-stamp-64.png"
+                            src="/icons/icons8-signature-80.png"
                           />
-                          <div className="text-violet-400 text-lg">
+                          <div className="text-blue-400 text-lg">
                             Sign with one click
                           </div>
                         </div>
@@ -498,7 +506,7 @@ export default function Contracts({ user }) {
                       <Image
                         width={40}
                         height={40}
-                        src="/icons/icons8-stamp-64-2.png"
+                        src="/icons/icons8-signature-80-2.png"
                       />
                       <div className="text-gray-400 text-lg">
                         {s.signed ? "Signed" : "Waiting for signature"}
@@ -767,7 +775,11 @@ export default function Contracts({ user }) {
                           className="flex flex-row items-center space-x-2"
                           onClick={() => {
                             setPreviewAttachment(!previewAttachment);
-                            setAttachmentId("reqAttachments/" + contract?.reqAttachmentDocId + ".pdf");
+                            setAttachmentId(
+                              "reqAttachments/" +
+                                contract?.reqAttachmentDocId +
+                                ".pdf"
+                            );
                           }}
                         >
                           <div>{contract?.request?.title}</div>{" "}
@@ -800,21 +812,23 @@ export default function Contracts({ user }) {
                           >
                             <div>
                               {s?.signed ? (
-                                <Popover
-                                  content={`signed: ${moment(
-                                    s?.signedAt
-                                  ).format("DD MMM YYYY")} at ${moment(
-                                    s?.signedAt
-                                  )
+                                <Tooltip
+                                  title={`signed: ${moment(s?.signedAt).format(
+                                    "DD MMM YYYY"
+                                  )} at ${moment(s?.signedAt)
                                     .tz("Africa/Kigali")
-                                    .format("h:mm a z z")}`}
+                                    .format("h:mm a z")}`}
                                 >
-                                  <LockClosedIcon className="h-5 text-green-500" />
-                                </Popover>
+                                  <span>
+                                    <LockClosedIcon className="h-5 text-green-500" />
+                                  </span>
+                                </Tooltip>
                               ) : (
-                                <Popover content="Signature still pending">
-                                  <LockOpenIcon className="h-5 text-yellow-500" />
-                                </Popover>
+                                <Tooltip title="Signature still pending">
+                                  <span>
+                                    <LockOpenIcon className="h-5 text-yellow-500" />
+                                  </span>
+                                </Tooltip>
                               )}
                             </div>
                             <div className="flex flex-col text-gray-600">
@@ -862,6 +876,10 @@ export default function Contracts({ user }) {
                   </div>
                 );
               })}
+
+              <div class="absolute -bottom-0 right-10 opacity-10">
+                <Image src="/icons/blue icon.png" width={110} height={100} />
+              </div>
             </div>
           )}
         </div>

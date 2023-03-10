@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { ArrowDownOutlined, ArrowUpOutlined } from "@ant-design/icons";
-import { Card, Col, Row, Statistic } from "antd";
+import { Card, Col, message, Row, Statistic } from "antd";
 import { Bar, Pie } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -22,12 +22,13 @@ ChartJS.register(
   Tooltip
 );
 
-export default function RequestStats({ totalRequests, totalBids }) {
+export default function RequestStats() {
   let [byDep, setByDepData] = useState(null);
   let [byCat, setByCatData] = useState(null);
   let url = process.env.NEXT_PUBLIC_BKEND_URL;
   let apiUsername = process.env.NEXT_PUBLIC_API_USERNAME;
   let apiPassword = process.env.NEXT_PUBLIC_API_PASSWORD;
+  const [messageApi, contextHolder] = message.useMessage();
 
   useEffect(() => {
     fetch(`${url}/requests/countsByDep`, {
@@ -79,11 +80,11 @@ export default function RequestStats({ totalRequests, totalBids }) {
       .catch((err) => {
         messageApi.open({
           type: "error",
-          content: "Something happened! Please try again.",
+          content: JSON.stringify(err),
         });
       });
 
-    fetch(`${url}/tenders/countsByCat`, {
+    fetch(`${url}/requests/countsByCat`, {
       method: "GET",
       headers: {
         Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
@@ -132,53 +133,25 @@ export default function RequestStats({ totalRequests, totalBids }) {
       .catch((err) => {
         messageApi.open({
           type: "error",
-          content: "Something happened! Please try again.",
+          content: JSON.stringify(err),
         });
       });
   }, []);
 
   return (
-    <Row gutter={[16]} className="flex flex-col justify-between space-y-2">
-      <div className="flex flex-row justify-between">
-        <div>
-          <Card className="shadow-xl">
-            <Statistic
-              title="Total Requests"
-              value={totalRequests}
-              // precision={2}
-              valueStyle={{
-                color: "#2299FF",
-              }}
-              //   prefix={<ArrowDownOutlined />}
-              //   suffix="%"
-            />
-          </Card>
-        </div>
+    <div className="flex flex-row justify-between">
+      <Card
+        title="Requests by Category"
+        size="default"
+        className="shadow-xl w-full"
+      >
+        {byCat && <Bar data={byCat} />}
+      </Card>
 
-        <div>
-          <Card className="shadow-xl">
-            <Statistic
-              title="Total Open Requests"
-              value={totalRequests}
-              // precision={2}
-              valueStyle={{
-                color: "#2299FF",
-              }}
-              //   prefix={<ArrowDownOutlined />}
-              //   suffix="%"
-            />
-          </Card>
-        </div>
-      </div>
-      <div className="flex flex-row justify-between">
-        <Card title="Counts by Category" size="default" className="shadow-xl w-full">
-          {byCat && <Bar data={byCat} />}
-        </Card>
-
-        {/* <Card title="Counts by Department" size="default" className="shadow-xl">
+      {/* <Card title="Counts by Department" size="default" className="shadow-xl">
             {byDep && <Bar data={byDep} />}
           </Card> */}
-      </div>
-    </Row>
+      {contextHolder}
+    </div>
   );
 }

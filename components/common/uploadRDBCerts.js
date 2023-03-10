@@ -2,7 +2,7 @@ import React from "react";
 import { UploadOutlined } from "@ant-design/icons";
 import { Button, Upload, message } from "antd";
 
-function UploadRDCerts({ label, uuid}) {
+function UploadRDCerts({ label, uuid, setSelected}) {
   const [messageApi, contextHolder] = message.useMessage();
   let url = process.env.NEXT_PUBLIC_BKEND_URL;
   let apiUsername = process.env.NEXT_PUBLIC_API_USERNAME;
@@ -23,6 +23,7 @@ function UploadRDCerts({ label, uuid}) {
     },
     listType: "document",
     previewFile(file) {
+      setSelected(true)
       console.log("Your upload file:", file);
       // Your process logic. Here we just mock to the same file
       return fetch(`${url}/users/`, {

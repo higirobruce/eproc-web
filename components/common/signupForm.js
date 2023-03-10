@@ -1,5 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { LoadingOutlined, StarFilled } from "@ant-design/icons";
+import {
+  LoadingOutlined,
+  QuestionCircleOutlined,
+  StarFilled,
+} from "@ant-design/icons";
 import {
   AutoComplete,
   Button,
@@ -17,6 +21,7 @@ import {
   message,
   Upload,
   Divider,
+  Tooltip,
 } from "antd";
 import Image from "next/image";
 import UploadFiles from "./uploadFiles";
@@ -75,8 +80,9 @@ const SignupForm = () => {
   let [servCategories, setServCategories] = useState([]);
 
   const [form] = Form.useForm();
-  const [rdbCertId, setRdbCertId] = useState(null)
-  const [vatCertId, setVatCertId] = useState(null)
+  const [rdbCertId, setRdbCertId] = useState(null);
+  const [vatCertId, setVatCertId] = useState(null);
+  const [rdbSelected,setRDBSelected] = useState(false)
 
   const onFinish = (values) => {
     setSubmitting(true);
@@ -107,7 +113,7 @@ const SignupForm = () => {
         passportNid: values.passportNid,
         services: values.services,
         rdbCertId,
-        vatCertId
+        vatCertId,
       }),
     })
       .then((res) => res.json())
@@ -139,8 +145,8 @@ const SignupForm = () => {
   const antIcon = <LoadingOutlined style={{ fontSize: 24 }} spin />;
 
   useEffect(() => {
-    setRdbCertId(v4())
-    setVatCertId(v4())
+    setRdbCertId(v4());
+    setVatCertId(v4());
     setLoaded(true);
     fetch(`${url}/dpts`, {
       method: "GET",
@@ -549,7 +555,6 @@ const SignupForm = () => {
                           </Form.Item>
                         </div>
                       </div>
-
                     </div>
 
                     <Typography.Title className="" level={4}>
@@ -558,11 +563,20 @@ const SignupForm = () => {
 
                     <div className="grid md:grid-cols-2 gap-x-5">
                       <div>
-                        <div>Full RDB registration</div>
-                        <Form.Item
-                          name="rdbRegistraction"
-                        >
-                          <UploadRDCerts uuid={rdbCertId} />
+                        <div className="flex flex-row space-x-1">
+                          <div>Incorporation document</div>
+                          <div>
+                            <Tooltip
+                              placement="top"
+                              title="Please attach your incorporation document. For Rwandan companies, please provide your RDB certificate."
+                              arrow={false}
+                            >
+                              <QuestionCircleOutlined />
+                            </Tooltip>
+                          </div>
+                        </div>
+                        <Form.Item name="rdbRegistraction">
+                          <UploadRDCerts uuid={rdbCertId} setSelected={setRDBSelected} />
                         </Form.Item>
                       </div>
                       <div>
@@ -597,135 +611,6 @@ const SignupForm = () => {
                 </Form.Item>
 
                 <Form.Item className="pb-5" {...tailFormItemLayout}>
-                  {submitting ? (
-                    <Spin indicator={antIcon} />
-                  ) : (
-                    <Button type="default" htmlType="submit">
-                      Register
-                    </Button>
-                  )}
-                </Form.Item>
-              </>
-            )}
-
-            {type === "DPT-USER" && (
-              <>
-                <Form.Item
-                  name="dpt"
-                  label="Department"
-                  rules={[
-                    { required: true, message: "Please select department!!" },
-                  ]}
-                >
-                  <Select
-                    placeholder="select department!"
-                    // onChange={(value) => setType(value)}
-                  >
-                    {dpts?.map((d) => {
-                      return (
-                        <Option key={d.number} value={d._id}>
-                          {d.description}
-                        </Option>
-                      );
-                    })}
-                  </Select>
-                </Form.Item>
-                <Row className="row space-x-4">
-                  <Form.Item
-                    name="firstName"
-                    label="First name"
-                    rules={[
-                      {
-                        required: true,
-                        message: "Please input your First Name!",
-                      },
-                    ]}
-                  >
-                    <Input />
-                  </Form.Item>
-
-                  <Form.Item name="lastName" label="Last name">
-                    <Input />
-                  </Form.Item>
-                </Row>
-
-                <Form.Item
-                  name="email"
-                  label="E-mail"
-                  rules={[
-                    {
-                      type: "email",
-                      message: "The input is not valid E-mail!",
-                    },
-                    {
-                      required: true,
-                      message: "Please input your E-mail!",
-                    },
-                  ]}
-                >
-                  <Input />
-                </Form.Item>
-
-                <Row className="row space-x-4">
-                  <Form.Item
-                    name="password"
-                    label="Password"
-                    rules={[
-                      {
-                        required: true,
-                        message: "Please input your password!",
-                      },
-                    ]}
-                    hasFeedback
-                  >
-                    <Input.Password />
-                  </Form.Item>
-
-                  <Form.Item
-                    name="confirm"
-                    label="Confirm Password"
-                    dependencies={["password"]}
-                    hasFeedback
-                    rules={[
-                      {
-                        required: true,
-                        message: "Please confirm your password!",
-                      },
-                      ({ getFieldValue }) => ({
-                        validator(_, value) {
-                          if (!value || getFieldValue("password") === value) {
-                            return Promise.resolve();
-                          }
-                          return Promise.reject(
-                            new Error(
-                              "The two passwords that you entered do not match!"
-                            )
-                          );
-                        },
-                      }),
-                    ]}
-                  >
-                    <Input.Password />
-                  </Form.Item>
-                </Row>
-
-                <Form.Item
-                  name="phone"
-                  label="Phone Number"
-                  rules={[
-                    {
-                      required: true,
-                      message: "Please input your phone number!",
-                    },
-                  ]}
-                >
-                  <Input
-                    addonBefore={prefixSelector}
-                    style={{ width: "100%" }}
-                  />
-                </Form.Item>
-
-                <Form.Item {...tailFormItemLayout}>
                   {submitting ? (
                     <Spin indicator={antIcon} />
                   ) : (

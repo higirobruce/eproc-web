@@ -19,7 +19,8 @@ const TopMenu = ({ setScreen, screen, handleLogout }) => {
   const [items, setItems] = useState([]);
   const [loggedInUser, setLoggedInUser] = useState(null);
 
-  useEffect(() => {}, [screen]);
+  useEffect(() => {
+  }, [screen]);
 
   useEffect(() => {
     let user = JSON.parse(localStorage.getItem("user"));
@@ -49,12 +50,8 @@ const TopMenu = ({ setScreen, screen, handleLogout }) => {
         style: { marginLeft: "auto" },
         children: [
           {
-            label: 'Option 1',
+            label: 'My Profile',
             key: 'setting:1',
-          },
-          {
-            label: 'Option 2',
-            key: 'setting:2',
           },
         ],
         // onClick: logout,

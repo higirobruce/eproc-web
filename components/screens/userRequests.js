@@ -780,8 +780,22 @@ export default function UserRequests({ user }) {
                             defaultValue={budgetLine}
                             placeholder="Select service category"
                             showSearch
-                            onChange={(value) => {
+                            onChange={(value, option) => {
+                              
                               setBudgetLine(value);
+                            }}
+                            // filterSort={(optionA, optionB) =>
+                            //   (optionA?.label ?? "")
+                            //     .toLowerCase()
+                            //     .localeCompare(
+                            //       (optionB?.label ?? "").toLowerCase()
+                            //     )
+                            // }
+                            filterOption={(inputValue, option) => {
+                              
+                              return option.label
+                                .toLowerCase()
+                                .includes(inputValue.toLowerCase());
                             }}
                             options={budgetLines.map((s) => {
                               return {
@@ -790,6 +804,7 @@ export default function UserRequests({ user }) {
                                   return {
                                     label: sub,
                                     value: sub,
+                                    title: s.title
                                   };
                                 }),
                               };
@@ -814,6 +829,10 @@ export default function UserRequests({ user }) {
               />
             </div>
           </Modal>
+
+          <div class="absolute -bottom-32 right-10 opacity-10">
+            <Image src='/icons/blue icon.png' width={110} height={100} />
+          </div>
         </div>
       ) : (
         <div className="flex items-center justify-center h-screen flex-1">

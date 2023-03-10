@@ -22,7 +22,7 @@ ChartJS.register(
   Tooltip
 );
 
-export default function TendersStats({ totalTenders, totalBids }) {
+export default function TendersStats() {
   let [byDep, setByDepData] = useState(null);
   let [byCat, setByCatData] = useState(null);
   let url = process.env.NEXT_PUBLIC_BKEND_URL;
@@ -138,34 +138,16 @@ export default function TendersStats({ totalTenders, totalBids }) {
   }, []);
 
   return (
-    <div className="">
-      <Row gutter={[16]} className="flex flex-col justify-between space-y-2">
-        <div className="flex flex-col justify-between space-y-2">
-          <Card className="shadow-xl" style={{ width: 150 }}>
-            <Statistic
-              title="Total Tenders"
-              value={totalTenders}
-              // precision={2}
-              valueStyle={{
-                color: "#2299FF",
-              }}
-              //   prefix={<ArrowDownOutlined />}
-              //   suffix="%"
-            />
-          </Card>
-        </div>
-        <div className="flex flex-row space-x-2 w-full">
-          <div>
-            <Card
-              title="Counts by Category"
-              size="default"
-              className="shadow-xl"
-            >
-              {byCat && <Bar data={byCat} />}
-            </Card>
-          </div>
+    <div className="flex flex-row justify-between">
+      <Card
+        title="Tenders by Category"
+        size="default"
+        className="shadow-xl w-full"
+      >
+          {byCat && <Bar data={byCat} />}
+        </Card>
 
-          {/* <div>
+      {/* <div>
             <Card
               title="Counts by Department"
               size="default"
@@ -174,8 +156,6 @@ export default function TendersStats({ totalTenders, totalBids }) {
               {byDep && <Bar data={byDep} />}
             </Card>
           </div> */}
-        </div>
-      </Row>
     </div>
   );
 }

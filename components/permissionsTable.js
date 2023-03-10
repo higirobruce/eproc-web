@@ -36,7 +36,8 @@ function PermissionsTable({
   handleSetCanView,
   handleSetCanCreated,
   handleSetCanEdit,
-  handleSetCanApprove
+  handleSetCanApprove,
+  canNotEdit
 }) {
   const columns = [
     {
@@ -50,7 +51,7 @@ function PermissionsTable({
       //   dataIndex: "view",
       key: "view",
       render: (_, row) => {
-        return <Checkbox defaultChecked={row?.view} onChange={(e) => handleSetCanView(e.target.checked, row?.alias)} />;
+        return <Checkbox disabled={canNotEdit} defaultChecked={row?.view} onChange={(e) => handleSetCanView(e.target.checked, row?.alias)} />;
       },
     },
     {
@@ -58,7 +59,7 @@ function PermissionsTable({
       //   dataIndex: "create",
       key: "create",
       render: (_, row) => {
-        return <Checkbox defaultChecked={row?.create} onChange={(e) => handleSetCanCreated(e.target.checked,row?.alias)} />;
+        return <Checkbox disabled={canNotEdit}defaultChecked={row?.create} onChange={(e) => handleSetCanCreated(e.target.checked,row?.alias)} />;
       },
     },
     {
@@ -66,7 +67,7 @@ function PermissionsTable({
       //   dataIndex: "edit",
       key: "edit",
       render: (_, row) => {
-        return <Checkbox defaultChecked={row?.edit} onChange={(e) => handleSetCanEdit(e.target.checked,row?.alias)} />;
+        return <Checkbox disabled={canNotEdit} defaultChecked={row?.edit} onChange={(e) => handleSetCanEdit(e.target.checked,row?.alias)} />;
       },
     },
 
@@ -75,7 +76,7 @@ function PermissionsTable({
       //   dataIndex: "approve",
       key: "approve",
       render: (_, row) => {
-        return <Checkbox defaultChecked={row?.approve} onChange={(e) => handleSetCanApprove(e.target.checked,row?.alias)} />;
+        return <Checkbox disabled={canNotEdit} defaultChecked={row?.approve} onChange={(e) => handleSetCanApprove(e.target.checked,row?.alias)} />;
       },
     },
   ];

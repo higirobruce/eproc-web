@@ -11,6 +11,7 @@ import {
   Popconfirm,
   Popover,
   Tag,
+  Tooltip,
 } from "antd";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
@@ -246,7 +247,10 @@ export default function PurchaseOrders({ user }) {
           <div className="grid grid-cols-3 gap-5">
             {po?.signatories?.map((s, index) => {
               return (
-                <div key={s?.email} className="flex flex-col ring-1 ring-gray-300 rounded pt-5 space-y-3 justify-between">
+                <div
+                  key={s?.email}
+                  className="flex flex-col ring-1 ring-gray-300 rounded pt-5 space-y-3 justify-between"
+                >
                   <div className="px-5 flex flex-col space-y-6">
                     <div className="flex flex-col">
                       <Typography.Text type="secondary">
@@ -286,17 +290,21 @@ export default function PurchaseOrders({ user }) {
                     )}
                   </div>
                   {s?.signed && (
-                    <div className="flex flex-row justify-center space-x-10 items-center border-t-2 bg-violet-50 p-5">
+                    <div className="flex flex-row justify-center space-x-10 items-center border-t-2 bg-blue-50 p-5">
                       <Image
                         width={40}
                         height={40}
-                        src="/icons/icons8-stamp-64.png"
+                        src="/icons/icons8-signature-80.png"
                       />
 
-                      <div className="text-violet-500 flex flex-col">
+                      <div className="text-blue-500 flex flex-col">
                         <div className="text-lg">Signed digitaly</div>
                         <div>{moment(s.signedAt).format("DD MMM YYYY")} at</div>
-                        <div>{moment(s.signedAt).tz('Africa/Kigali').format("h:mm a z")}</div>
+                        <div>
+                          {moment(s.signedAt)
+                            .tz("Africa/Kigali")
+                            .format("h:mm a z")}
+                        </div>
                       </div>
                     </div>
                   )}
@@ -306,14 +314,14 @@ export default function PurchaseOrders({ user }) {
                       title="Confirm Contract Signature"
                       onConfirm={() => handleSignPo(s, index)}
                     >
-                      <div className="flex flex-row justify-center space-x-5 items-center border-t-2 bg-violet-50 p-5 cursor-pointer hover:opacity-75">
+                      <div className="flex flex-row justify-center space-x-5 items-center border-t-2 bg-blue-50 p-5 cursor-pointer hover:opacity-75">
                         <Image
                           width={40}
                           height={40}
-                          src="/icons/icons8-stamp-64.png"
+                          src="/icons/icons8-signature-80.png"
                         />
 
-                        <div className="text-violet-400 text-lg">
+                        <div className="text-blue-400 text-lg">
                           Sign with one click
                         </div>
                       </div>
@@ -324,7 +332,7 @@ export default function PurchaseOrders({ user }) {
                       <Image
                         width={40}
                         height={40}
-                        src="/icons/icons8-stamp-64-2.png"
+                        src="/icons/icons8-signature-80-2.png"
                       />
                       <div className="text-gray-400 text-lg">
                         {s.signed ? "Signed" : "Waiting for signature"}
@@ -341,7 +349,6 @@ export default function PurchaseOrders({ user }) {
   }
 
   function handleSignPo(signatory, index) {
-    
     setSigning(true);
     let myIpObj = "";
     signatory.signed = true;
@@ -450,6 +457,18 @@ export default function PurchaseOrders({ user }) {
 
     return totSignatories?.length === signatures?.length;
   }
+
+  function documentFullySignedInternally(document) {
+    let totIntenalSignatories = document?.signatories?.filter(
+      (s) => s.onBehalfOf === "Irembo Ltd"
+    );
+    let signatures = document?.signatories?.filter(
+      (s) => s.signed && s.onBehalfOf === "Irembo Ltd"
+    );
+
+    return totIntenalSignatories?.length === signatures?.length;
+  }
+
   return (
     <>
       {dataLoaded ? (
@@ -513,24 +532,30 @@ export default function PurchaseOrders({ user }) {
                     <div className="flex flex-col space-y-3 text-gray-600">
                       {po?.signatories?.map((s) => {
                         return (
-                          <div key={s?.email} className="flex flex-row items-center space-x-2">
+                          <div
+                            key={s?.email}
+                            className="flex flex-row items-center space-x-2"
+                          >
                             <div>
                               {s?.signed ? (
-                                <Popover
-                                  content={`signed: ${moment(
-                                    s?.signedAt
-                                  ).format("DD MMM YYYY")} at ${moment(
-                                    s?.signedAt
-                                  )
+                                <Tooltip
+                                  placement="top"
+                                  title={`signed: ${moment(s?.signedAt).format(
+                                    "DD MMM YYYY"
+                                  )} at ${moment(s?.signedAt)
                                     .tz("Africa/Kigali")
-                                    .format("h:mm a z z")}`}
+                                    .format("h:mm a z")}`}
                                 >
-                                  <LockClosedIcon className="h-5 text-green-500" />
-                                </Popover>
+                                  <span>
+                                    <LockClosedIcon className="h-5 text-green-500" />
+                                  </span>
+                                </Tooltip>
                               ) : (
-                                <Popover content="Signature still pending">
-                                  <LockOpenIcon className="h-5 text-yellow-500" />
-                                </Popover>
+                                <Tooltip title="Signature still pending">
+                                  <span>
+                                    <LockOpenIcon className="h-5 text-yellow-500" />
+                                  </span>
+                                </Tooltip>
                               )}
                             </div>
                             <div className="flex flex-col text-gray-600">
@@ -544,6 +569,10 @@ export default function PurchaseOrders({ user }) {
 
                     <div className="flex flex-col space-y-1 items-center justify-center">
                       <Dropdown.Button
+                        disabled={
+                          user?.userType === "VENDOR" &&
+                          !documentFullySignedInternally(po)
+                        }
                         menu={{ items, onClick: onMenuClick }}
                         onOpenChange={() => {
                           setPO(po);
@@ -581,6 +610,10 @@ export default function PurchaseOrders({ user }) {
                   </div>
                 );
               })}
+
+              <div class="absolute -bottom-0 right-10 opacity-10">
+                <Image src="/icons/blue icon.png" width={110} height={100} />
+              </div>
             </div>
           )}
         </div>

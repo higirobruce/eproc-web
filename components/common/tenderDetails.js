@@ -278,16 +278,14 @@ const TenderDetails = ({
     updateBidList();
   }, [items]);
 
-  useEffect(()=>{
-    let list = []
-    assets.map(alist=>{
-      alist.map(a=>{
-        list.push(a)
-      })
-    })
-
-    alert(JSON.stringify(list))
-  },[assets])
+  useEffect(() => {
+    let list = [];
+    assets.map((alist) => {
+      alist.map((a) => {
+        list.push(a);
+      });
+    });
+  }, [assets]);
 
   useEffect(() => {
     if (openViewContract) {
@@ -308,7 +306,8 @@ const TenderDetails = ({
     sections,
     contractStartDate,
     contractEndDate,
-    signatories
+    signatories,
+    request
   ) {
     fetch(`${url}/contracts/`, {
       method: "POST",
@@ -324,6 +323,7 @@ const TenderDetails = ({
         contractStartDate,
         contractEndDate,
         signatories,
+        request
       }),
     })
       .then((res) => res.json())
@@ -1013,7 +1013,7 @@ const TenderDetails = ({
                     <Divider></Divider>
                     {(contract?.status === "reviewed" ||
                       (contract?.status === "draft" &&
-                        user?.permissions?.canReviewContracts)) &&
+                        user?.permissions?.canReviewContracts) || !contract) &&
                     bidList?.filter((d) => d.status === "awarded").length >=
                       1 ? (
                       !poCreated || !contractCreated ? (
@@ -1127,6 +1127,38 @@ const TenderDetails = ({
                                                         <FileDoneOutlined />
                                                       }
                                                       onClick={() => {
+                                                        let _signatories = [
+                                                          {
+                                                            onBehalfOf:
+                                                              "Irembo Ltd",
+                                                            title:
+                                                              "Finance Manager",
+                                                            names: "",
+                                                            email: "",
+                                                          },
+                                                          {
+                                                            onBehalfOf:
+                                                              "Irembo Ltd",
+                                                            title:
+                                                              "Procurement Manager",
+                                                            names: "",
+                                                            email: "",
+                                                          },
+                                                          {
+                                                            onBehalfOf:
+                                                              item?.createdBy?.companyName,
+                                                            title:
+                                                              item?.createdBy?.title,
+                                                            names:
+                                                              item?.createdBy?.contactPersonNames,
+                                                            email:
+                                                              item?.createdBy?.email,
+                                                          },
+                                                        ];
+
+                                                        setSignatories(
+                                                          _signatories
+                                                        );
                                                         setOpenCreatePO(true);
                                                         setVendor(
                                                           item?.createdBy
@@ -1197,7 +1229,7 @@ const TenderDetails = ({
                     1 ? (
                       (!poCreated || !contractCreated) &&
                       contract?.status === "reviewed" &&
-                      documentFullySignedInternally(contract) ? (
+                      documentFullySignedInternally(contract) && documentFullySignedInternally(po) ? (
                         <div>
                           {bidList
                             ?.filter(
@@ -1289,7 +1321,7 @@ const TenderDetails = ({
                         </div>
                       ) : contract?.vendor?._id === user?._id &&
                         contract?.status === "reviewed" &&
-                        documentFullySignedInternally(contract) ? (
+                        documentFullySignedInternally(contract) && documentFullySignedInternally(po) ? (
                         <div className="mx-3 flex flex-row space-x-5 items-center justify-center">
                           <div className="flex flex-col items-center justify-center">
                             <Typography.Title level={5}>
@@ -1683,9 +1715,10 @@ const TenderDetails = ({
                   </div>
                 );
               })}
+              {/* New Signatory */}
               <div
                 onClick={() => {
-                  let signs = [...signatories];
+                  let signs = [];
                   let newSignatory =
                     signs?.length < 1
                       ? { onBehalfOf: "Irembo Ltd" }
@@ -1695,13 +1728,14 @@ const TenderDetails = ({
                           names: vendor?.contactPersonNames,
                           email: vendor?.email,
                         };
+
                   signs.push(newSignatory);
                   setSignatories(signs);
                 }}
                 className="flex flex-col ring-1 ring-gray-300 rounded pt-5 space-y-3 items-center justify-center cursor-pointer hover:bg-gray-50"
               >
                 <Image
-                  src="/icons/icons8-stamp-64.png"
+                  src="/icons/icons8-signature-80.png"
                   width={40}
                   height={40}
                 />
@@ -1728,7 +1762,8 @@ const TenderDetails = ({
             sections,
             contractStartDate,
             contractEndDate,
-            signatories
+            signatories,
+            tendor?.purchaseRequest?._id
           );
           setOpenCreateContract(false);
         }}
@@ -2021,7 +2056,7 @@ const TenderDetails = ({
               }}
               className="flex flex-col ring-1 ring-gray-300 rounded pt-5 space-y-3 items-center justify-center cursor-pointer hover:bg-gray-50"
             >
-              <Image src="/icons/icons8-stamp-64.png" width={40} height={40} />
+              <Image src="/icons/icons8-signature-80.png" width={40} height={40} />
               <div>Add new Signatory</div>
             </div>
           </div>
@@ -2196,14 +2231,14 @@ const TenderDetails = ({
                     )}
                   </div>
                   {s?.signed && (
-                    <div className="flex flex-row justify-center space-x-10 items-center border-t-2 bg-violet-50 p-5">
+                    <div className="flex flex-row justify-center space-x-10 items-center border-t-2 bg-blue-50 p-5">
                       <Image
                         width={40}
                         height={40}
-                        src="/icons/icons8-stamp-64.png"
+                        src="/icons/icons8-signature-80.png"
                       />
 
-                      <div className="text-violet-500 flex flex-col">
+                      <div className="text-blue-500 flex flex-col">
                         <div className="text-lg">Signed digitaly</div>
                         <div>{moment(s.signedAt).format("DD MMM YYYY")} at</div>
                         <div>
@@ -2220,14 +2255,14 @@ const TenderDetails = ({
                       title="Confirm Contract Signature"
                       onConfirm={() => handleSignPo(s, index)}
                     >
-                      <div className="flex flex-row justify-center space-x-5 items-center border-t-2 bg-violet-50 p-5 cursor-pointer hover:opacity-75">
+                      <div className="flex flex-row justify-center space-x-5 items-center border-t-2 bg-blue-50 p-5 cursor-pointer hover:opacity-75">
                         <Image
                           width={40}
                           height={40}
-                          src="/icons/icons8-stamp-64.png"
+                          src="/icons/icons8-signature-80.png"
                         />
 
-                        <div className="text-violet-400 text-lg">
+                        <div className="text-blue-400 text-lg">
                           Sign with one click
                         </div>
                       </div>
@@ -2238,7 +2273,7 @@ const TenderDetails = ({
                       <Image
                         width={40}
                         height={40}
-                        src="/icons/icons8-stamp-64-2.png"
+                        src="/icons/icons8-signature-80-2.png"
                       />
                       <div className="text-gray-400 text-lg">
                         {s.signed ? "Signed" : "Waiting for signature"}
@@ -2552,14 +2587,14 @@ const TenderDetails = ({
                     )}
                   </div>
                   {s?.signed && (
-                    <div className="flex flex-row justify-center space-x-10 items-center border-t-2 bg-violet-50 p-5">
+                    <div className="flex flex-row justify-center space-x-10 items-center border-t-2 bg-blue-50 p-5">
                       <Image
                         width={40}
                         height={40}
-                        src="/icons/icons8-stamp-64.png"
+                        src="/icons/icons8-signature-80.png"
                       />
 
-                      <div className="text-violet-500 flex flex-col">
+                      <div className="text-blue-500 flex flex-col">
                         <div className="text-lg">Signed digitaly</div>
                         <div>{moment(s.signedAt).format("DD MMM YYYY")} at</div>
                         <div>
@@ -2578,13 +2613,13 @@ const TenderDetails = ({
                         title="Confirm Contract Signature"
                         onConfirm={() => handleSignContract(s, index)}
                       >
-                        <div className="flex flex-row justify-center space-x-5 items-center border-t-2 bg-violet-50 p-5 cursor-pointer hover:opacity-75">
+                        <div className="flex flex-row justify-center space-x-5 items-center border-t-2 bg-blue-50 p-5 cursor-pointer hover:opacity-75">
                           <Image
                             width={40}
                             height={40}
-                            src="/icons/icons8-stamp-64.png"
+                            src="/icons/icons8-signature-80.png"
                           />
-                          <div className="text-violet-400 text-lg">
+                          <div className="text-blue-400 text-lg">
                             Sign with one click
                           </div>
                         </div>
@@ -2597,7 +2632,7 @@ const TenderDetails = ({
                       <Image
                         width={40}
                         height={40}
-                        src="/icons/icons8-stamp-64-2.png"
+                        src="/icons/icons8-signature-80-2.png"
                       />
                       <div className="text-gray-400 text-lg">
                         {s.signed ? "Signed" : "Waiting for signature"}

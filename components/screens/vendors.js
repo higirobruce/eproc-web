@@ -105,7 +105,6 @@ export default function Vendors({ user }) {
   }
   useEffect(() => {
     setUpdatingId("");
-    console.log(dataset);
   }, [dataset]);
 
   function approveUser(id) {
@@ -285,11 +284,15 @@ export default function Vendors({ user }) {
             </Col>
             {/* <Col flex={1}><OverviewWindow/></Col> */}
           </Row>
+          <div class="absolute -bottom-20 right-10 opacity-10">
+            <Image src='/icons/blue icon.png' width={110} height={100} />
+          </div>
         </div>
       ) : (
-        <div className="flex items-center justify-center h-screen transition-opacity ease-in-out duration-300 flex-1">
-          <Image alt="" src="/people_search.svg" width={600} height={600} />
-        </div>
+        // <div className="flex items-center justify-center h-screen transition-opacity ease-in-out duration-300 flex-1">
+        //   <Image alt="" src="/people_search.svg" width={600} height={600} />
+        // </div>
+        <></>
       )}
     </>
   ) : (

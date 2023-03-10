@@ -12,7 +12,7 @@
     "@ant-design/icons": "^4.8.0",
     "@heroicons/react": "^2.0.16",
     "@next/font": "^13.1.6",
-    "antd": "^5.1.0",
+    "antd": "^5.3.0",
     "antd-input-tag": "^1.0.14",
     "autoprefixer": "^10.4.13",
     "chart.js": "^4.2.0",

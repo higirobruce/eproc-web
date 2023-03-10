@@ -493,6 +493,9 @@ export default function Tenders({ user }) {
               </Row>
             </Form>
           </Modal>
+          <div class="absolute -bottom-32 right-10 opacity-10">
+            <Image src='/icons/blue icon.png' width={110} height={100} />
+          </div>
         </div>
       ) : dataLoaded && dataset?.length === 0 ? (
         <Empty />

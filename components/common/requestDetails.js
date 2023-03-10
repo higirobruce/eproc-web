@@ -23,6 +23,8 @@ import {
   Modal,
   Table,
   message,
+  Tooltip,
+  Timeline,
 } from "antd";
 import UploadFiles from "./uploadFiles";
 import {
@@ -36,6 +38,11 @@ import {
   PlusCircleOutlined,
   PrinterOutlined,
   CloseCircleOutlined,
+  ClockCircleOutlined,
+  CheckCircleOutlined,
+  FileAddOutlined,
+  ShoppingOutlined,
+  ShoppingCartOutlined,
 } from "@ant-design/icons";
 import moment from "moment";
 import dayjs from "dayjs";
@@ -112,6 +119,7 @@ const RequestDetails = ({
   let apiPassword = process.env.NEXT_PUBLIC_API_PASSWORD;
   let [tender, setTender] = useState(null);
   let [po, setPO] = useState(null);
+  let [contract, setContract] = useState(null);
   let [currentStep, setCurrentStep] = useState(-1);
   let [progress, setProgress] = useState(0);
   let [refDoc, setRefDoc] = useState(false);
@@ -137,6 +145,7 @@ const RequestDetails = ({
   let [contractStartDate, setContractStartDate] = useState(moment());
   let [contractEndDate, setContractEndDate] = useState(moment());
   let [reqAttachId, setReqAttachId] = useState(v4());
+ 
 
   const showPopconfirm = () => {
     setOpen(true);
@@ -202,6 +211,7 @@ const RequestDetails = ({
     },
   ];
 
+
   useEffect(() => {
     let statusCode = getRequestStatusCode(data?.status);
     console.log(statusCode);
@@ -212,7 +222,7 @@ const RequestDetails = ({
     checkDirectPOExists(data);
     setReqAttachId(v4());
     if (data) {
-      checkTenderExists(data);
+      checkContractExists();
     }
     fetch(`${url}/users/vendors`, {
       method: "GET",
@@ -347,6 +357,7 @@ const RequestDetails = ({
   }
 
   function checkTenderExists(data) {
+   
     fetch(`${url}/tenders/byRequest/${data._id}`, {
       method: "GET",
       headers: {
@@ -356,12 +367,18 @@ const RequestDetails = ({
     })
       .then((res) => res.json())
       .then((res) => {
-        if (res) setTender(res[0]);
-        else setTender(null);
+        if (res?.length >= 1) {
+         
+          setTender(res[0]);
+        } else {
+          setTender(null);
+         
+        }
       });
   }
 
   function checkPOExists(tender) {
+  
     fetch(`${url}/purchaseOrders/byTenderId/${tender?._id}`, {
       method: "GET",
       headers: {
@@ -371,8 +388,31 @@ const RequestDetails = ({
     })
       .then((res) => res.json())
       .then((res) => {
-        if (res) setPO(res[0]);
-        else setPO(null);
+        if (res?.length >= 1) {
+          setPO(res[0]);
+        } else {
+          setPO(null);
+         
+        }
+      });
+  }
+
+  function checkContractExists() {
+    
+    fetch(`${url}/contracts/byRequestId/${data?._id}`, {
+      method: "GET",
+      headers: {
+        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+        "Content-Type": "application/json",
+      },
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        if (res?.length >= 1) {
+          setContract(res[0])
+        } else {
+         setContract(null)
+        }
       });
   }
 
@@ -386,7 +426,7 @@ const RequestDetails = ({
     })
       .then((res) => res.json())
       .then((res) => {
-        if (res) setPO(res[0]);
+        if (res?.length>=1) setPO(res[0]);
         else setPO(null);
       });
   }
@@ -414,7 +454,24 @@ const RequestDetails = ({
                 >
                   <div className="flex flex-col space-y-5">
                     {/* TItle */}
-                    <div className="text-lg font-bold">Request Details</div>
+                    <div className="grid md:grid-cols-5 gap-5">
+                      <div className="text-lg font-bold">Request Details</div>
+                      <div className="">
+                        <Tag color={data?.budgeted ? "green" : "blue"}>
+                          <Tooltip title={data?.budgetLine} showArrow={false}>
+                            {data?.budgeted ? "budgeted" : "not budgeted"}
+                          </Tooltip>
+                        </Tag>
+                      </div>
+                      <div className="">
+                        <Tag>
+                          Requested by{" "}
+                          {data?.createdBy?.firstName +
+                            " " +
+                            data?.createdBy?.lastName}
+                        </Tag>
+                      </div>
+                    </div>
                     <div className="flex flex-row justify-between items-start">
                       <div className="grid grid-cols-5">
                         <div className="flex flex-col space-y-1 items-start">
@@ -510,9 +567,9 @@ const RequestDetails = ({
                         );
                       })}
 
-                    {data.status === "completed" &&
+                    {/* {data.status === "completed" &&
                       (tender || po) &&
-                      buildWorkflow(currentStep, tender, po)}
+                      buildWorkflow(currentStep, tender, po)} */}
 
                     {po && po.deliveryProgress >= 100 && (
                       <>
@@ -551,38 +608,39 @@ const RequestDetails = ({
         {previewAttachmentModal()}
         {createContractMOdal()}
       </div>
-      <div className="flex flex-col px-10 py-4 rounded ring-1 ring-gray-200 bg-white h-full">
-        <Typography.Title level={5}>Workflow tracker (V2)</Typography.Title>
-        <Steps
-          direction="vertical"
-          progressDot
-          size="small"
-          current={0}
+      <div className="flex flex-col py-4 rounded h-full">
+        {/* <Typography.Title level={5}>Workflow tracker (V2)</Typography.Title> */}
+        <Timeline
+          // mode="alternate"
           items={[
-            { title: "PR created" },
             {
-              title: "PR approved",
-              description: "",
+              children: "PR-created",
+              color: data?.status!=='rejected' ? "blue" : "red",
+              dot: data?.status!=='rejected' && <FileAddOutlined className=" text-blue-500"/>
             },
             {
-              title: "Tender created",
-              description: "",
+              children: "PR-approved",
+              color: data?.status==='approved (pm)'||tender ? "blue" : "gray",
+              dot: (data?.status==='approved (pm)'||tender) && <FileDoneOutlined className=" text-blue-500"/>
             },
             {
-              title: "Contract created",
-              description: "",
-            },
-            // {
-            //   title: "Contract Signed",
-            //   description:"",
-            // },
-            {
-              title: "PO Created",
-              description: "",
+              children: `Tender-created`,
+              color: tender ? "blue" : "gray",
+              dot: tender && <CheckCircleOutlined className="text-lg text-blue-500"/>
             },
             {
-              title: "Delivered",
-              description: "",
+              color: contract ? "blue" : "gray",
+              children: "Contract-created",
+              dot: contract && <FileProtectOutlined className="text-lg text-blue-500"/>
+            },
+            {
+              children: "PO-created",
+              color: po ? "blue" : "gray",
+              dot: po && <ShoppingCartOutlined className="text-xl text-blue-500"/>
+            },
+            {
+              children: "Delivered",
+              color: progress===100 ? "blue" : "gray",
             },
           ]}
         />
@@ -1363,7 +1421,7 @@ const RequestDetails = ({
               }}
               className="flex flex-col ring-1 ring-gray-300 rounded pt-5 space-y-3 items-center justify-center cursor-pointer hover:bg-gray-50"
             >
-              <Image src="/icons/icons8-stamp-64.png" width={40} height={40} />
+              <Image src="/icons/icons8-signature-80.png" width={40} height={40} />
               <div>Add new Signatory</div>
             </div>
           </div>
@@ -1519,14 +1577,14 @@ const RequestDetails = ({
               </div>
 
               <Popconfirm title="Confirm PO Signature">
-                <div className="flex flex-row justify-center space-x-5 items-center border-t-2 bg-violet-50 p-5 cursor-pointer hover:opacity-75">
+                <div className="flex flex-row justify-center space-x-5 items-center border-t-2 bg-blue-50 p-5 cursor-pointer hover:opacity-75">
                   <Image
                     width={40}
                     height={40}
-                    src="/icons/icons8-stamp-64.png"
+                    src="/icons/icons8-signature-80.png"
                   />
 
-                  <div className="text-violet-400 text-lg">
+                  <div className="text-blue-400 text-lg">
                     Sign with one click
                   </div>
                 </div>
@@ -1855,7 +1913,7 @@ const RequestDetails = ({
                 className="flex flex-col ring-1 ring-gray-300 rounded pt-5 space-y-3 items-center justify-center cursor-pointer hover:bg-gray-50"
               >
                 <Image
-                  src="/icons/icons8-stamp-64.png"
+                  src="/icons/icons8-signature-80.png"
                   width={40}
                   height={40}
                 />
@@ -2178,7 +2236,7 @@ const RequestDetails = ({
               }}
               className="flex flex-col ring-1 ring-gray-300 rounded pt-5 space-y-3 items-center justify-center cursor-pointer hover:bg-gray-50"
             >
-              <Image src="/icons/icons8-stamp-64.png" width={40} height={40} />
+              <Image src="/icons/icons8-signature-80.png" width={40} height={40} />
               <div>Add new Signatory</div>
             </div>
           </div>
@@ -2260,10 +2318,10 @@ function buildSingatory(onBehalfOf, repTitle, repNames, repEmail) {
       </div>
 
       <Popconfirm title="Confirm PO Signature">
-        <div className="flex flex-row justify-center space-x-5 items-center border-t-2 bg-violet-50 p-5 cursor-pointer hover:opacity-75">
-          <Image width={40} height={40} src="/icons/icons8-stamp-64.png" />
+        <div className="flex flex-row justify-center space-x-5 items-center border-t-2 bg-blue-50 p-5 cursor-pointer hover:opacity-75">
+          <Image width={40} height={40} src="/icons/icons8-signature-80.png" />
 
-          <div className="text-violet-400 text-lg">Sign with one click</div>
+          <div className="text-blue-400 text-lg">Sign with one click</div>
         </div>
       </Popconfirm>
     </div>

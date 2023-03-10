@@ -118,7 +118,7 @@ const VendorsTable = ({
             <>
               {record.status === "created" && (
                 <Popover content="Approve">
-                  <Popconfirm
+                  <span><Popconfirm
                     title="Approve vendor"
                     description="Are you sure to approve this vendor?"
                     okText="Yes"
@@ -126,12 +126,12 @@ const VendorsTable = ({
                     onConfirm={() => approve(record._id)}
                   >
                     <CheckOutlined className="text-green-400 cursor-pointer" />
-                  </Popconfirm>
+                  </Popconfirm></span>
                 </Popover>
               )}
               {record.status === "declined" && (
                 <Popover content="Activate">
-                  <Popconfirm
+                 <span> <Popconfirm
                     title="Activate vendor"
                     description="Are you sure to activate this vendor?"
                     okText="Yes"
@@ -139,12 +139,12 @@ const VendorsTable = ({
                     onConfirm={() => activate(record._id)}
                   >
                     <SafetyCertificateOutlined className="text-green-400 cursor-pointer" />
-                  </Popconfirm>
+                  </Popconfirm></span>
                 </Popover>
               )}
               {record.status === "approved" && (
                 <Popover content="Ban">
-                  <Popconfirm
+                  <span><Popconfirm
                     title="Ban vendor"
                     description="Are you sure to ban this vendor?"
                     okText="Yes"
@@ -152,12 +152,12 @@ const VendorsTable = ({
                     onConfirm={() => ban(record._id)}
                   >
                     <StopOutlined className="text-red-400 cursor-pointer" />
-                  </Popconfirm>
+                  </Popconfirm></span>
                 </Popover>
               )}
               {record.status === "banned" && (
                 <Popover content="Activate">
-                  <Popconfirm
+                  <span><Popconfirm
                     title="Acivate vendor"
                     description="Are you sure to activate this vendor?"
                     okText="Yes"
@@ -165,7 +165,7 @@ const VendorsTable = ({
                     onConfirm={() => activate(record._id)}
                   >
                     <SafetyCertificateOutlined className="text-green-400 cursor-pointer" />
-                  </Popconfirm>
+                  </Popconfirm></span>
                 </Popover>
               )}
             </>

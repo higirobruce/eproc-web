@@ -212,10 +212,10 @@ export default function Users({ user }) {
         loadUsers();
       })
       .catch((err) => {
-        messageApi.open({
-          type: "error",
-          content: "Something happened! Please try again.",
-        });
+        // messageApi.open({
+        //   type: "error",
+        //   content: "Something happened! Please try again.",
+        // });
       });
   }
 
@@ -361,6 +361,9 @@ export default function Users({ user }) {
             updatingId={updatingId}
             handleSetRow={setRow}
           />
+          <div class="absolute -bottom-28 right-10 opacity-10">
+                <Image src="/icons/blue icon.png" width={110} height={100} />
+              </div>
         </div>
       ) : (
         <div className="flex items-center justify-center h-screen">
