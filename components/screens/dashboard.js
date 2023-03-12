@@ -143,6 +143,9 @@ export default function Dashboard({ user }) {
       {dataLoaded ? (
         <div>
           <div className="grid md:grid-cols-5 gap-4 p-5">
+          <div class="absolute opacity-10">
+            <Image src='/icons/blue icon.png' width={962} height={900} />
+          </div>
             <div>
               <CountCard
                 title="Requests"
@@ -188,13 +191,11 @@ export default function Dashboard({ user }) {
               />
             </div>
           </div>
-          <div className="grid md:grid-cols-2 gap-4 p-5">
+          <div className="grid md:grid-cols-4 gap-4 p-5 h-1/3">
             <RequestStats />
             <TendersStats />
           </div>
-          <div class="absolute -bottom-30 right-0 opacity-10">
-            <Image src='/icons/blue icon.png' width={110} height={100} />
-          </div>
+          
         </div>
       ) : (
         <div className="flex items-center justify-center flex-1">

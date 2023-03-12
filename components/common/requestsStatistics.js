@@ -145,7 +145,7 @@ export default function RequestStats() {
         size="default"
         className="shadow-xl w-full"
       >
-        {byCat && <Bar data={byCat} />}
+        {byCat && <Pie data={byCat} />}
       </Card>
 
       {/* <Card title="Counts by Department" size="default" className="shadow-xl">

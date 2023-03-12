@@ -742,6 +742,7 @@ export default function UserRequests({ user }) {
                 <div>
                   {/* Budgeted */}
                   <div>
+                    <div>Budgeted?</div>
                     <div>
                       <Form.Item
                         name="budgeted"
@@ -754,8 +755,8 @@ export default function UserRequests({ user }) {
                           }}
                           value={budgeted}
                         >
-                          <Radio value={true}>Budgeted</Radio>
-                          <Radio value={false}>Not Budgeted</Radio>
+                          <Radio value={true}>Yes</Radio>
+                          <Radio value={false}>No</Radio>
                         </Radio.Group>
                       </Form.Item>
                     </div>
@@ -781,7 +782,6 @@ export default function UserRequests({ user }) {
                             placeholder="Select service category"
                             showSearch
                             onChange={(value, option) => {
-                              
                               setBudgetLine(value);
                             }}
                             // filterSort={(optionA, optionB) =>
@@ -792,7 +792,6 @@ export default function UserRequests({ user }) {
                             //     )
                             // }
                             filterOption={(inputValue, option) => {
-                              
                               return option.label
                                 .toLowerCase()
                                 .includes(inputValue.toLowerCase());
@@ -804,7 +803,7 @@ export default function UserRequests({ user }) {
                                   return {
                                     label: sub,
                                     value: sub,
-                                    title: s.title
+                                    title: s.title,
                                   };
                                 }),
                               };
@@ -831,7 +830,7 @@ export default function UserRequests({ user }) {
           </Modal>
 
           <div class="absolute -bottom-32 right-10 opacity-10">
-            <Image src='/icons/blue icon.png' width={110} height={100} />
+            <Image src="/icons/blue icon.png" width={110} height={100} />
           </div>
         </div>
       ) : (

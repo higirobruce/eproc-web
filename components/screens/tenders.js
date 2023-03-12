@@ -434,7 +434,7 @@ export default function Tenders({ user }) {
             <Typography.Title level={4}>Tenders</Typography.Title>
             <Row className="flex flex-row space-x-5 items-center">
               <div>
-                <Input.Search placeholder="Search requests" />
+                <Input.Search placeholder="Search tenders" />
               </div>
               <Button
                 type="text"

@@ -11,6 +11,8 @@ import {
   Segmented,
   List,
   Empty,
+  Switch,
+  Select,
 } from "antd";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
@@ -22,6 +24,7 @@ import {
   BankOutlined,
   CompassOutlined,
   EditOutlined,
+  EyeOutlined,
   FileTextOutlined,
   GiftOutlined,
   GlobalOutlined,
@@ -31,6 +34,7 @@ import {
   PhoneOutlined,
   PlusOutlined,
   ReloadOutlined,
+  SaveOutlined,
   SettingOutlined,
   UserOutlined,
 } from "@ant-design/icons";
@@ -50,9 +54,28 @@ export default function Vendors({ user }) {
   let [vendorsBids, setVendorsBids] = useState([]);
   const [previewAttachment, setPreviewAttachment] = useState(false);
   const [attachmentId, setAttachmentId] = useState(null);
+  const [editVendor, setEditVendor] = useState(false);
+  let [servCategories, setServCategories] = useState([]);
 
   useEffect(() => {
     loadVendors();
+    fetch(`${url}/serviceCategories`, {
+      method: "GET",
+      headers: {
+        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+        "Content-Type": "application/json",
+      },
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        setServCategories(res);
+      })
+      .catch((err) => {
+        messageApi.open({
+          type: "error",
+          content: "Connection Error!",
+        });
+      });
   }, []);
 
   useEffect(() => {
@@ -246,6 +269,29 @@ export default function Vendors({ user }) {
       });
   }
 
+  function updateVendor() {
+    fetch(`${url}/users/${rowData?._id}`, {
+      method: "PUT",
+      headers: {
+        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+        "Content-Type": "application/json",
+      },
+      body:JSON.stringify({
+        newUser: rowData
+      })
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        refresh()
+      })
+      .catch((err) => {
+        messageApi.open({
+          type: "error",
+          content: "Something happened! Please try again.",
+        });
+      });
+  }
+
   return !rowData ? (
     <>
       {contextHolder}
@@ -285,7 +331,7 @@ export default function Vendors({ user }) {
             {/* <Col flex={1}><OverviewWindow/></Col> */}
           </Row>
           <div class="absolute -bottom-20 right-10 opacity-10">
-            <Image src='/icons/blue icon.png' width={110} height={100} />
+            <Image src="/icons/blue icon.png" width={110} height={100} />
           </div>
         </div>
       ) : (
@@ -303,16 +349,46 @@ export default function Vendors({ user }) {
     return (
       <div className="flex flex-col  transition-opacity ease-in-out duration-1000 px-10 py-5 flex-1 space-y-3 h-full">
         <div className="flex flex-col space-y-5">
-          <div>
-            <Button
-              icon={<ArrowLeftOutlined />}
-              onClick={() => {
-                setRowData(null);
-                setSegment("Bids");
-              }}
-            >
-              Back to vendors
-            </Button>
+          <div className="flex flex-row justify-between">
+            <div className="flex flex-row items-center space-x-2">
+              <div>
+                <Button
+                  icon={<ArrowLeftOutlined />}
+                  onClick={() => {
+                    setRowData(null);
+                    setSegment("Bids");
+                  }}
+                >
+                  Back to vendors
+                </Button>
+              </div>
+
+              {editVendor && (
+                <div>
+                  <Button
+                    icon={<SaveOutlined />}
+                    type="primary"
+                    onClick={() => {
+                      setEditVendor(false);
+                      updateVendor()
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+            {user?.permissions?.canEditVendors && (
+              <div>
+                <Switch
+                  checkedChildren={<EditOutlined />}
+                  unCheckedChildren={<EyeOutlined />}
+                  defaultChecked={editVendor}
+                  checked={editVendor}
+                  onChange={(checked) => {
+                    setEditVendor(checked);
+                  }}
+                />
+              </div>
+            )}
           </div>
 
           <div className="grid md:grid-cols-3 gap-5">
@@ -321,57 +397,180 @@ export default function Vendors({ user }) {
               <div className="bg-white ring-1 ring-gray-100 rounded shadow p-5">
                 <div className="text-xl font-semibold mb-5 flex flex-row justify-between items-center">
                   <div>General Information</div>
-                  <div>
-                    <EditOutlined />
-                  </div>
                 </div>
                 <div className="flex flex-col space-y-2">
                   <div className="flex flex-row items-center space-x-10">
                     <UserOutlined className="text-gray-400" />
                     <div className="text-sm flex flex-row items-center space-x-2">
-                      <div>{rowData?.contactPersonNames}</div>{" "}
-                      <div>
-                        <Tag color="cyan">{rowData?.title}</Tag>
-                      </div>
+                      <Typography.Text
+                        editable={
+                          editVendor && {
+                            onChange: (e) => {
+                              let r = { ...rowData };
+                              r.contactPersonNames = e;
+                              setRowData(r);
+                            },
+                            text: rowData?.contactPersonNames,
+                          }
+                        }
+                      >
+                        {rowData?.contactPersonNames}
+                      </Typography.Text>{" "}
+                      {!editVendor && (
+                        <div>
+                          <Tag color="cyan">{rowData?.title}</Tag>
+                        </div>
+                      )}
+                      {editVendor && (
+                        <Typography.Text
+                          editable={
+                            editVendor && {
+                              onChange: (e) => {
+                                let r = { ...rowData };
+                                r.title = e;
+                                setRowData(r);
+                              },
+                              text: rowData?.title,
+                            }
+                          }
+                        >
+                          {rowData?.title}
+                        </Typography.Text>
+                      )}
                     </div>
                   </div>
                   <div className="flex flex-row items-center space-x-10">
                     <MailOutlined className="text-gray-400" />
-                    <div className="text-sm ">{rowData?.email} </div>
+                    <Typography.Text
+                      editable={
+                        editVendor && {
+                          onChange: (e) => {
+                            let r = { ...rowData };
+                            r.email = e;
+                            setRowData(r);
+                          },
+                          text: rowData?.email,
+                        }
+                      }
+                      className="text-sm"
+                    >
+                      {rowData?.email}{" "}
+                    </Typography.Text>
                   </div>
 
                   <div className="flex flex-row items-center space-x-10">
                     <BankOutlined className="text-gray-400" />
-                    <div className="text-sm ">{rowData?.tin} </div>
+                    <Typography.Text
+                      editable={
+                        editVendor && {
+                          onChange: (e) => {
+                            let r = { ...rowData };
+                            r.tin = e;
+                            setRowData(r);
+                          },
+                          text: rowData?.tin,
+                        }
+                      }
+                      className="text-sm "
+                    >
+                      {rowData?.tin}{" "}
+                    </Typography.Text>
                   </div>
 
                   <div className="flex flex-row items-center space-x-10">
                     <PhoneOutlined className="text-gray-400" />
-                    <div className="text-sm ">{rowData?.telephone} </div>
+                    <Typography.Text
+                      editable={
+                        editVendor && {
+                          onChange: (e) => {
+                            let r = { ...rowData };
+                            r.telephone = e;
+                            setRowData(r);
+                          },
+                          text: rowData?.telephone,
+                        }
+                      }
+                      className="text-sm "
+                    >
+                      {rowData?.telephone}{" "}
+                    </Typography.Text>
                   </div>
                   <div className="flex flex-row items-center space-x-10">
                     <GlobalOutlined className="text-gray-400" />
                     <div className="text-sm ">
-                      <Typography.Link>{rowData?.webSite} </Typography.Link>
+                      <Typography.Link
+                        editable={
+                          editVendor && {
+                            onChange: (e) => {
+                              let r = { ...rowData };
+                              r.website = e;
+                              setRowData(r);
+                            },
+                            text: rowData?.webSite,
+                          }
+                        }
+                      >
+                        {rowData?.webSite}{" "}
+                      </Typography.Link>
                     </div>
                   </div>
 
                   <div className="flex flex-row items-center space-x-10">
                     <IdcardOutlined className="text-gray-400" />
-                    <div className="text-sm ">{rowData?.passportNid}</div>
+                    <Typography.Text
+                      editable={
+                        editVendor && {
+                          onChange: (e) => {
+                            let r = { ...rowData };
+                            r.passportNid = e;
+                            setRowData(r);
+                          },
+                          text: rowData?.passportNid,
+                        }
+                      }
+                      className="text-sm "
+                    >
+                      {rowData?.passportNid}
+                    </Typography.Text>
                   </div>
 
                   <div className="flex flex-row items-center space-x-10">
                     <GiftOutlined className="text-gray-400" />
-                    <div className="grid grid-cols-1 gap-2">
-                      {rowData?.services?.map((s) => {
-                        return (
-                          <div key={s}>
-                            <Tag>{s}</Tag>
-                          </div>
-                        );
-                      })}
-                    </div>
+                    {!editVendor && (
+                      <div className="grid grid-cols-1 gap-2">
+                        {rowData?.services?.map((s) => {
+                          return (
+                            <div key={s}>
+                              <Tag>{s}</Tag>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                    {editVendor && (
+                      <Select
+                        mode="multiple"
+                        allowClear
+                        defaultValue={rowData?.services?.map((s) => {
+                          return s;
+                        })}
+                        style={{ width: "100%" }}
+                        placeholder="Please select"
+                        onChange={(value) => {
+                          let r = { ...rowData };
+                          r.services = value;
+                          setRowData(r);
+                        }}
+                      >
+                        {servCategories?.map((s) => {
+                          return (
+                            <Option key={s._id} value={s.description}>
+                              {s.description}
+                            </Option>
+                          );
+                        })}
+                      </Select>
+                    )}
                   </div>
                 </div>
               </div>
@@ -379,19 +578,45 @@ export default function Vendors({ user }) {
               <div className="bg-white ring-1 ring-gray-100 rounded shadow p-5">
                 <div className="text-xl font-semibold mb-5 flex flex-row justify-between items-center">
                   <div>Address Information</div>
-                  <div>
-                    <EditOutlined />
-                  </div>
                 </div>
                 <div className="flex flex-col space-y-2">
                   <div className="flex flex-row items-center space-x-10">
                     <CompassOutlined className="text-gray-400" />
                     <div className="text-sm flex flex-row space-x-1">
-                      <div>{rowData?.building}, </div>
-                      <div>{rowData?.streetNo}, </div>
-                      <div>{rowData?.avenue}, </div>
-                      <div>{rowData?.city}, </div>
-                      <div>{rowData?.country}</div>
+                      <div>
+                        <Typography.Text
+                          editable={
+                            editVendor && {
+                              onChange: (e) => {
+                                let r = { ...rowData };
+                                r.hqAddress = e;
+                                setRowData(r);
+                              },
+                              tooltip: "Edit Hq Address",
+                              text: rowData?.hqAddress,
+                            }
+                          }
+                        >
+                          {rowData?.hqAddress}{" "}
+                        </Typography.Text>
+                      </div>
+                      <div>
+                        <Typography.Text
+                          editable={
+                            editVendor && {
+                              onChange: (e) => {
+                                let r = { ...rowData };
+                                r.country = e;
+                                setRowData(r);
+                              },
+                              text: rowData?.country,
+                              tooltip: "Edit Country",
+                            }
+                          }
+                        >
+                          {rowData?.country}
+                        </Typography.Text>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -400,9 +625,6 @@ export default function Vendors({ user }) {
               <div className="bg-white ring-1 ring-gray-100 rounded shadow p-5">
                 <div className="text-xl font-semibold mb-5 flex flex-row justify-between items-center">
                   <div>Attachements</div>
-                  <div>
-                    <EditOutlined />
-                  </div>
                 </div>
                 <div className="flex flex-col space-y-2">
                   <div className="flex flex-row items-center space-x-10">
@@ -432,7 +654,6 @@ export default function Vendors({ user }) {
                       <Typography.Link>VAT certificate</Typography.Link>
                     </div>
                   </div>
-
                 </div>
               </div>
             </div>

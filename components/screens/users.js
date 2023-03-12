@@ -12,6 +12,11 @@ import {
   Table,
   Form,
   Checkbox,
+  Select,
+  Input,
+  Spin,
+  Modal,
+  Row,
 } from "antd";
 import UsersTable from "../usersTable";
 import {
@@ -25,8 +30,12 @@ import {
   GiftOutlined,
   GlobalOutlined,
   IdcardOutlined,
+  LoadingOutlined,
   MailOutlined,
   PhoneOutlined,
+  PlusOutlined,
+  ReloadOutlined,
+  SettingOutlined,
   UserOutlined,
 } from "@ant-design/icons";
 import {
@@ -49,13 +58,88 @@ export default function Users({ user }) {
   let [segment, setSegment] = useState("Permissions");
   let [usersRequests, setUsersRequests] = useState([]);
 
+  let [submitting, setSubmitting] = useState(false);
+  let [type, setType] = useState("VENDOR");
+  let [dpts, setDpts] = useState([]);
+  let [servCategories, setServCategories] = useState([]);
+
+  const [form] = Form.useForm();
+  const [rdbCertId, setRdbCertId] = useState(null);
+  const [vatCertId, setVatCertId] = useState(null);
+  const [rdbSelected, setRDBSelected] = useState(false);
+
+  const [openCreateUser, setOpenCreateUser] = useState(false);
+
+  const antIcon = <LoadingOutlined style={{ fontSize: 24 }} spin />;
+
+  const prefixSelector = (
+    <Form.Item name="prefix" noStyle>
+      <Select style={{ width: 100 }}>
+        <Option value="+250">+250</Option>
+        <Option value="+254">+254</Option>
+      </Select>
+    </Form.Item>
+  );
+
+  const formItemLayout = {
+    // labelCol: {
+    //   xs: { span: 10 },
+    //   sm: { span: 10 },
+    // },
+    wrapperCol: {
+      xs: { span: 24 },
+      sm: { span: 24 },
+    },
+  };
+  const tailFormItemLayout = {
+    // wrapperCol: {
+    //   xs: {
+    //     span: 24,
+    //     offset: 0,
+    //   },
+    //   sm: {
+    //     span: 16,
+    //     offset: 8,
+    //   },
+    // },
+  };
+
+  const onFinish = (values) => {};
+
   useEffect(() => {
     loadUsers();
+
+    fetch(`${url}/dpts`, {
+      method: "GET",
+      headers: {
+        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+        "Content-Type": "application/json",
+      },
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        setDpts(res);
+      })
+      .catch((err) => {
+        messageApi.open({
+          type: "error",
+          content: "Connection Error!",
+        });
+      });
   }, []);
+
+  useEffect(() => {
+    setUpdatingId("");
+    console.log(dataset);
+  }, [dataset]);
 
   useEffect(() => {
     if (row) loadUsersRequests();
   }, [row]);
+
+  function refresh() {
+    loadUsers();
+  }
 
   function loadUsersRequests() {
     fetch(`${url}/requests/${row?._id}`, {
@@ -78,6 +162,7 @@ export default function Users({ user }) {
   }
 
   function loadUsers() {
+    setDataLoaded(false);
     fetch(`${url}/users/internal`, {
       method: "GET",
       headers: {
@@ -98,11 +183,6 @@ export default function Users({ user }) {
       });
   }
 
-  useEffect(() => {
-    setUpdatingId("");
-    console.log(dataset);
-  }, [dataset]);
-
   function approveUser(id) {
     setUpdatingId(id);
     fetch(`${url}/users/approve/${id}`, {
@@ -114,6 +194,8 @@ export default function Users({ user }) {
     })
       .then((res) => res.json())
       .then((res) => {
+
+        alert(JSON.stringify(res))
         let _data = [...dataset];
 
         // Find item index using _.findIndex (thanks @AJ Richardson for comment)
@@ -182,13 +264,30 @@ export default function Users({ user }) {
     })
       .then((res) => res.json())
       .then((res) => {
-       
         loadUsers();
       })
       .catch((err) => {
         messageApi.open({
           type: "error",
           content: "Something happened! Please try again.",
+        });
+      });
+
+    fetch(`${url}/dpts`, {
+      method: "GET",
+      headers: {
+        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+        "Content-Type": "application/json",
+      },
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        setDpts(res);
+      })
+      .catch((err) => {
+        messageApi.open({
+          type: "error",
+          content: "Connection Error!",
         });
       });
   }
@@ -208,7 +307,6 @@ export default function Users({ user }) {
     })
       .then((res) => res.json())
       .then((res) => {
-        
         loadUsers();
       })
       .catch((err) => {
@@ -234,7 +332,6 @@ export default function Users({ user }) {
     })
       .then((res) => res.json())
       .then((res) => {
-        
         loadUsers();
       })
       .catch((err) => {
@@ -285,7 +382,6 @@ export default function Users({ user }) {
     })
       .then((res) => res.json())
       .then((res) => {
-        
         loadUsers();
       })
       .catch((err) => {
@@ -311,7 +407,6 @@ export default function Users({ user }) {
     })
       .then((res) => res.json())
       .then((res) => {
-        
         loadUsers();
       })
       .catch((err) => {
@@ -337,7 +432,6 @@ export default function Users({ user }) {
     })
       .then((res) => res.json())
       .then((res) => {
-        
         loadUsers();
       })
       .catch((err) => {
@@ -348,12 +442,69 @@ export default function Users({ user }) {
       });
   }
 
+  function createUser(newUser) {
+
+    let permissions = {};
+    newUser?.permissions?.map((p) => {
+      permissions[p] = true
+    });
+
+    newUser.permissions = permissions
+    newUser.password = "password"
+    newUser.createdBy = user?._id
+    newUser.userType = 'DPT-USER'
+    newUser.companyName = newUser?.firstName + ' ' + newUser?.lastName
+    fetch(`${url}/users`, {
+      method: "POST",
+      headers: {
+        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(newUser),
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        loadUsers();
+        form.resetFields()
+      })
+      .catch((err) => {
+        messageApi.open({
+          type: "error",
+          content: "Something happened! Please try again.",
+        });
+      });
+
+  }
+
   return !row ? (
     <>
       {contextHolder}
+      {buildCreateUserScreen()}
       {dataLoaded ? (
         <div className="flex flex-col mx-10 flex-1 px-10">
-          <Typography.Title level={4}>Internal Users List</Typography.Title>
+          <Row className="flex flex-row justify-between items-center">
+            <Typography.Title level={4}>Users</Typography.Title>
+            <Row className="flex flex-row space-x-5 items-center">
+              <div>
+                <Input.Search placeholder="Search users" />
+              </div>
+              <Button
+                type="text"
+                icon={<ReloadOutlined />}
+                onClick={() => refresh()}
+              ></Button>
+
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={() => setOpenCreateUser(true)}
+              >
+                New user
+              </Button>
+
+              <Button type="text" icon={<SettingOutlined />}></Button>
+            </Row>
+          </Row>
           <UsersTable
             dataSet={dataset}
             handleApproveUser={approveUser}
@@ -362,8 +513,8 @@ export default function Users({ user }) {
             handleSetRow={setRow}
           />
           <div class="absolute -bottom-28 right-10 opacity-10">
-                <Image src="/icons/blue icon.png" width={110} height={100} />
-              </div>
+            <Image src="/icons/blue icon.png" width={110} height={100} />
+          </div>
         </div>
       ) : (
         <div className="flex items-center justify-center h-screen">
@@ -554,13 +705,21 @@ export default function Users({ user }) {
                         </div>
                         <div>
                           <div className="text-gray-500">Status</div>
-                          <div><Tag color='gold'>{request.status}</Tag></div>
+                          <div>
+                            <Tag color="gold">{request.status}</Tag>
+                          </div>
                         </div>
+                        <div>{`Due ${moment(request?.dueDate).fromNow()}`}</div>
                         <div>
-                          {`Due ${moment(request?.dueDate).fromNow()}`}
-                        </div>
-                        <div>
-                          {request?.budgeted ? <div><Tag color='green'>BUDGETED</Tag></div> : <div><Tag color='magenta'>NOT BUDGETED</Tag></div>}
+                          {request?.budgeted ? (
+                            <div>
+                              <Tag color="green">BUDGETED</Tag>
+                            </div>
+                          ) : (
+                            <div>
+                              <Tag color="magenta">NOT BUDGETED</Tag>
+                            </div>
+                          )}
                         </div>
                         <div></div>
                       </div>
@@ -572,6 +731,220 @@ export default function Users({ user }) {
           </div>
         </div>
       </div>
+    );
+  }
+
+  function buildCreateUserScreen() {
+    return (
+      <Modal
+        title="New User"
+        centered
+        open={openCreateUser}
+        onOk={() => {
+          form.validateFields().then(
+            (value) => {
+              createUser(value);
+              setOpenCreateUser(false)
+            },
+            (reason) => {}
+          );
+
+          // setOpenCreateUser(false);
+        }}
+        okText={"Ok"}
+        onCancel={() => setOpenCreateUser(false)}
+        width={"80%"}
+        bodyStyle={{ maxHeight: "700px", overflow: "scroll" }}
+      >
+        <Form
+          {...formItemLayout}
+          form={form}
+          name="newUser"
+          onFinish={onFinish}
+          initialValues={{
+            firstName: "",
+            prefix: "+250",
+            email: "",
+          }}
+          scrollToFirstError
+        >
+          <div className="">
+            {/* General Information */}
+            <div>
+              <Typography.Title className="" level={4}>
+                General Information
+              </Typography.Title>
+              <div className="">
+                {/* Grid 1 */}
+
+                <div className="grid grid-cols-2 gap-5">
+                  <div>
+                    <div className="flex flex-row spacex-3">
+                      First Name
+                      <div className="text-red-500">*</div>
+                    </div>
+                    <Form.Item
+                      name="firstName"
+                      // label="Contact Person's Names"
+                      rules={[
+                        {
+                          required: true,
+                          message: "Please input user's firstName!",
+                        },
+                      ]}
+                    >
+                      <Input />
+                    </Form.Item>
+                  </div>
+                  <div>
+                    <div className="flex flex-row spacex-3">
+                      Last Name
+                      <div className="text-red-500">*</div>
+                    </div>
+                    <Form.Item
+                      name="lastName"
+                      rules={[
+                        {
+                          required: true,
+                          message: "Please input user's lastName!",
+                        },
+                      ]}
+                    >
+                      <Input />
+                    </Form.Item>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-5">
+                  <div>
+                    <div className="flex flex-row spacex-3">
+                      Phone number <div className="text-red-500">*</div>
+                    </div>
+                    <Form.Item
+                      name="telephone"
+                      rules={[
+                        {
+                          required: true,
+                          message: "Please input your phone number!",
+                        },
+                      ]}
+                    >
+                      <Input addonBefore={prefixSelector} />
+                    </Form.Item>
+                  </div>
+                  <div>
+                    <div className="flex flex-row spacex-3">
+                      Department
+                      <div className="text-red-500">*</div>
+                    </div>
+                    <Form.Item name="department">
+                      <Select
+                        // mode="multiple"
+                        // allowClear
+                        // style={{width:'100%'}}
+
+                        placeholder="Please select"
+                      >
+                        {dpts?.map((dpt) => {
+                          return (
+                            <Option key={dpt._id} value={dpt._id}>
+                              {dpt.description}
+                            </Option>
+                          );
+                        })}
+                      </Select>
+                    </Form.Item>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-5">
+                  <div>
+                    <div>Email</div>
+                    <Form.Item
+                      name="email"
+                      // label="E-mail"
+                      rules={[
+                        {
+                          type: "email",
+                          message: "The input is not valid E-mail!",
+                        },
+                        {
+                          required: true,
+                          message: "Please input user's e-mail!",
+                        },
+                      ]}
+                    >
+                      <Input />
+                    </Form.Item>
+                  </div>
+
+                  <div>
+                    <div className="flex flex-row spacex-3">
+                      Permissions
+                      <div className="text-red-500">*</div>
+                    </div>
+                    <Form.Item name="permissions">
+                      <Select
+                        mode="multiple"
+                        allowClear
+                        // style={{width:'100%'}}
+
+                        placeholder="Please select"
+                        options={[
+                          {
+                            value: "canApproveAsHod",
+                            label: "Approve as Head of Department",
+                          },
+                          {
+                            value: "canApproveAsHof",
+                            label: "Approve as Head of Finance",
+                          },
+                          {
+                            value: "canApproveAsPM",
+                            label: "Approve as Procurement Manager",
+                          },
+                          {
+                            value: "canViewRequests",
+                            label: "View Purchase requests",
+                          },
+                          {
+                            value: "canViewTenders",
+                            label: "View Tenders",
+                          },
+                          {
+                            value: "canViewPurchaseOrders",
+                            label: "View Purchase Orders",
+                          },
+                          {
+                            value: "canViewVendors",
+                            label: "View Vendors",
+                          },
+                          {
+                            value: "canViewUsers",
+                            label: "View Users",
+                          },
+                          {
+                            value: "canViewDashboard",
+                            label: "View Dashboards",
+                          },
+                          {
+                            value: "canViewBids",
+                            label: "View Bids",
+                          },
+                          {
+                            value: "canViewContracts",
+                            label: "View Contracts",
+                          },
+                        ]}
+                      />
+                    </Form.Item>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Form>
+      </Modal>
     );
   }
 }

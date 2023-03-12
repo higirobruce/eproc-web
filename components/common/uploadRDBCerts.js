@@ -13,6 +13,9 @@ function UploadRDCerts({ label, uuid, setSelected}) {
       let isPDF = file.type == "application/pdf";
       if (!isPDF) {
         messageApi.error(`${file.name} is not a PDF file`);
+        setSelected(false)
+      } else{
+        setSelected(true)
       }
       return isPDF || Upload.LIST_IGNORE;
     },

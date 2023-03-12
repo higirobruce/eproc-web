@@ -175,7 +175,7 @@ const RequestDetails = ({
             className="flex flex-row items-center space-x-2"
             onClick={() => {
               setPreviewAttachment(!previewAttachment);
-              setAttachmentId(item?.id + ".pdf");
+              setAttachmentId(`termsOfReference/${item?.id}.pdf`);
             }}
           >
             <div>{item.title}</div>{" "}
@@ -211,7 +211,6 @@ const RequestDetails = ({
     },
   ];
 
-
   useEffect(() => {
     let statusCode = getRequestStatusCode(data?.status);
     console.log(statusCode);
@@ -223,6 +222,7 @@ const RequestDetails = ({
     setReqAttachId(v4());
     if (data) {
       checkContractExists();
+      checkTenderExists(data)
     }
     fetch(`${url}/users/vendors`, {
       method: "GET",
@@ -398,7 +398,6 @@ const RequestDetails = ({
   }
 
   function checkContractExists() {
-    
     fetch(`${url}/contracts/byRequestId/${data?._id}`, {
       method: "GET",
       headers: {
@@ -2273,7 +2272,7 @@ const RequestDetails = ({
       >
         <div>
           <PDFObject
-            url={`${url}/file/termsOfReference/${attachmentId}`}
+            url={`${url}/file/${attachmentId}`}
             height="40rem"
           />
         </div>

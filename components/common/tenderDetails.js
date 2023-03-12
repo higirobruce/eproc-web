@@ -235,7 +235,7 @@ const TenderDetails = ({
   const [signatories, setSignatories] = useState([]);
   const [docDate, setDocDate] = useState(moment());
   const [docType, setDocType] = useState("dDocument_Service");
-  const [bankName, setBankName] = useState("");
+  const [bankName, setBankName] = useState("BK");
   const [bankAccountNumber, setBankAccountNumber] = useState("");
   const [signing, setSigning] = useState(false);
 
@@ -323,7 +323,7 @@ const TenderDetails = ({
         contractStartDate,
         contractEndDate,
         signatories,
-        request
+        request,
       }),
     })
       .then((res) => res.json())
@@ -758,19 +758,32 @@ const TenderDetails = ({
                 <Form.Item noStyle name="bankName">
                   <Select
                     onChange={(value) => setBankName(value)}
-                    defaultValue="BK"
+                    defaultValue="Bank of Kigali"
+                    value={bankName}
                     options={[
                       {
-                        value: "BK",
+                        value: "Bank of Kigali",
                         label: "Bank of Kigali",
                       },
                       {
-                        value: "I&M",
+                        value: "I&M Bank",
                         label: "I&M Bank",
                       },
                       {
-                        value: "Access",
+                        value: "Access Bank",
                         label: "Access Bank",
+                      },
+                      {
+                        value: "Equity Bank",
+                        label: "Equity Bank",
+                      },
+                      {
+                        value: "Cogebank",
+                        label: "Cogebanl",
+                      },
+                      {
+                        value: "KCB Bank",
+                        label: "KCB Bank",
                       },
                     ]}
                   ></Select>
@@ -927,11 +940,15 @@ const TenderDetails = ({
                                         .tz("Africa/Kigali")
                                         .format("h:mm a z z")}`}
                                     >
-                                      <LockClosedIcon className="h-5 text-green-500" />
+                                      <span>
+                                        <LockClosedIcon className="h-5 text-green-500" />
+                                      </span>
                                     </Popover>
                                   ) : (
                                     <Popover content="Approval still pending">
-                                      <LockOpenIcon className="h-5 text-yellow-500" />
+                                      <span>
+                                        <LockOpenIcon className="h-5 text-yellow-500" />
+                                      </span>
                                     </Popover>
                                   )}
                                 </div>
@@ -1013,7 +1030,8 @@ const TenderDetails = ({
                     <Divider></Divider>
                     {(contract?.status === "reviewed" ||
                       (contract?.status === "draft" &&
-                        user?.permissions?.canReviewContracts) || !contract) &&
+                        user?.permissions?.canReviewContracts) ||
+                      !contract) &&
                     bidList?.filter((d) => d.status === "awarded").length >=
                       1 ? (
                       !poCreated || !contractCreated ? (
@@ -1146,13 +1164,17 @@ const TenderDetails = ({
                                                           },
                                                           {
                                                             onBehalfOf:
-                                                              item?.createdBy?.companyName,
+                                                              item?.createdBy
+                                                                ?.companyName,
                                                             title:
-                                                              item?.createdBy?.title,
+                                                              item?.createdBy
+                                                                ?.title,
                                                             names:
-                                                              item?.createdBy?.contactPersonNames,
+                                                              item?.createdBy
+                                                                ?.contactPersonNames,
                                                             email:
-                                                              item?.createdBy?.email,
+                                                              item?.createdBy
+                                                                ?.email,
                                                           },
                                                         ];
 
@@ -1229,7 +1251,8 @@ const TenderDetails = ({
                     1 ? (
                       (!poCreated || !contractCreated) &&
                       contract?.status === "reviewed" &&
-                      documentFullySignedInternally(contract) && documentFullySignedInternally(po) ? (
+                      documentFullySignedInternally(contract) &&
+                      documentFullySignedInternally(po) ? (
                         <div>
                           {bidList
                             ?.filter(
@@ -1321,7 +1344,8 @@ const TenderDetails = ({
                         </div>
                       ) : contract?.vendor?._id === user?._id &&
                         contract?.status === "reviewed" &&
-                        documentFullySignedInternally(contract) && documentFullySignedInternally(po) ? (
+                        documentFullySignedInternally(contract) &&
+                        documentFullySignedInternally(po) ? (
                         <div className="mx-3 flex flex-row space-x-5 items-center justify-center">
                           <div className="flex flex-col items-center justify-center">
                             <Typography.Title level={5}>
@@ -1383,6 +1407,19 @@ const TenderDetails = ({
         centered
         open={openCreatePO}
         onOk={async () => {
+          let assetItems = [];
+          if (docType === "dDocument_Item") {
+            items.map((i, index) => {
+              assets[index]?.map((a) => {
+                assetItems.push({
+                  ItemCode: a,
+                  Quantity: i.quantity / assets[index]?.length,
+                  UnitPrice: i.estimatedUnitCost,
+                  VatGroup: i.taxGroup ? i.taxGroup : "X1",
+                });
+              });
+            });
+          }
           let B1Data = {
             CardName: vendor?.companyName,
             DocType: docType,
@@ -1397,8 +1434,10 @@ const TenderDetails = ({
                       VatGroup: i.taxGroup ? i.taxGroup : "X1",
                     };
                   })
-                : {},
+                : assetItems
           };
+
+          // alert(JSON.stringify(B1Data));
           await handleCreatePO(
             vendor?._id,
             tendor?._id,
@@ -2056,7 +2095,11 @@ const TenderDetails = ({
               }}
               className="flex flex-col ring-1 ring-gray-300 rounded pt-5 space-y-3 items-center justify-center cursor-pointer hover:bg-gray-50"
             >
-              <Image src="/icons/icons8-signature-80.png" width={40} height={40} />
+              <Image
+                src="/icons/icons8-signature-80.png"
+                width={40}
+                height={40}
+              />
               <div>Add new Signatory</div>
             </div>
           </div>

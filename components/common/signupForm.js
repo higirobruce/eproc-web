@@ -82,7 +82,7 @@ const SignupForm = () => {
   const [form] = Form.useForm();
   const [rdbCertId, setRdbCertId] = useState(null);
   const [vatCertId, setVatCertId] = useState(null);
-  const [rdbSelected,setRDBSelected] = useState(false)
+  const [rdbSelected, setRDBSelected] = useState(false);
 
   const onFinish = (values) => {
     setSubmitting(true);
@@ -575,8 +575,23 @@ const SignupForm = () => {
                             </Tooltip>
                           </div>
                         </div>
-                        <Form.Item name="rdbRegistraction">
-                          <UploadRDCerts uuid={rdbCertId} setSelected={setRDBSelected} />
+                        <Form.Item
+                          name="rdbRegistraction"
+                          rules={[
+                            {
+                              validator: (_, value) =>
+                                rdbSelected
+                                  ? Promise.resolve()
+                                  : Promise.reject(
+                                      new Error("Should accept agreement")
+                                    ),
+                            },
+                          ]}
+                        >
+                          <UploadRDCerts
+                            uuid={rdbCertId}
+                            setSelected={setRDBSelected}
+                          />
                         </Form.Item>
                       </div>
                       <div>
