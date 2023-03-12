@@ -75,8 +75,8 @@ export default function Users({ user }) {
   const prefixSelector = (
     <Form.Item name="prefix" noStyle>
       <Select style={{ width: 100 }}>
-        <Option value="+250">+250</Option>
-        <Option value="+254">+254</Option>
+        <Select.Option value="+250">+250</Select.Option>
+        <Select.Option value="+254">+254</Select.Option>
       </Select>
     </Form.Item>
   );
@@ -847,9 +847,9 @@ export default function Users({ user }) {
                       >
                         {dpts?.map((dpt) => {
                           return (
-                            <Option key={dpt._id} value={dpt._id}>
+                            <Select.Option key={dpt._id} value={dpt._id}>
                               {dpt.description}
-                            </Option>
+                            </Select.Option>
                           );
                         })}
                       </Select>

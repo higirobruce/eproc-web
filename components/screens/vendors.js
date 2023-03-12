@@ -564,9 +564,9 @@ export default function Vendors({ user }) {
                       >
                         {servCategories?.map((s) => {
                           return (
-                            <Option key={s._id} value={s.description}>
+                            <Select.Option key={s._id} value={s.description}>
                               {s.description}
-                            </Option>
+                            </Select.Option>
                           );
                         })}
                       </Select>
