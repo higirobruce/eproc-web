@@ -175,7 +175,7 @@ const RequestDetails = ({
             className="flex flex-row items-center space-x-2"
             onClick={() => {
               setPreviewAttachment(!previewAttachment);
-              setAttachmentId(`termsOfReference/${item?.id}.pdf`);
+              setAttachmentId(`${item?.id}.pdf`);
             }}
           >
             <div>{item.title}</div>{" "}
@@ -2272,7 +2272,7 @@ const RequestDetails = ({
       >
         <div>
           <PDFObject
-            url={`${url}/file/${attachmentId}`}
+            url={`${url}/file/termsOfReference/${attachmentId}`}
             height="40rem"
           />
         </div>
