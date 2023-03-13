@@ -16,7 +16,7 @@ function UploadFiles({ label }) {
       }
       return isPDF || Upload.LIST_IGNORE;
     },
-    action: "http://localhost:9999/uploads/termsOfReference",
+    action: `${url}/uploads/termsOfReference`,
     headers: {
       Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
       "Content-Type": "application/json",
