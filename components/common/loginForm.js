@@ -194,7 +194,7 @@ const LoginForm = () => {
             <Row className="flex flex-col items-center justify-between pb-5">
               <div className="flex flex-row items-center">
                 
-                <div>
+                {/* <div>
                   <Image
                     alt=""
                     className="pt-3"
@@ -203,7 +203,7 @@ const LoginForm = () => {
                     height={40}
                   />{" "}
                 </div>
-                <div className="font-bold text-lg">Irembo Procure</div>
+                <div className="font-bold text-lg">Irembo Procure</div> */}
               </div>
               <Typography.Title className="" level={3}>
                 Login

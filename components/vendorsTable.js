@@ -104,7 +104,7 @@ const VendorsTable = ({
       dataIndex: "telephone",
       render: (_, record) => (
         <>
-          <Rate count={3} disabled value={random(1,3)}/>
+          <Rate count={5} value={random(1,5)}/>
         </>
       ),
       

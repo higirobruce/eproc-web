@@ -44,8 +44,8 @@ const TopMenu = ({ setScreen, screen, handleLogout }) => {
       {
         // key: "username",
         label: `Hi, ${
-          user.userType === "VENDOR" ? user.contactPersonNames : user.firstName
-        } (${user.userType.toLowerCase()})`,
+          user.userType === "VENDOR" ? user?.contactPersonNames : user?.firstName
+        } (${user?.userType.toLowerCase()})`,
         icon: <UserOutlined />,
         style: { marginLeft: "auto" },
         children: [

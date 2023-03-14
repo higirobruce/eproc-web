@@ -494,7 +494,7 @@ const SignupForm = () => {
                             Area(s) of expertise
                             <div className="text-red-500">*</div>
                           </div>
-                          <Form.Item name="services">
+                          <Form.Item name="services" rules={[{required:true, message:"Areas of expertise are required"}]}>
                             <Select
                               mode="multiple"
                               allowClear

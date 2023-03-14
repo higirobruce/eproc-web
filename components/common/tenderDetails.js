@@ -1023,7 +1023,7 @@ const TenderDetails = ({
                     </div>
                   </div>
                 </Tabs.TabPane>
-                <Tabs.TabPane tab="Aggrement" key="3">
+                <Tabs.TabPane tab="Agreement" key="3">
                   <div className="flex flex-col space-y-5 p-3">
                     {buildTabHeader()}
                     <Divider></Divider>
@@ -1243,7 +1243,7 @@ const TenderDetails = ({
             )}
             {user?.userType === "VENDOR" &&
               contract?.vendor?._id === user?._id && (
-                <Tabs.TabPane tab="Aggrement" key="3">
+                <Tabs.TabPane tab="Agreement" key="3">
                   <div className="flex flex-col space-y-5 p-3">
                     {buildTabHeader()}
                     {bidList?.filter((d) => d.status === "awarded").length >=
@@ -2727,7 +2727,7 @@ const TenderDetails = ({
             }}
           >
             <Typography.Link>
-              <FileTextOutlined /> Tender document for {data?.number}{" "}
+              <FileTextOutlined /> Tender document
             </Typography.Link>
           </div>
 

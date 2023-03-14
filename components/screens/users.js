@@ -527,7 +527,7 @@ export default function Users({ user }) {
 
   function buildUser() {
     return (
-      <div className="flex flex-col  transition-opacity ease-in-out duration-1000 px-10 py-5 flex-1 space-y-3 h-full overflow-x-scroll">
+      <div className="flex flex-col  transition-opacity ease-in-out duration-1000 px-10 py-5 flex-1 space-y-3 overflow-x-scroll">
         <div className="flex flex-col space-y-5">
           <div>
             <Button
@@ -587,7 +587,7 @@ export default function Users({ user }) {
             </div>
 
             {/* Transactions */}
-            <div className="col-span-2 flex flex-col space-y-5 bg-white ring-1 ring-gray-100 rounded shadow p-10">
+            <div className="col-span-2 flex flex-col space-y-5 bg-white ring-1 ring-gray-100 rounded shadow p-10 ">
               <Segmented
                 block
                 size="large"
@@ -685,7 +685,7 @@ export default function Users({ user }) {
                 </div>
               )}
               {segment === "Requests History" && (
-                <div className="p-3">
+                <div className="p-3 overflow-y-scroll">
                   {usersRequests?.map((request) => {
                     return (
                       <div
