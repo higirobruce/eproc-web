@@ -41,7 +41,6 @@ import {
 } from "@ant-design/icons";
 import moment from "moment";
 import { UserIcon } from "@heroicons/react/24/outline";
-import { PDFObject } from "react-pdfobject";
 import MyPdfViewer from "../common/pdfViewer";
 export default function Vendors({ user }) {
   const [dataLoaded, setDataLoaded] = useState(false);
@@ -748,11 +747,6 @@ export default function Vendors({ user }) {
           </div>
           {previewAttachmentModal()}
 
-          {/* {previewAttachment && (
-            <PDFObject url={`${url}/file/${attachmentId}`} height="40rem" />
-            // <MyPdfViewer fileUrl={`${url}/file/${attachmentId}`} />
-
-          )} */}
         </div>
       </div>
     );
