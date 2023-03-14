@@ -195,7 +195,6 @@ export default function Users({ user }) {
       .then((res) => res.json())
       .then((res) => {
 
-        alert(JSON.stringify(res))
         let _data = [...dataset];
 
         // Find item index using _.findIndex (thanks @AJ Richardson for comment)

@@ -568,7 +568,7 @@ const SignupForm = () => {
                           <div>
                             <Tooltip
                               placement="top"
-                              title="Please attach your incorporation document. For Rwandan companies, please provide your RDB certificate."
+                              title="Please attach your incorporation document. For businesses registered in Rwanda, please provide your RDB certificate."
                               arrow={false}
                             >
                               <QuestionCircleOutlined />
@@ -583,7 +583,7 @@ const SignupForm = () => {
                                 rdbSelected
                                   ? Promise.resolve()
                                   : Promise.reject(
-                                      new Error("Should accept agreement")
+                                      new Error("Should attach the incorporation document")
                                     ),
                             },
                           ]}

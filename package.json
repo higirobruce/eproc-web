@@ -30,11 +30,14 @@
     "react-chartjs-2": "^5.2.0",
     "react-dom": "18.2.0",
     "react-highlight-words": "^0.18.0",
-    "react-pdfobject": "^1.2.0",
     "react-quill": "^2.0.0",
     "react-scrollbar": "^0.5.6",
+    "sharp": "^0.31.3",
     "tailwindcss": "^3.2.4",
-    "uuid": "^9.0.0"
+    "uuid": "^9.0.0",
+    "@react-pdf-viewer/core": "3.6.0",
+    "@react-pdf-viewer/default-layout": "3.6.0",
+    "pdfjs-dist": "^2.16.105"
   },
   "devDependencies": {}
 }

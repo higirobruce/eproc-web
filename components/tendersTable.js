@@ -60,6 +60,15 @@ const TendersTable = ({
       ),
     },
     {
+      title: "Request reference",
+      key: "request",
+      render: (_, record) => (
+        <>
+          <Typography.Text>{record?.purchaseRequest?.number}</Typography.Text>
+        </>
+      ),
+    },
+    {
       title: "Title",
       key: "title",
       render: (_, record) => (
@@ -81,7 +90,17 @@ const TendersTable = ({
     },
 
     {
-      title: "Deadline date",
+      title: "Category",
+      key: "category",
+      render: (_, record) => (
+        <>
+          <Typography.Text>{record?.purchaseRequest?.serviceCategory}</Typography.Text>
+        </>
+      ),
+    },
+
+    {
+      title: "Closing date",
       key: "submissionDeadLine",
       render: (_, record) => (
         <>
@@ -110,55 +129,49 @@ const TendersTable = ({
       render: (_, record) => (
         <>
           {(record.status === "open" || record.status === "pending") && (
-            <Tag color="yellow">OPEN</Tag>
+            <Badge color="yellow" text='Open'/>
           )}
 
-          {record.status === "bidSelected" && (
-            <Tag color="green">BID SELECTED</Tag>
+          {(record.status === "bidSelected" || record.status === "bidAwarded" || record.status === "closed" )&& (
+            <Badge color="green" text='Closed'/>
           )}
-
-          {record.status === "bidAwarded" && (
-            <Tag color="blue">BID AWARDED</Tag>
-          )}
-
-          {record.status === "closed" && <Tag color="lime">CLOSED</Tag>}
         </>
       ),
     },
-    {
-      title: "Action",
-      key: "action",
-      render: (_, record) => (
-        <Space size="middle">
-          {updatingId !== record._id && (
-            <>
-              {/* {record.status !== "approved" && (
-                <CheckOutlined
-                  className="text-green-400 cursor-pointer"
-                  onClick={() => approve(record._id)}
-                />
-              )}
-              {record.status !== "declined" && (
-                <CloseOutlined
-                  className="text-red-400 cursor-pointer"
-                  onClick={() => decline(record._id)}
-                />
-              )} */}
-              <EllipsisOutlined
-                className="text-blue-400 cursor-pointer"
-                onClick={() => {
-                  handleSetRow(record);
-                }}
-              />
-            </>
-          )}
+    // {
+    //   title: "Action",
+    //   key: "action",
+    //   render: (_, record) => (
+    //     <Space size="middle">
+    //       {updatingId !== record._id && (
+    //         <>
+    //           {record.status !== "approved" && (
+    //             <CheckOutlined
+    //               className="text-green-400 cursor-pointer"
+    //               onClick={() => approve(record._id)}
+    //             />
+    //           )}
+    //           {record.status !== "declined" && (
+    //             <CloseOutlined
+    //               className="text-red-400 cursor-pointer"
+    //               onClick={() => decline(record._id)}
+    //             />
+    //           )}
+    //           <EllipsisOutlined
+    //             className="text-blue-400 cursor-pointer"
+    //             onClick={() => {
+    //               handleSetRow(record);
+    //             }}
+    //           />
+    //         </>
+    //       )}
 
-          {updatingId === record._id && (
-            <Spin size="small" indicator={antIcon} />
-          )}
-        </Space>
-      ),
-    },
+    //       {updatingId === record._id && (
+    //         <Spin size="small" indicator={antIcon} />
+    //       )}
+    //     </Space>
+    //   ),
+    // },
   ];
 
   async function approve(id) {

@@ -51,10 +51,10 @@ import moment from "moment-timezone";
 import BidList from "./bidList";
 import Image from "next/image";
 import ItemsTable from "./itemsTableB1";
-import { PDFObject } from "react-pdfobject";
 import UploadBidDoc from "./uploadBidDoc";
 import { v4 } from "uuid";
 import { LockClosedIcon, LockOpenIcon } from "@heroicons/react/24/solid";
+import MyPdfViewer from "./pdfViewer";
 
 let modules = {
   toolbar: [
@@ -519,7 +519,6 @@ const TenderDetails = ({
 
   function createSubmission(submissionData) {
     handleCreateSubmission(submissionData);
-    // alert(JSON.stringify(submissionData))
   }
 
   function submitSubmissionData() {
@@ -1436,8 +1435,6 @@ const TenderDetails = ({
                   })
                 : assetItems
           };
-
-          // alert(JSON.stringify(B1Data));
           await handleCreatePO(
             vendor?._id,
             tendor?._id,
@@ -2772,7 +2769,6 @@ const TenderDetails = ({
   }
 
   function handleSignContract(signatory, index) {
-    // alert(JSON.stringify({signatory, index}))
     setSigning(true);
     let myIpObj = "";
     signatory.signed = true;
@@ -2814,7 +2810,6 @@ const TenderDetails = ({
   }
 
   function handleSignPo(signatory, index) {
-    // alert(JSON.stringify({signatory, index}))
     setSigning(true);
     let myIpObj = "";
     signatory.signed = true;
@@ -2862,11 +2857,11 @@ const TenderDetails = ({
         open={previewAttachment}
         onOk={() => setPreviewAttachment(false)}
         onCancel={() => setPreviewAttachment(false)}
-        width={"80%"}
-        bodyStyle={{ maxHeight: "700px", overflow: "scroll" }}
+        width={"60%"}
+        // bodyStyle={{ maxHeight: "700px", overflow: "scroll" }}
       >
         <div>
-          <PDFObject url={`${url}/file/${attachmentId}`} height="40rem" />
+          <MyPdfViewer fileUrl={`${url}/file/${attachmentId}`}/>
         </div>
       </Modal>
     );

@@ -35,7 +35,7 @@ import {
 import dynamic from "next/dynamic";
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 import "react-quill/dist/quill.snow.css";
-import { PDFObject } from "react-pdfobject";
+import MyPdfViewer from "../common/pdfViewer";
 let modules = {
   toolbar: [
     [{ header: [1, 2, false] }],
@@ -723,11 +723,11 @@ export default function Contracts({ user }) {
         open={previewAttachment}
         onOk={() => setPreviewAttachment(false)}
         onCancel={() => setPreviewAttachment(false)}
-        width={"80%"}
-        bodyStyle={{ maxHeight: "700px", overflow: "scroll" }}
+        width={"60%"}
+        // bodyStyle={{ maxHeight: "700px", overflow: "scroll" }}
       >
         <div>
-          <PDFObject url={`${url}/file/${attachmentId}`} height="40rem" />
+          <MyPdfViewer fileUrl={`${url}/file/${attachmentId}`}/>
         </div>
       </Modal>
     );

@@ -111,7 +111,7 @@ const ItemsTable = ({ setDataSource, dataSource, setFileList, fileList }) => {
     {
       title: "Attachments",
       dataIndex: "attachements",
-      render: (_, record) => (dataSource.length >= 1 ? <UploadTORs label='TOR' uuid={record?.id} setFileList={setFileList} fileList={fileList} /> : null),
+      render: (_, record) => (dataSource.length >= 1 ? <UploadTORs uuid={record?.id} setFileList={setFileList} fileList={fileList} /> : null),
     },
     {
       title: "Action",

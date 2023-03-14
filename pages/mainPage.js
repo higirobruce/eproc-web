@@ -37,7 +37,7 @@ export default function Home() {
 
       <main>
         {loggedInUser && (
-          <div className="flex flex-col pb-5 bg-white">
+          <div className="flex flex-col pb-5 h-screen">
             <TopMenu
               setScreen={setScreen}
               screen={screen}
@@ -54,7 +54,7 @@ export default function Home() {
                 </Layout.Sider>
               </div>
               <Layout>
-                <Layout.Content className="bg-white h-screen">
+                <Layout.Content className="bg-white max-h-full">
                   <Spin
                     spinning={loggingOut}
                     indicator={

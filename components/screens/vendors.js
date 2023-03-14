@@ -13,6 +13,7 @@ import {
   Empty,
   Switch,
   Select,
+  Modal,
 } from "antd";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
@@ -41,6 +42,7 @@ import {
 import moment from "moment";
 import { UserIcon } from "@heroicons/react/24/outline";
 import { PDFObject } from "react-pdfobject";
+import MyPdfViewer from "../common/pdfViewer";
 export default function Vendors({ user }) {
   const [dataLoaded, setDataLoaded] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
@@ -276,13 +278,13 @@ export default function Vendors({ user }) {
         Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
         "Content-Type": "application/json",
       },
-      body:JSON.stringify({
-        newUser: rowData
-      })
+      body: JSON.stringify({
+        newUser: rowData,
+      }),
     })
       .then((res) => res.json())
       .then((res) => {
-        refresh()
+        refresh();
       })
       .catch((err) => {
         messageApi.open({
@@ -370,7 +372,7 @@ export default function Vendors({ user }) {
                     type="primary"
                     onClick={() => {
                       setEditVendor(false);
-                      updateVendor()
+                      updateVendor();
                     }}
                   />
                 </div>
@@ -632,11 +634,13 @@ export default function Vendors({ user }) {
                     <div
                       className="text-sm "
                       onClick={() => {
-                        setAttachmentId(`rdbCerts/${rowData?.rdbCertId}.pdf`);
-                        setPreviewAttachment(!previewAttachment);
+                        if (rowData?.rdbCertId) {
+                          setAttachmentId(`rdbCerts/${rowData?.rdbCertId}.pdf`);
+                          setPreviewAttachment(!previewAttachment);
+                        }
                       }}
                     >
-                      <Typography.Link>Full RDB registration</Typography.Link>
+                      <Typography.Link>Full RDB registration {!rowData?.rdbCertId && '-not available'}</Typography.Link>
                     </div>
                   </div>
 
@@ -645,13 +649,13 @@ export default function Vendors({ user }) {
                     <div
                       className="text-sm "
                       onClick={() => {
-                        setAttachmentId(`vatCerts/${rowData?.vatCertId}.pdf`);
-                        previewAttachment
-                          ? setPreviewAttachment(false)
-                          : setPreviewAttachment(true);
+                        if (rowData?.vatCertId) {
+                          setAttachmentId(`vatCerts/${rowData?.vatCertId}.pdf`);
+                          setPreviewAttachment(!previewAttachment);
+                        }
                       }}
                     >
-                      <Typography.Link>VAT certificate</Typography.Link>
+                      <Typography.Link>VAT certificate {!rowData?.vatCertId && '-not available'}</Typography.Link>
                     </div>
                   </div>
                 </div>
@@ -742,12 +746,33 @@ export default function Vendors({ user }) {
                 (!vendorsBids || vendorsBids?.length == 0) && <Empty />}
             </div>
           </div>
+          {previewAttachmentModal()}
 
-          {previewAttachment && (
+          {/* {previewAttachment && (
             <PDFObject url={`${url}/file/${attachmentId}`} height="40rem" />
-          )}
+            // <MyPdfViewer fileUrl={`${url}/file/${attachmentId}`} />
+
+          )} */}
         </div>
       </div>
+    );
+  }
+
+  function previewAttachmentModal() {
+    return (
+      <Modal
+        title="Attachment view"
+        centered
+        open={previewAttachment}
+        onOk={() => setPreviewAttachment(false)}
+        onCancel={() => setPreviewAttachment(false)}
+        width={"60%"}
+        // bodyStyle={{ maxHeight: "700px", overflow: "scroll" }}
+      >
+        <div>
+          <MyPdfViewer fileUrl={`${url}/file/${attachmentId}`} />
+        </div>
+      </Modal>
     );
   }
 }

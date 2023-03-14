@@ -7,6 +7,7 @@ import {
   InputNumber,
   Popconfirm,
   Popover,
+  Rate,
   Space,
   Spin,
   Table,
@@ -21,6 +22,7 @@ import {
   StopOutlined,
   UserOutlined,
 } from "@ant-design/icons";
+import { random } from "lodash";
 
 const VendorsTable = ({
   dataSet,
@@ -46,25 +48,21 @@ const VendorsTable = ({
 
   const columns = [
     {
-      title: "#",
+      title: "Company Name",
       // dataIndex: "number",
       render: (_, record) => (
         <>
           <div
-            className="font-semibold cursor-pointer space-x-1 flex flex-row items-center text-blue-500 hover:underline"
+            className="cursor-pointer space-x-1 flex flex-row items-center text-blue-500 hover:underline"
             onClick={() => handleSetRow(record)}
           >
-            <div>
+            {/* <div>
               <UserOutlined className="text-xs" />
-            </div>
-            <div>{record?.number}</div>
+            </div> */}
+            <div>{record?.companyName}</div>
           </div>
         </>
       ),
-    },
-    {
-      title: "Company Name",
-      dataIndex: "companyName",
     },
     {
       title: "TIN",
@@ -77,14 +75,6 @@ const VendorsTable = ({
     {
       title: "Phone",
       dataIndex: "telephone",
-    },
-    {
-      title: "Experience (Yrs)",
-      dataIndex: "experienceDurationInYears",
-    },
-    {
-      title: "Website",
-      dataIndex: "webSite",
     },
     {
       title: "Status",
@@ -108,6 +98,16 @@ const VendorsTable = ({
           )}
         </>
       ),
+    },
+    {
+      title: "Rank",
+      dataIndex: "telephone",
+      render: (_, record) => (
+        <>
+          <Rate count={3} disabled value={random(1,3)}/>
+        </>
+      ),
+      
     },
     {
       title: "Action",

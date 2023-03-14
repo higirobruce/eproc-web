@@ -27,7 +27,6 @@ import {
 } from "antd";
 import moment from "moment-timezone";
 import React, { useEffect, useState } from "react";
-import { PDFObject } from "react-pdfobject";
 import PermissionsTable from "../permissionsTable";
 
 export default function Profile({ user }) {

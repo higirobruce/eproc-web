@@ -16,6 +16,7 @@ import {
   message,
   Input,
   Empty,
+  Select,
 } from "antd";
 import Image from "next/image";
 import React, { useState, useEffect } from "react";
@@ -43,6 +44,8 @@ export default function Tenders({ user }) {
   let [totalTenders, setTotalTenders] = useState(0);
   let [totalBids, setTotalBids] = useState(0);
   let [doneCreatingContract, setDoneCreatingContract] = useState(false);
+
+  let [searchStatus, setSearchStatus] = useState("all");
 
   useEffect(() => {
     loadTenders()
@@ -429,9 +432,30 @@ export default function Tenders({ user }) {
     <>
       {contextHolder}
       {dataLoaded && dataset?.length >= 1 ? (
-        <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 px-10 flex-1 h-full">
+        <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 py-5 flex-1 space-y-3 h-full">
           <Row className="flex flex-row justify-between items-center">
-            <Typography.Title level={4}>Tenders</Typography.Title>
+            <div className="flex flex-col items-start space-y-2">
+              <div className="text-xl font-semibold">Tenders</div>
+              <div className="flex-1">
+                <Select
+                  // mode="tags"
+                  style={{ width: "300px" }}
+                  placeholder="Select status"
+                  onChange={(value) => setSearchStatus(value)}
+                  value={searchStatus}
+                  options={[
+                    { value: "all", label: "All" },
+                    { value: "open", label: "Open" },
+                    {
+                      value: "closed",
+                      label: "Closed",
+                    },
+                    
+                  ]}
+                />
+              </div>
+            </div>
+
             <Row className="flex flex-row space-x-5 items-center">
               <div>
                 <Input.Search placeholder="Search tenders" />
@@ -441,8 +465,6 @@ export default function Tenders({ user }) {
                 icon={<ReloadOutlined />}
                 onClick={() => refresh()}
               ></Button>
-
-              <Button type="text" icon={<SettingOutlined />}></Button>
             </Row>
           </Row>
 
@@ -494,7 +516,7 @@ export default function Tenders({ user }) {
             </Form>
           </Modal>
           <div class="absolute -bottom-32 right-10 opacity-10">
-            <Image src='/icons/blue icon.png' width={110} height={100} />
+            <Image src="/icons/blue icon.png" width={110} height={100} />
           </div>
         </div>
       ) : dataLoaded && dataset?.length === 0 ? (

@@ -155,18 +155,26 @@ const UsersRequestsTable = ({
       ),
   });
 
+  function getHighLevelStatus(status) {
+    if(status==='Approved' || status==='Declined'){
+      return status
+    } else{
+      return 'Pending'
+    }
+  }
+
   const cancel = () => {
     setEditingKey("");
   };
 
-  const getTagColor = (status)=>{
-    if(status==='pending') return 'yellow'
-    else if(status==='approved (hod)') return 'blue'
-    else if(status==='approved (fd)') return 'cyan'
-    else if(status==='approved (pm)') return 'geekblue'
-    else if(status==='completed') return 'green'
-    else if(status==='declined') return 'red'
-  }
+  const getTagColor = (status) => {
+    if (status === "Pending") return "yellow";
+    else if (status === "Approved") return "green";
+    else if (status === "approved (fd)") return "cyan";
+    else if (status === "approved (pm)") return "geekblue";
+    else if (status === "approved") return "green";
+    else if (status === "Declined") return "red";
+  };
 
   useEffect(() => {
     setData(dataSet);
@@ -223,21 +231,12 @@ const UsersRequestsTable = ({
       ),
     },
     {
-      title: "Items",
-      key: "items",
+      title: "Category",
+      key: "serviceCategory",
       render: (_, record) => (
         <>
           <Typography.Text>
-            {record?.items[0]?.title}
-            {record?.items.length > 1 && (
-              <Tag
-                color="blue"
-                className="ml-2 cursor-pointer"
-                onClick={() => handleSetRow(record)}
-              >
-                {record?.items.length - 1} more...
-              </Tag>
-            )}
+            {record?.serviceCategory}
           </Typography.Text>
         </>
       ),
@@ -248,12 +247,8 @@ const UsersRequestsTable = ({
       key: "budgeted",
       render: (_, record) => (
         <>
-          {record.budgeted && (
-            <Typography.Text type="success">BUDGETED</Typography.Text>
-          )}
-          {!record.budgeted && (
-            <Typography.Text type="danger">NOT BUDGETED</Typography.Text>
-          )}
+          {record.budgeted && <Typography.Text>Yes</Typography.Text>}
+          {!record.budgeted && <Typography.Text>No</Typography.Text>}
         </>
       ),
     },
@@ -276,9 +271,12 @@ const UsersRequestsTable = ({
       key: "status",
       render: (_, record) => (
         <>
-          <Tag color={
-            getTagColor(record?.status)
-          }>{record?.status.toUpperCase()}</Tag>
+          <Badge
+            color={getTagColor(getHighLevelStatus(record?.status.charAt(0).toUpperCase() + record?.status.slice(1)))}
+            text={
+              getHighLevelStatus(record?.status.charAt(0).toUpperCase() + record?.status.slice(1))
+            }
+          />
         </>
       ),
     },
@@ -324,7 +322,7 @@ const UsersRequestsTable = ({
         columns={columns}
         className="shadow-lg rounded-md"
         pagination={{
-          pageSize:20
+          pageSize: 20,
         }}
       />
     </Form>

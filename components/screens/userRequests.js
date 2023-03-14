@@ -78,6 +78,8 @@ export default function UserRequests({ user }) {
   let [defaultApprover, setDefaultApprover] = useState({});
 
   let [selectedReqId, setSelectedReqId] = useState(null);
+  let [searchStatus, setSearchStatus] = useState("all");
+  const [form] = Form.useForm();
 
   useEffect(() => {
     loadRequests()
@@ -156,6 +158,33 @@ export default function UserRequests({ user }) {
         setBudgetLines(res);
       });
   }, []);
+
+  useEffect(() => {
+    if (searchStatus === "all") {
+      refresh();
+    } else {
+      setDataLoaded(false);
+      fetch(`${url}/requests/byStatus/${searchStatus}`, {
+        method: "GET",
+        headers: {
+          Authorization:
+            "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+          "Content-Type": "application/json",
+        },
+      })
+        .then((res) => res.json())
+        .then((res) => {
+          setDataLoaded(true);
+          setDataset(res);
+        })
+        .catch((err) => {
+          messageApi.open({
+            type: "error",
+            content: "Something happened! Please try again.",
+          });
+        });
+    }
+  }, [searchStatus]);
 
   function refresh() {
     setDataLoaded(false);
@@ -386,7 +415,7 @@ export default function UserRequests({ user }) {
     })
       .then((res) => res.json())
       .then((res) => {
-        updateStatus(rowData._id, "completed");
+        updateStatus(rowData._id, "approved");
       })
       .catch((err) => {
         console.log(err);
@@ -457,7 +486,7 @@ export default function UserRequests({ user }) {
             content: res1.message,
           });
         } else {
-          updateStatus(rowData._id, "completed");
+          updateStatus(rowData._id, "approved");
           messageApi.open({
             type: "success",
             content: "PO created!",
@@ -504,7 +533,7 @@ export default function UserRequests({ user }) {
     })
       .then((res) => res.json())
       .then((res1) => {
-        updateStatus(rowData._id, "completed");
+        updateStatus(rowData._id, "approved");
         messageApi.open({
           type: "success",
           content: "PO created!",
@@ -561,10 +590,28 @@ export default function UserRequests({ user }) {
       {dataLoaded ? (
         <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 px-10 py-5 flex-1 space-y-3 h-full">
           <Row className="flex flex-row justify-between items-center">
-            <div className="flex flex-row items-start space-x-5">
+            <div className="flex flex-col items-start space-y-2">
               <div className="text-xl font-semibold">Purchase Requests</div>
               <div className="flex-1">
-                <SelectStatuses />
+                <Select
+                  // mode="tags"
+                  style={{width:'300px'}}
+                  placeholder="Select status"
+                  onChange={(value) => setSearchStatus(value)}
+                  value={searchStatus}
+                  options={[
+                    { value: "all", label: "All requests" },
+                    { value: "pending", label: "Pending for approval" },
+                    {
+                      value: "approved",
+                      label: "Approved",
+                    },
+                    {
+                      value: "declined",
+                      label: "Declined",
+                    },
+                  ]}
+                />
               </div>
             </div>
             <Row className="flex flex-row space-x-5 items-center">
@@ -586,8 +633,6 @@ export default function UserRequests({ user }) {
                   New request
                 </Button>
               )}
-
-              <Button type="text" icon={<SettingOutlined />}></Button>
             </Row>
           </Row>
           {/* <RequestStats totalRequests={dataset?.length}/> */}
@@ -603,7 +648,10 @@ export default function UserRequests({ user }) {
             title="Create a User Purchase request"
             centered
             open={open}
-            onOk={() => save()}
+            onOk={() => {
+              form.validateFields()
+              save()
+            }}
             onCancel={() => {
               setOpen(false);
               setFileList([]);
@@ -615,7 +663,7 @@ export default function UserRequests({ user }) {
               setBudgetLine("");
               setTitle("");
             }}
-            okText="Save"
+            okText="Submit for approval"
             okButtonProps={{ size: "small" }}
             cancelButtonProps={{ size: "small" }}
             width={1000}
@@ -627,6 +675,7 @@ export default function UserRequests({ user }) {
               // style={{ maxWidth: 600 }}
               className="mt-5"
               // layout="horizontal"
+              form={form}
               onFinish={save}
             >
               <div className="grid md:grid-cols-3 gap-10">
@@ -638,7 +687,13 @@ export default function UserRequests({ user }) {
                       <div>Due Date</div>
                     </div>
                     <div>
-                      <Form.Item>
+                      <Form.Item name='dueDate' rules={[
+                        {
+                          required: true,
+                          message:'Due date is required'
+                        }
+                        
+                      ]}>
                         <DatePicker
                           style={{ width: "100%" }}
                           defaultValue={null}
@@ -652,7 +707,9 @@ export default function UserRequests({ user }) {
                   <div>
                     <div> Request title</div>
                     <div>
-                      <Form.Item>
+                      <Form.Item name='title' rules={[
+                        {required:true, message:"Request title is required"}
+                      ]}>
                         <Input
                           value={title}
                           onChange={(e) => setTitle(e.target.value)}
@@ -666,7 +723,9 @@ export default function UserRequests({ user }) {
                   <div>
                     <div>Request Category</div>
                     <div>
-                      <Form.Item name="serviceCategory">
+                      <Form.Item name="serviceCategory" rules={[{
+                          required:true, message:"Service category is required"
+                      }]}>
                         <Select
                           defaultValue={serviceCategory}
                           placeholder="Select service category"
@@ -704,7 +763,7 @@ export default function UserRequests({ user }) {
                   <div>
                     <div>Level 1 Approver</div>
                     <div>
-                      <Form.Item name="level1Approver">
+                      <Form.Item name="level1Approver" rules={[{required:true, message:"Level 1 approver is required"}]}>
                         <Select
                           defaultValue={defaultApprover}
                           placeholder="Select Level1 Approver"
@@ -726,7 +785,7 @@ export default function UserRequests({ user }) {
                   <div>
                     <div>Request Description</div>
                     <div>
-                      <Form.Item>
+                      <Form.Item name='description' rules={[{required:true, message:'Description is required'}]}>
                         <Input.TextArea
                           value={description}
                           onChange={(e) => setDescription(e.target.value)}
@@ -776,7 +835,8 @@ export default function UserRequests({ user }) {
                     <div>
                       <div>Budget Line</div>
                       <div>
-                        <Form.Item name="budgetLine">
+                        <Form.Item name="budgetLine" rules={[{required: budgeted, message:'Budget Line is required'
+                        }]}>
                           <Select
                             defaultValue={budgetLine}
                             placeholder="Select service category"

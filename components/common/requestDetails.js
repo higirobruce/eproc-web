@@ -52,7 +52,6 @@ import dynamic from "next/dynamic";
 import parse from "html-react-parser";
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 import "react-quill/dist/quill.snow.css";
-import { PDFObject } from "react-pdfobject";
 import {
   BanknotesIcon,
   CheckCircleIcon,
@@ -65,6 +64,7 @@ import {
 import { v4 } from "uuid";
 import UploadTenderDoc from "./uploadTenderDoc";
 import UploadReqAttach from "./uploadReqAttach";
+import MyPdfViewer from "./pdfViewer";
 
 let modules = {
   toolbar: [
@@ -145,7 +145,6 @@ const RequestDetails = ({
   let [contractStartDate, setContractStartDate] = useState(moment());
   let [contractEndDate, setContractEndDate] = useState(moment());
   let [reqAttachId, setReqAttachId] = useState(v4());
- 
 
   const showPopconfirm = () => {
     setOpen(true);
@@ -222,7 +221,7 @@ const RequestDetails = ({
     setReqAttachId(v4());
     if (data) {
       checkContractExists();
-      checkTenderExists(data)
+      checkTenderExists(data);
     }
     fetch(`${url}/users/vendors`, {
       method: "GET",
@@ -357,7 +356,6 @@ const RequestDetails = ({
   }
 
   function checkTenderExists(data) {
-   
     fetch(`${url}/tenders/byRequest/${data._id}`, {
       method: "GET",
       headers: {
@@ -368,17 +366,14 @@ const RequestDetails = ({
       .then((res) => res.json())
       .then((res) => {
         if (res?.length >= 1) {
-         
           setTender(res[0]);
         } else {
           setTender(null);
-         
         }
       });
   }
 
   function checkPOExists(tender) {
-  
     fetch(`${url}/purchaseOrders/byTenderId/${tender?._id}`, {
       method: "GET",
       headers: {
@@ -392,7 +387,6 @@ const RequestDetails = ({
           setPO(res[0]);
         } else {
           setPO(null);
-         
         }
       });
   }
@@ -408,9 +402,9 @@ const RequestDetails = ({
       .then((res) => res.json())
       .then((res) => {
         if (res?.length >= 1) {
-          setContract(res[0])
+          setContract(res[0]);
         } else {
-         setContract(null)
+          setContract(null);
         }
       });
   }
@@ -425,7 +419,7 @@ const RequestDetails = ({
     })
       .then((res) => res.json())
       .then((res) => {
-        if (res?.length>=1) setPO(res[0]);
+        if (res?.length >= 1) setPO(res[0]);
         else setPO(null);
       });
   }
@@ -453,9 +447,14 @@ const RequestDetails = ({
                 >
                   <div className="flex flex-col space-y-5">
                     {/* TItle */}
-                    <div className="grid md:grid-cols-5 gap-5">
-                      <div className="text-lg font-bold">Request Details</div>
-                      <div className="">
+                    <div className="flex flex-row justify-between items-center">
+                      <div className="ml-3 text-lg font-bold">Request Details</div>
+                      <Tag
+                        color={data.status === "declined" ? "red" : "geekblue"}
+                      >
+                        {data.status}
+                      </Tag>
+                      {/* <div className="">
                         <Tag color={data?.budgeted ? "green" : "blue"}>
                           <Tooltip title={data?.budgetLine} showArrow={false}>
                             {data?.budgeted ? "budgeted" : "not budgeted"}
@@ -469,10 +468,11 @@ const RequestDetails = ({
                             " " +
                             data?.createdBy?.lastName}
                         </Tag>
-                      </div>
+                      </div> */}
                     </div>
                     <div className="flex flex-row justify-between items-start">
-                      <div className="grid grid-cols-5">
+                      <div className="grid md:grid-cols-4 gap-y-5 w-full">
+                        {/* Request number */}
                         <div className="flex flex-col space-y-1 items-start">
                           <div className="text-xs ml-3 text-gray-400">
                             Request Number:
@@ -482,15 +482,29 @@ const RequestDetails = ({
                           </div>
                         </div>
 
+                        {/* Initiator */}
                         <div className="flex flex-col space-y-1 items-start">
                           <div className="text-xs ml-3 text-gray-400">
-                            Service category:
+                            Initiator:
                           </div>
                           <div className="text-sm font-semibold ml-3 text-gray-600">
-                            {data?.serviceCategory}
+                            {data?.createdBy?.firstName +
+                              " " +
+                              data?.createdBy?.lastName}
                           </div>
                         </div>
 
+                        {/* Department */}
+                        <div className="flex flex-col space-y-1 items-start">
+                          <div className="text-xs ml-3 text-gray-400">
+                            Dapartment:
+                          </div>
+                          <div className="text-sm font-semibold ml-3 text-gray-600">
+                            {data?.createdBy?.department?.description}
+                          </div>
+                        </div>
+
+                        {/* Due date */}
                         <div className="flex flex-col space-y-1 items-start">
                           <div className="text-xs ml-3 text-gray-400">
                             Due date:
@@ -500,20 +514,46 @@ const RequestDetails = ({
                           </div>
                         </div>
 
-                        <div className="flex flex-col col-span-2 space-y-1 items-start">
+                        {/* Service Category */}
+                        <div className="flex flex-col space-y-1 items-start">
+                          <div className="text-xs ml-3 text-gray-400">
+                            Service category:
+                          </div>
+                          <div className="text-sm font-semibold ml-3 text-gray-600">
+                            {data?.serviceCategory}
+                          </div>
+                        </div>
+
+                        {/* Budgeted */}
+                        <div className="flex flex-col space-y-1 items-start">
+                          <div className="text-xs ml-3 text-gray-400">
+                            Budgeted:
+                          </div>
+                          <div className="text-sm font-semibold ml-3 text-gray-600">
+                            {data?.budgeted ? "Yes" : "No"}
+                          </div>
+                        </div>
+
+                        {/* Budgete Line */}
+                        <div className="flex flex-col space-y-1 items-start">
+                          <div className="text-xs ml-3 text-gray-400">
+                            Budgete Line:
+                          </div>
+                          <div className="text-sm font-semibold ml-3 text-gray-600">
+                            {data?.budgetLine}
+                          </div>
+                        </div>
+
+                        {/* Description */}
+                        <div className="flex flex-col space-y-1 items-start">
                           <div className="text-xs ml-3 text-gray-400">
                             Description:
                           </div>
-                          <div className="text-sm font-semibold ml-3 text-gray-600 w-2/3">
+                          <div className="text-sm font-semibold ml-3 text-gray-600">
                             {data?.description}
                           </div>
                         </div>
                       </div>
-                      <Tag
-                        color={data.status === "declined" ? "red" : "geekblue"}
-                      >
-                        {data.status}
-                      </Tag>
                     </div>
 
                     <div className="p-5">
@@ -526,7 +566,7 @@ const RequestDetails = ({
                       />
                     </div>
 
-                    {data.status !== "completed" &&
+                    {data.status !== "approved" &&
                       data.status !== "po created" &&
                       data.status !== "declined" &&
                       buildApprovalFlow(
@@ -566,7 +606,7 @@ const RequestDetails = ({
                         );
                       })}
 
-                    {/* {data.status === "completed" &&
+                    {/* {data.status === "approved" &&
                       (tender || po) &&
                       buildWorkflow(currentStep, tender, po)} */}
 
@@ -614,32 +654,43 @@ const RequestDetails = ({
           items={[
             {
               children: "PR-created",
-              color: data?.status!=='rejected' ? "blue" : "red",
-              dot: data?.status!=='rejected' && <FileAddOutlined className=" text-blue-500"/>
+              color: data?.status !== "rejected" ? "blue" : "red",
+              dot: data?.status !== "rejected" && (
+                <FileAddOutlined className=" text-blue-500" />
+              ),
             },
             {
               children: "PR-approved",
-              color: data?.status==='approved (pm)'||tender ? "blue" : "gray",
-              dot: (data?.status==='approved (pm)'||tender) && <FileDoneOutlined className=" text-blue-500"/>
+              color:
+                data?.status === "approved (pm)" || tender ? "blue" : "gray",
+              dot: (data?.status === "approved (pm)" || tender) && (
+                <FileDoneOutlined className=" text-blue-500" />
+              ),
             },
             {
               children: `Tender-created`,
               color: tender ? "blue" : "gray",
-              dot: tender && <CheckCircleOutlined className="text-lg text-blue-500"/>
+              dot: tender && (
+                <CheckCircleOutlined className="text-lg text-blue-500" />
+              ),
             },
             {
               color: contract ? "blue" : "gray",
               children: "Contract-created",
-              dot: contract && <FileProtectOutlined className="text-lg text-blue-500"/>
+              dot: contract && (
+                <FileProtectOutlined className="text-lg text-blue-500" />
+              ),
             },
             {
               children: "PO-created",
               color: po ? "blue" : "gray",
-              dot: po && <ShoppingCartOutlined className="text-xl text-blue-500"/>
+              dot: po && (
+                <ShoppingCartOutlined className="text-xl text-blue-500" />
+              ),
             },
             {
               children: "Delivered",
-              color: progress===100 ? "blue" : "gray",
+              color: progress === 100 ? "blue" : "gray",
             },
           ]}
         />
@@ -672,14 +723,18 @@ const RequestDetails = ({
         <Divider></Divider>
         <div className="grid md:grid-cols-2">
           <div>
-            <div className="ml-3 text-lg font-semibold">Approval Queue</div>
+            <div className="ml-3 text-lg font-semibold">Request Approval Queue</div>
             <div className="mx-3 mt-5 ">
               <Steps
                 direction="vertical"
                 current={currentCode}
                 items={[
                   {
-                    title: "Level 1 (Department)",
+                    title: `Level 1 (Department - ${
+                      data?.level1Approver?.firstName +
+                      " " +
+                      data?.level1Approver?.lastName
+                    })`,
                     icon: <UserGroupIcon className="h-6" />,
                     subTitle: currentCode >= 0 && (
                       <div className="flex flex-row items-center space-x-1">
@@ -882,10 +937,10 @@ const RequestDetails = ({
               <>
                 <Form>
                   <div className="text-lg font-semibold">
-                    Next Procurement Steps
+                    Sourcing Method Selection
                   </div>
                   <div className="mt-5 items-center">
-                    <div>Reference</div>
+                    <div>Indicate available reference</div>
                     <Form.Item name="refDoc">
                       <Select
                         onChange={(value) => setRefDoc(value)}
@@ -893,16 +948,17 @@ const RequestDetails = ({
                         defaultValue={false}
                         options={[
                           {
-                            value: "none",
-                            label: "None",
+                            value: "contract",
+                            label: "Signed",
                           },
+
                           {
                             value: "external",
-                            label: "External Document",
+                            label: "External reference Document",
                           },
                           {
-                            value: "contract",
-                            label: "Contract (on going)",
+                            value: "none",
+                            label: "No reference available",
                           },
                         ]}
                       />
@@ -925,7 +981,7 @@ const RequestDetails = ({
                   {refDoc === "external" && (
                     <div>
                       <div className="items-center">
-                        <div>Select Vendor</div>
+                        <div>Select registered vendor</div>
                         <Form.Item name="vendor">
                           <Select
                             onChange={(value, option) => {
@@ -956,7 +1012,7 @@ const RequestDetails = ({
                         </Form.Item>
                       </div>
                       <div className="items-center">
-                        <div>Upload file</div>
+                        <div>Upload reference document</div>
                         <Form.Item name="vendor">
                           <UploadReqAttach uuid={reqAttachId} />
                         </Form.Item>
@@ -1144,454 +1200,6 @@ const RequestDetails = ({
           </div>
         )}
       </div>
-    );
-  }
-
-  function createPOMOdal__() {
-    return (
-      <Modal
-        title="New Purchase Order"
-        centered
-        open={openCreatePO}
-        onOk={async () => {
-          let B1Data = {
-            CardName: selectedContract?.vendor?.companyName,
-            DocType: docType,
-            DocDate: docDate,
-            DocumentLines: poItems.map((i) => {
-              return {
-                ItemDescription: i.title,
-                Quantity: i.quantity,
-                UnitPrice: i.estimatedUnitCost,
-                VatGroup: i.taxGroup ? i.taxGroup : "X1",
-              };
-            }),
-          };
-          await handleCreatePO(
-            selectedContract?.vendor?._id,
-            selectedContract?.tender?._id,
-            user?._id,
-            sections,
-            poItems,
-            B1Data
-          );
-          setOpenCreatePO(false);
-        }}
-        okText="Save and Submit"
-        onCancel={() => setOpenCreatePO(false)}
-        width={"80%"}
-        bodyStyle={{ maxHeight: "700px", overflow: "scroll" }}
-      >
-        <div className="space-y-5 px-20 py-5">
-          <Typography.Title level={4}>
-            PURCHASE ORDER: {selectedContract?.vendor?.companyName}
-          </Typography.Title>
-          <div className="grid grid-cols-2 w-1/2">
-            <div>
-              <div>Document date</div>
-              <DatePicker onChange={(v, dstr) => setDocDate(dstr)} />
-            </div>
-            <div>
-              <div>PO Type</div>
-              <Select
-                onChange={(value) => setDocType(value)}
-                defaultValue="dDocument_Service"
-                options={[
-                  { value: "dDocument_Service", label: "Service" },
-                  { value: "dDocument_Item", label: "Item" },
-                ]}
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-5">
-            <div className="flex flex-col ring-1 ring-gray-300 rounded p-5 space-y-3">
-              <div className="flex flex-col">
-                <Typography.Text type="secondary">
-                  <div className="text-xs">Company Name</div>
-                </Typography.Text>
-                <Typography.Text strong>Irembo ltd</Typography.Text>
-              </div>
-
-              <div className="flex flex-col">
-                <Typography.Text type="secondary">
-                  <div className="text-xs">Company Address</div>
-                </Typography.Text>
-                <Typography.Text strong>
-                  Irembo Campass Nyarutarama KG 9 Ave
-                </Typography.Text>
-              </div>
-
-              <div className="flex flex-col">
-                <Typography.Text type="secondary">
-                  <div className="text-xs">Company TIN no.</div>
-                </Typography.Text>
-                <Typography.Text strong>102911562</Typography.Text>
-              </div>
-
-              <div className="flex flex-col">
-                <Typography.Text type="secondary">
-                  <div className="text-xs">Hereinafter refferd to as</div>
-                </Typography.Text>
-                <Typography.Text strong>Sender</Typography.Text>
-              </div>
-            </div>
-
-            <div className="flex flex-col ring-1 ring-gray-300 rounded p-5 space-y-3">
-              <div className="flex flex-col">
-                <Typography.Text type="secondary">
-                  <div className="text-xs">Company Name</div>
-                </Typography.Text>
-                <Typography.Text strong>
-                  {selectedContract?.vendor?.companyName}
-                </Typography.Text>
-              </div>
-
-              <div className="flex flex-col">
-                <Typography.Text type="secondary">
-                  <div className="text-xs">Company Address</div>
-                </Typography.Text>
-                <Typography.Text strong>
-                  {selectedContract?.vendor?.building}-
-                  {selectedContract?.vendor?.street}-
-                  {selectedContract?.vendor?.avenue}
-                </Typography.Text>
-              </div>
-              <div className="flex flex-col">
-                <Typography.Text type="secondary">
-                  <div className="text-xs">Company TIN no.</div>
-                </Typography.Text>
-                <Typography.Text strong>
-                  {selectedContract?.vendor?.tin}
-                </Typography.Text>
-              </div>
-              <div className="flex flex-col">
-                <Typography.Text type="secondary">
-                  <div className="text-xs">Hereinafter refferd to as</div>
-                </Typography.Text>
-                <Typography.Text strong>Receiver</Typography.Text>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-col space-y-5">
-            <ItemsTable dataSource={poItems} setDataSource={setPOItems} />
-            <Typography.Title level={5} className="self-end">
-              Total (Tax Excl.): {totalVal?.toLocaleString()} RWF
-            </Typography.Title>
-            <Typography.Title level={5} className="self-end">
-              Total Tax: {totalTax?.toLocaleString()} RWF
-            </Typography.Title>
-            <Typography.Title level={4} className="self-end">
-              Gross Total: {grossTotal?.toLocaleString()} RWF
-            </Typography.Title>
-
-            <Typography.Title level={4}>Details</Typography.Title>
-
-            {sections.map((s, index) => {
-              let section = sections[index]
-                ? sections[index]
-                : { title: "", body: "" };
-              let _sections = [...sections];
-              return (
-                <>
-                  <Typography.Title
-                    level={5}
-                    editable={{
-                      onChange: (e) => {
-                        section.title = e;
-                        _sections[index]
-                          ? (_sections[index] = section)
-                          : _sections.push(section);
-                        setSections(_sections);
-                      },
-                      text: s.title,
-                    }}
-                  >
-                    {s.title}
-                  </Typography.Title>
-                  <ReactQuill
-                    theme="snow"
-                    modules={modules}
-                    formats={formats}
-                    onChange={(value) => {
-                      section.body = value;
-                      _sections[index]
-                        ? (_sections[index] = section)
-                        : _sections.push(section);
-                      setSections(_sections);
-                    }}
-                  />
-                </>
-              );
-            })}
-
-            <Button
-              icon={<PlusOutlined />}
-              onClick={() => {
-                let _sections = [...sections];
-                _sections.push({
-                  title: `Set section ${sections?.length + 1} Title`,
-                  body: "",
-                });
-                setSections(_sections);
-              }}
-            >
-              Add section
-            </Button>
-          </div>
-
-          <div className="text-lg font-semibold">Reviews</div>
-          {/* Initiator and Reviewers */}
-          <div className="grid grid-cols-3 gap-5">
-            <div className="flex flex-col ring-1 ring-gray-300 rounded py-5 space-y-3">
-              <div className="px-5">
-                <Typography.Text type="secondary">Initiated by</Typography.Text>
-                <div className="flex flex-col">
-                  <Typography.Text strong>
-                    e.manirakiza@irembo.com
-                  </Typography.Text>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex flex-col ring-1 ring-gray-300 rounded py-5 space-y-3">
-              <div className="px-5">
-                <Typography.Text type="secondary">Reviewed by</Typography.Text>
-                <div className="flex flex-col">
-                  <Typography.Text strong>{user?.email}</Typography.Text>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="text-lg font-semibold">Signatories</div>
-
-          {/* Signatories */}
-          <div className="grid grid-cols-3 gap-5">
-            {signatories.map((s) => {
-              return (
-                <div
-                  key={s}
-                  className="flex flex-col ring-1 ring-gray-300 rounded py-5 space-y-3"
-                >
-                  <div className="flex flex-col space-y-3 px-5">
-                    <div className="flex flex-col space-y-1">
-                      <Typography.Text type="secondary">
-                        <div className="text-xs">On Behalf of</div>
-                      </Typography.Text>
-                      <Typography.Text editable>Irembo ltd</Typography.Text>
-                    </div>
-
-                    <div className="flex flex-col space-y-1">
-                      <Typography.Text type="secondary">
-                        <div className="text-xs">Representative Title</div>
-                      </Typography.Text>
-                      <Typography.Text editable>
-                        Procurement Manager
-                      </Typography.Text>
-                    </div>
-
-                    <div className="flex flex-col space-y-1">
-                      <Typography.Text type="secondary">
-                        <div className="text-xs">Company Representative</div>
-                      </Typography.Text>
-                      <Typography.Text editable>
-                        Manirakiza Edouard
-                      </Typography.Text>
-                    </div>
-
-                    <div className="flex flex-col space-y-1">
-                      <Typography.Text type="secondary">
-                        <div className="text-xs">Email</div>
-                      </Typography.Text>
-                      <Typography.Text editable>
-                        e.manirakiza@irembo.com
-                      </Typography.Text>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-            <div
-              onClick={() => {
-                let signs = [...signatories];
-                signs.push([]);
-                setSignatories(signs);
-              }}
-              className="flex flex-col ring-1 ring-gray-300 rounded pt-5 space-y-3 items-center justify-center cursor-pointer hover:bg-gray-50"
-            >
-              <Image src="/icons/icons8-signature-80.png" width={40} height={40} />
-              <div>Add new Signatory</div>
-            </div>
-          </div>
-        </div>
-      </Modal>
-    );
-  }
-
-  function viewPOMOdal() {
-    return (
-      <Modal
-        title="Display Purchase Order"
-        centered
-        open={openViewPO}
-        onOk={() => {
-          setOpenViewPO(false);
-        }}
-        onCancel={() => setOpenViewPO(false)}
-        width={"80%"}
-        bodyStyle={{ maxHeight: "700px", overflow: "scroll" }}
-      >
-        <div className="space-y-10 px-20 py-5 overflow-x-scroll">
-          <div className="flex flex-row justify-between items-center">
-            <Typography.Title level={4} className="flex flex-row items-center">
-              PURCHASE ORDER: {po?.vendor?.companyName}{" "}
-              <Image
-                src="/icons/icons8-approval-90.png"
-                width={20}
-                height={20}
-              />
-            </Typography.Title>
-            <Button icon={<PrinterOutlined />}>Print</Button>
-          </div>
-          <div className="grid grid-cols-2 gap-5 ">
-            <div className="flex flex-col ring-1 ring-gray-300 rounded p-5 space-y-3">
-              <div className="flex flex-col">
-                <Typography.Text type="secondary">
-                  <div className="text-xs">Company Name</div>
-                </Typography.Text>
-                <Typography.Text strong>Irembo ltd</Typography.Text>
-              </div>
-
-              <div className="flex flex-col">
-                <Typography.Text type="secondary">
-                  <div className="text-xs">Company Address</div>
-                </Typography.Text>
-                <Typography.Text strong>
-                  Irembo Campass Nyarutarama KG 9 Ave
-                </Typography.Text>
-              </div>
-
-              <div className="flex flex-col">
-                <Typography.Text type="secondary">
-                  <div className="text-xs">Company TIN no.</div>
-                </Typography.Text>
-                <Typography.Text strong>102911562</Typography.Text>
-              </div>
-
-              <div className="flex flex-col">
-                <Typography.Text type="secondary">
-                  <div className="text-xs">Hereinafter refferd to as</div>
-                </Typography.Text>
-                <Typography.Text strong>Sender</Typography.Text>
-              </div>
-            </div>
-
-            <div className="flex flex-col ring-1 ring-gray-300 rounded p-5 space-y-3">
-              <div className="flex flex-col">
-                <Typography.Text type="secondary">
-                  <div className="text-xs">Company Name</div>
-                </Typography.Text>
-                <Typography.Text strong>
-                  {po?.vendor?.companyName}
-                </Typography.Text>
-              </div>
-
-              <div className="flex flex-col">
-                <Typography.Text type="secondary">
-                  <div className="text-xs">Company Address</div>
-                </Typography.Text>
-                <Typography.Text strong>
-                  {po?.vendor?.building}-{po?.vendor?.street}-
-                  {po?.vendor?.avenue}
-                </Typography.Text>
-              </div>
-              <div className="flex flex-col">
-                <Typography.Text type="secondary">
-                  <div className="text-xs">Company TIN no.</div>
-                </Typography.Text>
-                <Typography.Text strong>{po?.vendor?.tin}</Typography.Text>
-              </div>
-              <div className="flex flex-col">
-                <Typography.Text type="secondary">
-                  <div className="text-xs">Hereinafter refferd to as</div>
-                </Typography.Text>
-                <Typography.Text strong>Receiver</Typography.Text>
-              </div>
-            </div>
-          </div>
-          <div className="flex flex-col space-y-5">
-            <Table
-              size="small"
-              dataSource={items}
-              columns={columns}
-              pagination={false}
-            />
-            <Typography.Title level={5} className="self-end">
-              Total (Tax Excl.): {totalVal?.toLocaleString()} RWF
-            </Typography.Title>
-            <Typography.Title level={3}>Details</Typography.Title>
-            {po?.sections?.map((section) => {
-              return (
-                <>
-                  <Typography.Title level={4}>{section.title}</Typography.Title>
-                  <div>{parse(section?.body)}</div>
-                </>
-              );
-            })}
-          </div>
-
-          <div className="grid grid-cols-3 gap-5">
-            <div className="flex flex-col ring-1 ring-gray-300 rounded pt-5 space-y-3">
-              <div className="px-5">
-                <div className="flex flex-col">
-                  <Typography.Text type="secondary">
-                    <div className="text-xs">On Behalf of</div>
-                  </Typography.Text>
-                  <Typography.Text strong>Irembo ltd</Typography.Text>
-                </div>
-
-                <div className="flex flex-col">
-                  <Typography.Text type="secondary">
-                    <div className="text-xs">Representative Title</div>
-                  </Typography.Text>
-                  <Typography.Text strong>Procurement Manager</Typography.Text>
-                </div>
-
-                <div className="flex flex-col">
-                  <Typography.Text type="secondary">
-                    <div className="text-xs">Company Representative</div>
-                  </Typography.Text>
-                  <Typography.Text strong>Manirakiza Edouard</Typography.Text>
-                </div>
-
-                <div className="flex flex-col">
-                  <Typography.Text type="secondary">
-                    <div className="text-xs">Email</div>
-                  </Typography.Text>
-                  <Typography.Text strong>
-                    e.manirakiza@irembo.com
-                  </Typography.Text>
-                </div>
-              </div>
-
-              <Popconfirm title="Confirm PO Signature">
-                <div className="flex flex-row justify-center space-x-5 items-center border-t-2 bg-blue-50 p-5 cursor-pointer hover:opacity-75">
-                  <Image
-                    width={40}
-                    height={40}
-                    src="/icons/icons8-signature-80.png"
-                  />
-
-                  <div className="text-blue-400 text-lg">
-                    Sign with one click
-                  </div>
-                </div>
-              </Popconfirm>
-            </div>
-          </div>
-        </div>
-      </Modal>
     );
   }
 
@@ -2235,7 +1843,11 @@ const RequestDetails = ({
               }}
               className="flex flex-col ring-1 ring-gray-300 rounded pt-5 space-y-3 items-center justify-center cursor-pointer hover:bg-gray-50"
             >
-              <Image src="/icons/icons8-signature-80.png" width={40} height={40} />
+              <Image
+                src="/icons/icons8-signature-80.png"
+                width={40}
+                height={40}
+              />
               <div>Add new Signatory</div>
             </div>
           </div>
@@ -2267,15 +1879,10 @@ const RequestDetails = ({
         open={previewAttachment}
         onOk={() => setPreviewAttachment(false)}
         onCancel={() => setPreviewAttachment(false)}
-        width={"80%"}
-        bodyStyle={{ maxHeight: "700px", overflow: "scroll" }}
+        width={"60%"}
+        // bodyStyle={{ maxHeight: "700px", overflow: "scroll" }}
       >
-        <div>
-          <PDFObject
-            url={`${url}/file/termsOfReference/${attachmentId}`}
-            height="40rem"
-          />
-        </div>
+        <MyPdfViewer fileUrl={`${url}/file/termsOfReference/${attachmentId}`} />
       </Modal>
     );
   }
@@ -2374,12 +1981,12 @@ function buildTenderForm(setDeadLine, user, docId, submitTenderData) {
     <>
       <div className="items-center">
         <Typography.Title level={5}>Create Tender</Typography.Title>
-        <Form.Item name="tenderDocUrl" label="Tender Document (RFP/RFQ)">
+        <Form.Item name="tenderDocUrl" label="Upload Tender Documents">
           <UploadTenderDoc uuid={docId} />
         </Form.Item>
         <Form.Item
           name="deadLine"
-          label="Submition Deadline"
+          label="Indicate Bid Submission Deadline"
           rules={[
             {
               required: true,
@@ -2403,7 +2010,7 @@ function buildTenderForm(setDeadLine, user, docId, submitTenderData) {
             onClick={submitTenderData}
             disabled={!user?.permissions?.canCreateTenders}
           >
-            Create Tender
+            Publish Tender
           </Button>
         </Form.Item>
       </div>
@@ -2422,7 +2029,7 @@ function buildPOForm(
   return (
     <div className="">
       <Typography.Title level={5}>
-        Create PO from an existing contract
+        Select existing contract
       </Typography.Title>
       <Form.Item>
         <Form.Item
@@ -2475,7 +2082,7 @@ function buildPOForm(
           }
           htmlType="submit"
         >
-          Create PO from contract
+          Create PO
         </Button>
       </Form.Item>
     </div>
