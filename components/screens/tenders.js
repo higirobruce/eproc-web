@@ -457,9 +457,9 @@ export default function Tenders({ user }) {
             </div>
 
             <Row className="flex flex-row space-x-5 items-center">
-              <div>
+              {/* <div>
                 <Input.Search placeholder="Search tenders" />
-              </div>
+              </div> */}
               <Button
                 type="text"
                 icon={<ReloadOutlined />}

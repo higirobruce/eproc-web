@@ -217,7 +217,7 @@ const RequestDetails = ({
   ];
 
   useEffect(() => {
-    refresh()
+    refresh();
   }, [data]);
 
   useEffect(() => {
@@ -234,9 +234,9 @@ const RequestDetails = ({
     setGrossTotal(t + tax);
   }, [poItems, items]);
 
-  useEffect(()=>{
-    setProgress(po?.deliveryProgress)
-  },[po])
+  useEffect(() => {
+    setProgress(po?.deliveryProgress);
+  }, [po]);
 
   useEffect(() => {
     let list = [];
@@ -871,7 +871,7 @@ const RequestDetails = ({
                                 icon={<DislikeOutlined />}
                                 disabled={
                                   !user?.permissions?.canApproveAsHod ||
-                                  user?._id !== data?.level1Approver ||
+                                  user?._id !== data?.level1Approver?._id ||
                                   currentCode > 0
                                 }
                                 danger
@@ -924,19 +924,47 @@ const RequestDetails = ({
                             </Button>
                           </div>
                           <div>
-                            <Button
-                              disabled={
-                                !user?.permissions?.canApproveAsHof ||
-                                currentCode > 1 ||
-                                currentCode < 0
+                            <Popconfirm
+                              title="Reject request"
+                              open={open}
+                              icon={
+                                <QuestionCircleOutlined
+                                  style={{ color: "red" }}
+                                />
                               }
-                              type="primary"
-                              danger
-                              size="small"
+                              onConfirm={handleOk}
+                              description={
+                                <>
+                                  <Typography.Text>
+                                    Are you sure?
+                                  </Typography.Text>
+                                  <Input
+                                    onChange={(v) => setReason(v.target.value)}
+                                    placeholder="Reason for rejection"
+                                  ></Input>
+                                </>
+                              }
+                              okButtonProps={{
+                                loading: confirmRejectLoading,
+                              }}
+                              onCancel={handleCancel}
                             >
-                              Reject
-                            </Button>
+                              <Button
+                                disabled={
+                                  !user?.permissions?.canApproveAsHof ||
+                                  currentCode > 1 ||
+                                  currentCode < 0
+                                }
+                                type="primary"
+                                danger
+                                size="small"
+                                onClick={showPopconfirm}
+                              >
+                                Reject
+                              </Button>
+                            </Popconfirm>
                           </div>
+                          
                         </div>
                       </div>
                     ),
@@ -981,7 +1009,32 @@ const RequestDetails = ({
                             </Button>
                           </div>
                           <div>
-                            <Button
+                            <Popconfirm
+                              title="Reject request"
+                              open={open}
+                              icon={
+                                <QuestionCircleOutlined
+                                  style={{ color: "red" }}
+                                />
+                              }
+                              onConfirm={handleOk}
+                              description={
+                                <>
+                                  <Typography.Text>
+                                    Are you sure?
+                                  </Typography.Text>
+                                  <Input
+                                    onChange={(v) => setReason(v.target.value)}
+                                    placeholder="Reason for rejection"
+                                  ></Input>
+                                </>
+                              }
+                              okButtonProps={{
+                                loading: confirmRejectLoading,
+                              }}
+                              onCancel={handleCancel}
+                            >
+                              <Button
                               disabled={
                                 !user?.permissions?.canApproveAsPM ||
                                 currentCode > 2 ||
@@ -990,10 +1043,13 @@ const RequestDetails = ({
                               type="primary"
                               danger
                               size="small"
+                              onClick={showPopconfirm}
                             >
                               Reject
                             </Button>
+                            </Popconfirm>
                           </div>
+                          
                         </div>
                       </div>
                     ),
@@ -1256,17 +1312,18 @@ const RequestDetails = ({
 
                 <Form.Item>
                   {/* <Popover content="Confirm Quantity approved"> */}
-                    <Button
-                      type="primary"
-                      icon={<CheckOutlined />}
-                      onClick={() => {
-                        handleUpdateProgress(
-                          po?._id,
-                          parseFloat(progress) +
-                            parseFloat(po?.deliveryProgress)
-                        );
-                      }}
-                    >Confirm Quantity Received</Button>
+                  <Button
+                    type="primary"
+                    icon={<CheckOutlined />}
+                    onClick={() => {
+                      handleUpdateProgress(
+                        po?._id,
+                        parseFloat(progress) + parseFloat(po?.deliveryProgress)
+                      );
+                    }}
+                  >
+                    Confirm Quantity Received
+                  </Button>
                   {/* </Popover> */}
                 </Form.Item>
               </Form>
@@ -1617,7 +1674,7 @@ const RequestDetails = ({
                           </Typography.Text>
                         </div>
                       </div>
-                      
+
                       <div
                         onClick={() => {
                           let _signatories = [...signatories];
