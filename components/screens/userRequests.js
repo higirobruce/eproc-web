@@ -461,7 +461,7 @@ export default function UserRequests({ user }) {
       });
   }
 
-  function createPO(vendor, tender, createdBy, sections, items, B1Data) {
+  function createPO(vendor, tender, createdBy, sections, items, B1Data, signatories, request) {
     return fetch(`${url}/purchaseOrders/`, {
       method: "POST",
       headers: {
@@ -476,6 +476,8 @@ export default function UserRequests({ user }) {
         items,
         B1Data,
         request: rowData?._id,
+        signatories,
+        request
       }),
     })
       .then((res) => res.json())
@@ -588,7 +590,7 @@ export default function UserRequests({ user }) {
     <>
       {contextHolder}
       {dataLoaded ? (
-        <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 px-10 py-5 flex-1 space-y-3 h-full">
+        <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 py-5 flex-1 space-y-3 h-full">
           <Row className="flex flex-row justify-between items-center">
             <div className="flex flex-col items-start space-y-2">
               <div className="text-xl font-semibold">Purchase Requests</div>

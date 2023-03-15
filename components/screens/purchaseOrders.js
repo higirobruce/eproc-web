@@ -12,6 +12,7 @@ import {
   Popover,
   Tag,
   Tooltip,
+  Select,
 } from "antd";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
@@ -80,6 +81,8 @@ export default function PurchaseOrders({ user }) {
   const [docDate, setDocDate] = useState(moment());
   const [docType, setDocType] = useState("dDocument_Service");
   const [signing, setSigning] = useState(false);
+
+  const [searchStatus, setSearchStatus] = useState("all");
 
   useEffect(() => {
     if (user?.userType === "VENDOR") {
@@ -309,25 +312,28 @@ export default function PurchaseOrders({ user }) {
                     </div>
                   )}
 
-                  {user?.email === s?.email && !s?.signed && (
-                    <Popconfirm
-                      title="Confirm Contract Signature"
-                      onConfirm={() => handleSignPo(s, index)}
-                    >
-                      <div className="flex flex-row justify-center space-x-5 items-center border-t-2 bg-blue-50 p-5 cursor-pointer hover:opacity-75">
-                        <Image
-                          width={40}
-                          height={40}
-                          src="/icons/icons8-signature-80.png"
-                        />
+                  {user?.email === s?.email &&
+                    !s?.signed &&
+                    previousSignatorySigned(po?.signatories, index) && (
+                      <Popconfirm
+                        title="Confirm Contract Signature"
+                        onConfirm={() => handleSignPo(s, index)}
+                      >
+                        <div className="flex flex-row justify-center space-x-5 items-center border-t-2 bg-blue-50 p-5 cursor-pointer hover:opacity-75">
+                          <Image
+                            width={40}
+                            height={40}
+                            src="/icons/icons8-signature-80.png"
+                          />
 
-                        <div className="text-blue-400 text-lg">
-                          Sign with one click
+                          <div className="text-blue-400 text-lg">
+                            Sign with one click
+                          </div>
                         </div>
-                      </div>
-                    </Popconfirm>
-                  )}
-                  {user?.email !== s?.email && !s.signed && (
+                      </Popconfirm>
+                    )}
+                  {((user?.email !== s?.email && !s.signed) ||
+                    !previousSignatorySigned(po?.signatories, index)) && (
                     <div className="flex flex-row justify-center space-x-5 items-center border-t-2 bg-gray-50 p-5">
                       <Image
                         width={40}
@@ -346,6 +352,11 @@ export default function PurchaseOrders({ user }) {
         </div>
       </Modal>
     );
+  }
+
+  function previousSignatorySigned(signatories, index) {
+    let signed = index == 0 ? true : signatories[index - 1]?.signed;
+    return signed;
   }
 
   function handleSignPo(signatory, index) {
@@ -472,12 +483,36 @@ export default function PurchaseOrders({ user }) {
   return (
     <>
       {dataLoaded ? (
-        <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 px-10 flex-1">
+        <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 py-5 flex-1">
           {viewPOMOdal()}
 
-          <Typography.Title className="mx-5" level={4}>
-            Purchase Orders List
-          </Typography.Title>
+          <div className="flex flex-col items-start space-y-2 ml-3">
+            <div className="text-xl font-semibold">Purchase Orders</div>
+            <div className="flex-1">
+              <Select
+                // mode="tags"
+                style={{ width: "300px" }}
+                placeholder="Select status"
+                onChange={(value) => setSearchStatus(value)}
+                value={searchStatus}
+                options={[
+                  { value: "all", label: "All" },
+                  {
+                    value: "pending",
+                    label: "Pending Signature",
+                  },
+                  {
+                    value: "partially-signed",
+                    label: "Paritally Signed",
+                  },
+                  {
+                    value: "signed",
+                    label: "Signed",
+                  },
+                ]}
+              />
+            </div>
+          </div>
 
           {(pOs?.length < 1 || !pOs) && <Empty />}
           {pOs && pOs?.length >= 1 && (
@@ -494,7 +529,7 @@ export default function PurchaseOrders({ user }) {
                 return (
                   <div
                     key={po?.number}
-                    className="grid md:grid-cols-6 gap-3 ring-1 ring-gray-200 bg-white rounded px-5 py-3 shadow hover:shadow-md m-5"
+                    className="grid md:grid-cols-6 gap-3 ring-1 ring-gray-200 bg-white rounded px-5 py-3 shadow hover:shadow-md m-3"
                   >
                     <div className="flex flex-col space-y-1">
                       <div className="text-xs text-gray-600">
@@ -568,7 +603,7 @@ export default function PurchaseOrders({ user }) {
                     </div>
 
                     <div className="flex flex-col space-y-1 items-center justify-center">
-                      <Dropdown.Button
+                      {/* <Dropdown.Button
                         disabled={
                           user?.userType === "VENDOR" &&
                           !documentFullySignedInternally(po)
@@ -579,7 +614,17 @@ export default function PurchaseOrders({ user }) {
                         }}
                       >
                         Actions
-                      </Dropdown.Button>
+                      </Dropdown.Button> */}
+
+                      <Button
+                        disabled={
+                          user?.userType === "VENDOR" &&
+                          !documentFullySignedInternally(po)
+                        }
+                        onClick={()=>{setPO(po); setOpenViewPO(true)}}
+                      >
+                        View Document
+                      </Button>
                     </div>
 
                     <div className="flex flex-col space-y-1 justify-center">

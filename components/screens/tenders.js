@@ -431,7 +431,7 @@ export default function Tenders({ user }) {
   return !rowData ? (
     <>
       {contextHolder}
-      {dataLoaded && dataset?.length >= 1 ? (
+      {dataLoaded ? (
         <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 py-5 flex-1 space-y-3 h-full">
           <Row className="flex flex-row justify-between items-center">
             <div className="flex flex-col items-start space-y-2">

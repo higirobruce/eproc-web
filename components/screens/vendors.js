@@ -297,7 +297,7 @@ export default function Vendors({ user }) {
     <>
       {contextHolder}
       {dataLoaded ? (
-        <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 flex-1 px-10 py-5 space-y-5">
+        <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 flex-1 py-5 space-y-5">
           <Row className="flex flex-row justify-between items-center">
             <div className="flex flex-row items-start space-x-5 w-1/4">
               <div className="text-xl font-semibold">Vendors List</div>

@@ -146,6 +146,12 @@ const RequestDetails = ({
   let [contractEndDate, setContractEndDate] = useState(moment());
   let [reqAttachId, setReqAttachId] = useState(v4());
 
+  const [assetOptions, setAssetOptions] = useState([]);
+
+  const [assets, setAssets] = useState([]);
+
+  let [tendor, setTendor] = useState("");
+
   const showPopconfirm = () => {
     setOpen(true);
   };
@@ -211,30 +217,7 @@ const RequestDetails = ({
   ];
 
   useEffect(() => {
-    let statusCode = getRequestStatusCode(data?.status);
-    console.log(statusCode);
-    setCurrentCode(statusCode);
-    getContracts();
-    setPOItems(data?.items);
-    setItems(data?.items);
-    checkDirectPOExists(data);
-    setReqAttachId(v4());
-    if (data) {
-      checkContractExists();
-      checkTenderExists(data);
-    }
-    fetch(`${url}/users/vendors`, {
-      method: "GET",
-      headers: {
-        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
-        "Content-Type": "application/json",
-      },
-    })
-      .then((res) => res.json())
-      .then((res) => {
-        setVendors(res);
-      })
-      .catch((err) => {});
+    refresh()
   }, [data]);
 
   useEffect(() => {
@@ -250,6 +233,19 @@ const RequestDetails = ({
     setTotTax(tax);
     setGrossTotal(t + tax);
   }, [poItems, items]);
+
+  useEffect(()=>{
+    setProgress(po?.deliveryProgress)
+  },[po])
+
+  useEffect(() => {
+    let list = [];
+    assets.map((alist) => {
+      alist.map((a) => {
+        list.push(a);
+      });
+    });
+  }, [assets]);
 
   useEffect(() => {
     refresh();
@@ -268,13 +264,65 @@ const RequestDetails = ({
     setDocId(v4());
   }, [refDoc]);
 
+  function getFixedAssets() {
+    fetch(`${url}/b1/fixedAssets`, {
+      method: "GET",
+      headers: {
+        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+        "Content-Type": "application/json",
+      },
+    })
+      .then((res) => res.json())
+      .then((body) => {
+        if (body?.error) {
+          messageApi.error({
+            content: body?.error?.message?.value,
+          });
+        } else {
+          let value = body?.value;
+          let assetOptions = value?.map((v) => {
+            return {
+              value: v?.ItemCode,
+              label: v?.ItemName,
+            };
+          });
+          setAssetOptions(assetOptions);
+        }
+      })
+      .catch((err) => {
+        messageApi.error({
+          content: "Could not fetch users!",
+        });
+      });
+  }
+
   function refresh() {
     let statusCode = getRequestStatusCode(data?.status);
     console.log(statusCode);
     setCurrentCode(statusCode);
+    getContracts();
+    setPOItems(data?.items);
+    setItems(data?.items);
+    checkDirectPOExists(data);
+    setReqAttachId(v4());
+    getFixedAssets();
     if (data) {
+      checkContractExists();
       checkTenderExists(data);
     }
+
+    fetch(`${url}/users/vendors`, {
+      method: "GET",
+      headers: {
+        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+        "Content-Type": "application/json",
+      },
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        setVendors(res);
+      })
+      .catch((err) => {});
   }
 
   useEffect(() => {
@@ -333,6 +381,28 @@ const RequestDetails = ({
   }
 
   function submitPOData(values) {
+    let _signatories = [
+      {
+        onBehalfOf: "Irembo Ltd",
+        title: "Finance Manager",
+        names: "",
+        email: "",
+      },
+      {
+        onBehalfOf: "Irembo Ltd",
+        title: "Procurement Manager",
+        names: "",
+        email: "",
+      },
+      {
+        onBehalfOf: vendor.companyName,
+        title: vendor.title,
+        names: vendor.contactPersonNames,
+        email: vendor.email,
+      },
+    ];
+
+    setSignatories(_signatories);
     setOpenCreatePO(true);
   }
 
@@ -448,7 +518,9 @@ const RequestDetails = ({
                   <div className="flex flex-col space-y-5">
                     {/* TItle */}
                     <div className="flex flex-row justify-between items-center">
-                      <div className="ml-3 text-lg font-bold">Request Details</div>
+                      <div className="ml-3 text-lg font-bold">
+                        Request Details
+                      </div>
                       <Tag
                         color={data.status === "declined" ? "red" : "geekblue"}
                       >
@@ -723,7 +795,9 @@ const RequestDetails = ({
         <Divider></Divider>
         <div className="grid md:grid-cols-2">
           <div>
-            <div className="ml-3 text-lg font-semibold">Request Approval Queue</div>
+            <div className="ml-3 text-lg font-semibold">
+              Request Approval Queue
+            </div>
             <div className="mx-3 mt-5 ">
               <Steps
                 direction="vertical"
@@ -757,7 +831,7 @@ const RequestDetails = ({
                             <Button
                               disabled={
                                 !user?.permissions?.canApproveAsHod ||
-                                user?._id !== data?.level1Approver ||
+                                user?._id !== data?.level1Approver?._id ||
                                 currentCode > 0
                               }
                               onClick={() => changeStatus(0)}
@@ -1143,7 +1217,7 @@ const RequestDetails = ({
       <div className="mt-2 ">
         {po?.status === "started" && po?.deliveryProgress < 100 && (
           <div className="grid grid-cols-2 gap-10">
-            <div>
+            {/* <div>
               <Form layout="inline" size="small">
                 <Form.Item required>
                   <InputNumber
@@ -1169,9 +1243,9 @@ const RequestDetails = ({
                   </Popover>
                 </Form.Item>
               </Form>
-            </div>
+            </div> */}
             <div>
-              <Form layout="inline" size="small">
+              <Form layout="inline">
                 <Form.Item required>
                   <InputNumber
                     style={{ width: "100%" }}
@@ -1181,7 +1255,7 @@ const RequestDetails = ({
                 </Form.Item>
 
                 <Form.Item>
-                  <Popover content="Confirm Quantity approved">
+                  {/* <Popover content="Confirm Quantity approved"> */}
                     <Button
                       type="primary"
                       icon={<CheckOutlined />}
@@ -1192,8 +1266,8 @@ const RequestDetails = ({
                             parseFloat(po?.deliveryProgress)
                         );
                       }}
-                    ></Button>
-                  </Popover>
+                    >Confirm Quantity Received</Button>
+                  {/* </Popover> */}
                 </Form.Item>
               </Form>
             </div>
@@ -1210,18 +1284,34 @@ const RequestDetails = ({
         centered
         open={openCreatePO}
         onOk={async () => {
+          let assetItems = [];
+          if (docType === "dDocument_Item") {
+            items.map((i, index) => {
+              assets[index]?.map((a) => {
+                assetItems.push({
+                  ItemCode: a,
+                  Quantity: i.quantity / assets[index]?.length,
+                  UnitPrice: i.estimatedUnitCost,
+                  VatGroup: i.taxGroup ? i.taxGroup : "X1",
+                });
+              });
+            });
+          }
           let B1Data = {
             CardName: vendor?.companyName,
             DocType: docType,
             DocDate: docDate,
-            DocumentLines: items.map((i) => {
-              return {
-                ItemDescription: i.title,
-                Quantity: i.quantity,
-                UnitPrice: i.estimatedUnitCost,
-                VatGroup: i.taxGroup ? i.taxGroup : "X1",
-              };
-            }),
+            DocumentLines:
+              docType === "dDocument_Service"
+                ? items.map((i) => {
+                    return {
+                      ItemDescription: i.title,
+                      Quantity: i.quantity,
+                      UnitPrice: i.estimatedUnitCost,
+                      VatGroup: i.taxGroup ? i.taxGroup : "X1",
+                    };
+                  })
+                : assetItems,
           };
           await handleCreatePO(
             vendor?._id,
@@ -1230,7 +1320,8 @@ const RequestDetails = ({
             sections,
             items,
             B1Data,
-            signatories
+            signatories,
+            data?._id
           );
           setOpenCreatePO(false);
         }}
@@ -1332,6 +1423,34 @@ const RequestDetails = ({
 
           {/* PO Details */}
           <div className="flex flex-col space-y-5">
+            {docType === "dDocument_Item" && (
+              <div className="flex flex-col">
+                <Typography.Title level={4}>Asset assignment</Typography.Title>
+                <div className="p-5 rounded ring-1 ring-gray-200 grid md:grid-cols-3 gap-2">
+                  {items?.map((i, index) => {
+                    return (
+                      <div key={i?.key}>
+                        Select asset(s) for {i?.title}
+                        <div>
+                          <Select
+                            mode="tags"
+                            showArrow
+                            style={{ width: "100%" }}
+                            onChange={(value) => {
+                              let _v = [...assets];
+                              _v[index] = value;
+                              setAssets(_v);
+                            }}
+                            options={assetOptions}
+                            showSearch
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
             <ItemsTable dataSource={items} setDataSource={setItems} />
             <Typography.Title level={5} className="self-end">
               Total (Tax Excl.): {totalVal?.toLocaleString()} RWF
@@ -1498,6 +1617,7 @@ const RequestDetails = ({
                           </Typography.Text>
                         </div>
                       </div>
+                      
                       <div
                         onClick={() => {
                           let _signatories = [...signatories];
@@ -1511,10 +1631,21 @@ const RequestDetails = ({
                   </div>
                 );
               })}
+              {/* New Signatory */}
               <div
                 onClick={() => {
-                  let signs = [...signatories];
-                  signs.push({});
+                  let signs = [];
+                  let newSignatory =
+                    signs?.length < 1
+                      ? { onBehalfOf: "Irembo Ltd" }
+                      : {
+                          onBehalfOf: vendor?.companyName,
+                          title: vendor?.title,
+                          names: vendor?.contactPersonNames,
+                          email: vendor?.email,
+                        };
+
+                  signs.push(newSignatory);
                   setSignatories(signs);
                 }}
                 className="flex flex-col ring-1 ring-gray-300 rounded pt-5 space-y-3 items-center justify-center cursor-pointer hover:bg-gray-50"
@@ -1532,7 +1663,6 @@ const RequestDetails = ({
       </Modal>
     );
   }
-
   function createContractMOdal() {
     return (
       <Modal
@@ -2028,9 +2158,7 @@ function buildPOForm(
 ) {
   return (
     <div className="">
-      <Typography.Title level={5}>
-        Select existing contract
-      </Typography.Title>
+      <Typography.Title level={5}>Select existing contract</Typography.Title>
       <Form.Item>
         <Form.Item
           // label="Contract"

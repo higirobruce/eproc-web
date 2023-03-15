@@ -203,7 +203,7 @@ const VendorsTable = ({
         columns={columns}
         className="shadow-lg rounded-md"
         pagination={{
-          pageSize:20
+          pageSize:10
         }}
       />
     </Form>

@@ -21,6 +21,7 @@ import {
   Switch,
   message,
   Tooltip,
+  Select,
 } from "antd";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
@@ -116,6 +117,7 @@ export default function Contracts({ user }) {
   const [docDate, setDocDate] = useState(moment());
   const [docType, setDocType] = useState("dDocument_Service");
   const [signing, setSigning] = useState(false);
+  const [searchStatus, setSearchStatus] = useState("all");
 
   useEffect(() => {
     if (user?.userType === "VENDOR") {
@@ -727,10 +729,21 @@ export default function Contracts({ user }) {
         // bodyStyle={{ maxHeight: "700px", overflow: "scroll" }}
       >
         <div>
-          <MyPdfViewer fileUrl={`${url}/file/${attachmentId}`}/>
+          <MyPdfViewer fileUrl={`${url}/file/${attachmentId}`} />
         </div>
       </Modal>
     );
+  }
+
+  function documentFullySignedInternally(document) {
+    let totIntenalSignatories = document?.signatories?.filter(
+      (s) => s.onBehalfOf === "Irembo Ltd"
+    );
+    let signatures = document?.signatories?.filter(
+      (s) => s.signed && s.onBehalfOf === "Irembo Ltd"
+    );
+
+    return totIntenalSignatories?.length === signatures?.length;
   }
 
   return (
@@ -738,12 +751,37 @@ export default function Contracts({ user }) {
       {contextHolder}
       {previewAttachmentModal()}
       {dataLoaded ? (
-        <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 px-10 flex-1">
+        <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 py-5 flex-1">
           {viewContractMOdal()}
 
-          <Typography.Title className="mx-5" level={4}>
-            Contracts List
-          </Typography.Title>
+          <div className="flex flex-col items-start space-y-2 ml-3">
+            <div className="text-xl font-semibold">Contract List</div>
+            <div className="flex-1">
+              <Select
+                // mode="tags"
+                style={{ width: "300px" }}
+                placeholder="Select status"
+                onChange={(value) => setSearchStatus(value)}
+                value={searchStatus}
+                options={[
+                  { value: "all", label: "All" },
+                  { value: "draft", label: "Draft" },
+                  {
+                    value: "pending",
+                    label: "Pending Signature",
+                  },
+                  {
+                    value: "partially-signed",
+                    label: "Paritally Signed",
+                  },
+                  {
+                    value: "signed",
+                    label: "Signed",
+                  },
+                ]}
+              />
+            </div>
+          </div>
 
           {(contracts?.length < 1 || !contracts) && <Empty />}
           {contracts && contracts?.length >= 1 && (
@@ -760,7 +798,7 @@ export default function Contracts({ user }) {
                 return (
                   <div
                     key={contract?.number}
-                    className="grid md:grid-cols-5 gap-3 ring-1 ring-gray-200 bg-white rounded px-5 py-3 shadow hover:shadow-md m-5"
+                    className="grid md:grid-cols-5 gap-3 ring-1 ring-gray-200 bg-white rounded px-5 py-3 shadow hover:shadow-md m-3"
                   >
                     {/*  */}
                     <div className="flex flex-col space-y-1">
@@ -841,14 +879,26 @@ export default function Contracts({ user }) {
                     </div>
 
                     <div className="flex flex-col space-y-1 items-center justify-center">
-                      <Dropdown.Button
+                      {/* <Dropdown.Button
                         menu={{ items, onClick: onMenuClick }}
                         onOpenChange={() => {
                           setContract(contract);
                         }}
                       >
                         Actions
-                      </Dropdown.Button>
+                      </Dropdown.Button> */}
+                      <Button
+                        disabled={
+                          user?.userType === "VENDOR" &&
+                          !documentFullySignedInternally(contract)
+                        }
+                        onClick={() => {
+                          setContract(contract);
+                          setOpenViewContract(true);
+                        }}
+                      >
+                        View Document
+                      </Button>
                     </div>
 
                     <div className="flex flex-col space-y-1 justify-center">
