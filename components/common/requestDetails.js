@@ -1079,16 +1079,16 @@ const RequestDetails = ({
                         options={[
                           {
                             value: "contract",
-                            label: "Signed",
+                            label: "Sourcing from Existing Contract",
                           },
 
                           {
                             value: "external",
-                            label: "External reference Document",
+                            label: "Direct contracting",
                           },
                           {
                             value: "none",
-                            label: "No reference available",
+                            label: "Tendering",
                           },
                         ]}
                       />
