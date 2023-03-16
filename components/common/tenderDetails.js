@@ -159,52 +159,83 @@ const TenderDetails = ({
       }
     },
   };
-  const itemColumns = [
-    {
-      title: "Description",
-      dataIndex: "title",
-      key: "title",
-      render: (_, item) => (
-        <>
-          <Typography.Link
-            className="flex flex-row items-center space-x-2"
-            onClick={() => {
-              setPreviewAttachment(true);
-              setAttachmentId("termsOfReference/" + item?.id + ".pdf");
-            }}
-          >
-            <div>{item.title}</div>{" "}
-            <div>
-              <PaperClipIcon className="h-4 w-4" />
-            </div>
-          </Typography.Link>
-        </>
-      ),
-    },
-    {
-      title: "Quantity",
-      dataIndex: "quantity",
-      key: "quantity",
-      render: (_, item) => <>{(item?.quantity).toLocaleString()}</>,
-    },
-    {
-      title: "Unit Price (RWF)",
-      dataIndex: "estimatedUnitCost",
-      key: "estimatedUnitCost",
-      render: (_, item) => (
-        <>{(item?.estimatedUnitCost * 1).toLocaleString()}</>
-      ),
-    },
+  const itemColumns =
+    user?.userType !== "VENDOR"
+      ? [
+          {
+            title: "Description",
+            dataIndex: "title",
+            key: "title",
+            render: (_, item) => (
+              <>
+                <Typography.Link
+                  className="flex flex-row items-center space-x-2"
+                  onClick={() => {
+                    setPreviewAttachment(true);
+                    setAttachmentId("termsOfReference/" + item?.id + ".pdf");
+                  }}
+                >
+                  <div>{item.title}</div>{" "}
+                  <div>
+                    <PaperClipIcon className="h-4 w-4" />
+                  </div>
+                </Typography.Link>
+              </>
+            ),
+          },
+          {
+            title: "Quantity",
+            dataIndex: "quantity",
+            key: "quantity",
+            render: (_, item) => <>{(item?.quantity).toLocaleString()}</>,
+          },
+          {
+            title: "Unit Price (RWF)",
+            dataIndex: "estimatedUnitCost",
+            key: "estimatedUnitCost",
+            render: (_, item) => (
+              <>{(item?.estimatedUnitCost * 1).toLocaleString()}</>
+            ),
+          },
 
-    {
-      title: "Total Amount (Rwf)",
-      dataIndex: "totalAmount",
-      key: "totalAmount",
-      render: (_, item) => (
-        <>{(item?.quantity * item?.estimatedUnitCost).toLocaleString()}</>
-      ),
-    },
-  ];
+          {
+            title: "Total Amount (Rwf)",
+            dataIndex: "totalAmount",
+            key: "totalAmount",
+            render: (_, item) => (
+              <>{(item?.quantity * item?.estimatedUnitCost).toLocaleString()}</>
+            ),
+          },
+        ]
+      : [
+          {
+            title: "Description",
+            dataIndex: "title",
+            key: "title",
+            render: (_, item) => (
+              <>
+                <Typography.Link
+                  className="flex flex-row items-center space-x-2"
+                  onClick={() => {
+                    setPreviewAttachment(true);
+                    setAttachmentId("termsOfReference/" + item?.id + ".pdf");
+                  }}
+                >
+                  <div>{item.title}</div>{" "}
+                  <div>
+                    <PaperClipIcon className="h-4 w-4" />
+                  </div>
+                </Typography.Link>
+              </>
+            ),
+          },
+          {
+            title: "Quantity",
+            dataIndex: "quantity",
+            key: "quantity",
+            render: (_, item) => <>{(item?.quantity).toLocaleString()}</>,
+          },
+        ];
   const columns = [
     {
       title: "Description",
@@ -870,57 +901,64 @@ const TenderDetails = ({
                     {/* Evaluators section */}
                     {data?.invitees && (
                       <div className="ml-3 flex flex-col space-y-2">
-                        <div className="flex flex-row space-x-1 items-center border border-b-2 border-gray-600">
-                          <UsersIcon className="h-5" /> <div>Evaluators</div>
-                        </div>
-                        <div className="flex flex-row space-x-2">
-                          <a
-                            href="#"
-                            onClick={() => {
-                              setAttachmentId(
-                                `evaluationReports/${data?.evaluationReportId}.pdf`
-                              );
-                              setPreviewAttachment(true);
-                            }}
-                          >
-                            <FileTextOutlined /> Evaluation report
-                          </a>
-                          {iBelongToEvaluators() &&
-                            !iHaveApprovedEvalReport() && (
-                              <>
-                                <Button
-                                  size="small"
-                                  type="primary"
-                                  icon={<LikeOutlined />}
-                                  onClick={() => {
-                                    let invitees = [...data?.invitees];
-                                    let inv = invitees?.filter(
-                                      (i) => i?.approver === user?.email
-                                    );
-                                    let invIndex = invitees?.filter(
-                                      (i, index) => index
-                                    );
-                                    let objToUpdate =
-                                      inv?.length >= 1 ? inv[0] : {};
-                                    objToUpdate.approved = true;
-                                    objToUpdate.approvedAt = moment().toDate();
-                                    invitees[invIndex] = objToUpdate;
-                                    handleSendEvalApproval(data, invitees);
-                                  }}
-                                >
-                                  I agree the recomendations
-                                </Button>
-                                <Button
-                                  size="small"
-                                  type="text"
-                                  danger
-                                  icon={<DislikeOutlined />}
-                                >
-                                  I disagree
-                                </Button>
-                              </>
-                            )}
-                        </div>
+                        {data?.evaluationReportId && (
+                          <>
+                            <div className="flex flex-row space-x-1 items-center border border-b-2 border-gray-600">
+                              <UsersIcon className="h-5" />{" "}
+                              <div>Evaluators</div>
+                            </div>
+                            <div className="flex flex-row space-x-2">
+                              <a
+                                href="#"
+                                onClick={() => {
+                                  setAttachmentId(
+                                    `evaluationReports/${data?.evaluationReportId}.pdf`
+                                  );
+                                  setPreviewAttachment(true);
+                                }}
+                              >
+                                <FileTextOutlined /> Evaluation report
+                              </a>
+                              {iBelongToEvaluators() &&
+                                !iHaveApprovedEvalReport() && (
+                                  <>
+                                    <Button
+                                      size="small"
+                                      type="primary"
+                                      icon={<LikeOutlined />}
+                                      onClick={() => {
+                                        let invitees = [...data?.invitees];
+                                        let inv = invitees?.filter(
+                                          (i) => i?.approver === user?.email
+                                        );
+                                        let invIndex = invitees?.filter(
+                                          (i, index) => index
+                                        );
+                                        let objToUpdate =
+                                          inv?.length >= 1 ? inv[0] : {};
+                                        objToUpdate.approved = true;
+                                        objToUpdate.approvedAt =
+                                          moment().toDate();
+                                        invitees[invIndex] = objToUpdate;
+                                        handleSendEvalApproval(data, invitees);
+                                      }}
+                                    >
+                                      I agree the recomendations
+                                    </Button>
+                                    <Button
+                                      size="small"
+                                      type="text"
+                                      danger
+                                      icon={<DislikeOutlined />}
+                                    >
+                                      I disagree
+                                    </Button>
+                                  </>
+                                )}
+                            </div>
+                          </>
+                        )}
+
                         <div className="flex flex-row space-x-3 text-gray-600">
                           {data?.invitees?.map((c) => {
                             return (
@@ -1433,7 +1471,7 @@ const TenderDetails = ({
                       VatGroup: i.taxGroup ? i.taxGroup : "X1",
                     };
                   })
-                : assetItems
+                : assetItems,
           };
           await handleCreatePO(
             vendor?._id,
@@ -2861,7 +2899,7 @@ const TenderDetails = ({
         // bodyStyle={{ maxHeight: "700px", overflow: "scroll" }}
       >
         <div>
-          <MyPdfViewer fileUrl={`${url}/file/${attachmentId}`}/>
+          <MyPdfViewer fileUrl={`${url}/file/${attachmentId}`} />
         </div>
       </Modal>
     );

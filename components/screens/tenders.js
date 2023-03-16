@@ -440,18 +440,18 @@ export default function Tenders({ user }) {
             })
             .catch((err) => {
               setLoadingRowData(false);
-              messageApi.open({
-                type: "error",
-                content: "Something happened! Please try again.",
-              });
+              // messageApi.open({
+              //   type: "error",
+              //   content: "Something happened! Please try again.",
+              // });
             });
         })
         .catch((err) => {
           setLoadingRowData(false);
-          messageApi.open({
-            type: "error",
-            content: "Something happened! Please try again.",
-          });
+          // messageApi.open({
+          //   type: "error",
+          //   content: "Something happened! Please try again.",
+          // });
         });
     }, 2000);
   }
@@ -647,7 +647,7 @@ function buildTender(
         </Button>
 
         <div className="text-xl font-semibold">
-          {rowData?.purchaseRequest?.title}{" "}
+          Tender - {rowData?.purchaseRequest?.title}{" "}
         </div>
       </div>
       <TenderDetails

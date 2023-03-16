@@ -210,7 +210,7 @@ const BidList = ({
                             type="primary"
                             onClick={() => handleAwardBid(item._id)}
                           >
-                            Award Bid
+                            Award Tender
                           </Button>
                         </>
                       )}
