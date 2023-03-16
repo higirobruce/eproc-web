@@ -355,6 +355,7 @@ export default function Vendors({ user }) {
               <div>
                 <Button
                   icon={<ArrowLeftOutlined />}
+                  type='primary'
                   onClick={() => {
                     setRowData(null);
                     setSegment("Bids");

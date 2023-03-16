@@ -54,7 +54,7 @@ export default function Home() {
                 </Layout.Sider>
               </div>
               <Layout>
-                <Layout.Content className="bg-white max-h-full">
+                <Layout.Content className="bg-gray-50 h-full">
                   <Spin
                     spinning={loggingOut}
                     indicator={

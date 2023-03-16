@@ -58,6 +58,7 @@ export default function UserRequests({ user }) {
   let apiUsername = process.env.NEXT_PUBLIC_API_USERNAME;
   let apiPassword = process.env.NEXT_PUBLIC_API_PASSWORD;
   let [dataset, setDataset] = useState([]);
+  let [tempDataset, setTempDataset] = useState([]);
   let [updatingId, setUpdatingId] = useState("");
   const [open, setOpen] = useState(false);
   let [title, setTitle] = useState("");
@@ -79,6 +80,7 @@ export default function UserRequests({ user }) {
 
   let [selectedReqId, setSelectedReqId] = useState(null);
   let [searchStatus, setSearchStatus] = useState("all");
+  let [searchText, setSearchText] = useState("");
   const [form] = Form.useForm();
 
   useEffect(() => {
@@ -87,6 +89,7 @@ export default function UserRequests({ user }) {
       .then((res) => {
         setDataLoaded(true);
         setDataset(res);
+        setTempDataset(res);
       })
       .catch((err) => {
         messageApi.open({
@@ -176,6 +179,7 @@ export default function UserRequests({ user }) {
         .then((res) => {
           setDataLoaded(true);
           setDataset(res);
+          setTempDataset(res);
         })
         .catch((err) => {
           messageApi.open({
@@ -186,13 +190,32 @@ export default function UserRequests({ user }) {
     }
   }, [searchStatus]);
 
+  useEffect(() => {
+    if (searchText === "") {
+      refresh();
+    } else {
+      let _dataSet = [...dataset];
+      let filtered = _dataSet.filter((d) => {
+        return (
+          d?.number.toString().indexOf(searchText) > -1 ||
+          d?.createdBy?.firstName.indexOf(searchText) > -1 ||
+          d?.createdBy?.lastName.indexOf(searchText) > -1
+        );
+      });
+      setTempDataset(filtered);
+      // else setTempDataset(dataset)
+    }
+  }, [searchText]);
+
   function refresh() {
     setDataLoaded(false);
+    setSearchStatus("all");
     loadRequests()
       .then((res) => res.json())
       .then((res) => {
         setDataLoaded(true);
         setDataset(res);
+        setTempDataset(res);
       })
       .catch((err) => {
         messageApi.open({
@@ -254,6 +277,7 @@ export default function UserRequests({ user }) {
               .then((res) => {
                 setDataLoaded(true);
                 setDataset(res);
+                setTempDataset(res);
                 setConfirmLoading(false);
                 setOpen(false);
               })
@@ -301,6 +325,7 @@ export default function UserRequests({ user }) {
         _data.splice(index, 1, elindex);
 
         setDataset(_data);
+        setTempDataset(_data);
       })
       .catch((err) => {
         messageApi.open({
@@ -340,6 +365,7 @@ export default function UserRequests({ user }) {
         _data.splice(index, 1, elindex);
 
         setDataset(_data);
+        setTempDataset(_data);
         setConfirmRejectLoading(false);
       })
       .catch((err) => {
@@ -371,6 +397,7 @@ export default function UserRequests({ user }) {
             .then((res) => res.json())
             .then((res) => {
               setDataset(res);
+              setTempDataset(res);
               let r = res.filter((d) => {
                 return d._id === id;
               });
@@ -444,6 +471,7 @@ export default function UserRequests({ user }) {
           .then((res) => res.json())
           .then((res) => {
             setDataset(res);
+            setTempDataset(res);
             let r = res.filter((d) => {
               return d._id === id;
             });
@@ -461,7 +489,16 @@ export default function UserRequests({ user }) {
       });
   }
 
-  function createPO(vendor, tender, createdBy, sections, items, B1Data, signatories, request) {
+  function createPO(
+    vendor,
+    tender,
+    createdBy,
+    sections,
+    items,
+    B1Data,
+    signatories,
+    request
+  ) {
     return fetch(`${url}/purchaseOrders/`, {
       method: "POST",
       headers: {
@@ -477,7 +514,7 @@ export default function UserRequests({ user }) {
         B1Data,
         request: rowData?._id,
         signatories,
-        request
+        request,
       }),
     })
       .then((res) => res.json())
@@ -590,14 +627,14 @@ export default function UserRequests({ user }) {
     <>
       {contextHolder}
       {dataLoaded ? (
-        <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 py-5 flex-1 space-y-3 h-full">
-          <Row className="flex flex-row justify-between items-center">
-            <div className="flex flex-col items-start space-y-2">
+        <div className="flex flex-col transition-opacity ease-in-out duration-1000 flex-1 space-y-10 h-full">
+          <Row className="flex flex-row justify-between items-center bg-white px-10 py-3 shadow">
+            <div className="flex flex-row items-center space-x-2">
               <div className="text-xl font-semibold">Purchase Requests</div>
               <div className="flex-1">
                 <Select
                   // mode="tags"
-                  style={{width:'300px'}}
+                  style={{ width: "300px" }}
                   placeholder="Select status"
                   onChange={(value) => setSearchStatus(value)}
                   value={searchStatus}
@@ -618,14 +655,13 @@ export default function UserRequests({ user }) {
             </div>
             <Row className="flex flex-row space-x-5 items-center">
               <div>
-                <Input.Search onChange={(e)=>{
-                  // alert(JSON.stringify(dataset[0]))
-                  // let _dataset = [...dataset]
-                  // let _d = _dataset?.filter(d=>{
-                  //   return parseInt(d?.number)===parseInt(e?.target?.value)
-                  // })
-                  // setDataset(_d)
-                }} placeholder="Search requests" />
+                <Input.Search
+                style={{width:'300px'}}
+                  onChange={(e) => {
+                    setSearchText(e?.target?.value);
+                  }}
+                  placeholder="Search by request#, initiator"
+                />
               </div>
               <Button
                 type="text"
@@ -645,21 +681,23 @@ export default function UserRequests({ user }) {
             </Row>
           </Row>
           {/* <RequestStats totalRequests={dataset?.length}/> */}
+          <div className="mx-10">
           <UsersRequestsTable
             handleSetRow={handleSetRow}
-            dataSet={dataset}
+            dataSet={tempDataset}
             handleApproveRequest={approveRequest}
             handleDeclineRequest={declineRequest}
             updatingId={updatingId}
           />
+          </div>
 
           <Modal
             title="Create a User Purchase request"
             centered
             open={open}
             onOk={() => {
-              form.validateFields()
-              save()
+              form.validateFields();
+              save();
             }}
             onCancel={() => {
               setOpen(false);
@@ -696,13 +734,15 @@ export default function UserRequests({ user }) {
                       <div>Due Date</div>
                     </div>
                     <div>
-                      <Form.Item name='dueDate' rules={[
-                        {
-                          required: true,
-                          message:'Due date is required'
-                        }
-                        
-                      ]}>
+                      <Form.Item
+                        name="dueDate"
+                        rules={[
+                          {
+                            required: true,
+                            message: "Due date is required",
+                          },
+                        ]}
+                      >
                         <DatePicker
                           style={{ width: "100%" }}
                           defaultValue={null}
@@ -716,9 +756,15 @@ export default function UserRequests({ user }) {
                   <div>
                     <div> Request title</div>
                     <div>
-                      <Form.Item name='title' rules={[
-                        {required:true, message:"Request title is required"}
-                      ]}>
+                      <Form.Item
+                        name="title"
+                        rules={[
+                          {
+                            required: true,
+                            message: "Request title is required",
+                          },
+                        ]}
+                      >
                         <Input
                           value={title}
                           onChange={(e) => setTitle(e.target.value)}
@@ -732,9 +778,15 @@ export default function UserRequests({ user }) {
                   <div>
                     <div>Request Category</div>
                     <div>
-                      <Form.Item name="serviceCategory" rules={[{
-                          required:true, message:"Service category is required"
-                      }]}>
+                      <Form.Item
+                        name="serviceCategory"
+                        rules={[
+                          {
+                            required: true,
+                            message: "Service category is required",
+                          },
+                        ]}
+                      >
                         <Select
                           defaultValue={serviceCategory}
                           placeholder="Select service category"
@@ -772,7 +824,15 @@ export default function UserRequests({ user }) {
                   <div>
                     <div>Level 1 Approver</div>
                     <div>
-                      <Form.Item name="level1Approver" rules={[{required:true, message:"Level 1 approver is required"}]}>
+                      <Form.Item
+                        name="level1Approver"
+                        rules={[
+                          {
+                            required: true,
+                            message: "Level 1 approver is required",
+                          },
+                        ]}
+                      >
                         <Select
                           defaultValue={defaultApprover}
                           placeholder="Select Level1 Approver"
@@ -794,7 +854,15 @@ export default function UserRequests({ user }) {
                   <div>
                     <div>Request Description</div>
                     <div>
-                      <Form.Item name='description' rules={[{required:true, message:'Description is required'}]}>
+                      <Form.Item
+                        name="description"
+                        rules={[
+                          {
+                            required: true,
+                            message: "Description is required",
+                          },
+                        ]}
+                      >
                         <Input.TextArea
                           value={description}
                           onChange={(e) => setDescription(e.target.value)}
@@ -844,8 +912,15 @@ export default function UserRequests({ user }) {
                     <div>
                       <div>Budget Line</div>
                       <div>
-                        <Form.Item name="budgetLine" rules={[{required: budgeted, message:'Budget Line is required'
-                        }]}>
+                        <Form.Item
+                          name="budgetLine"
+                          rules={[
+                            {
+                              required: budgeted,
+                              message: "Budget Line is required",
+                            },
+                          ]}
+                        >
                           <Select
                             defaultValue={budgetLine}
                             placeholder="Select service category"
@@ -942,10 +1017,11 @@ function buildRequest(
   createContract
 ) {
   return (
-    <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 px-10 py-5 flex-1 space-y-3 h-full">
+    <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 py-5 flex-1 space-y-3 h-full">
       <div className="flex flex-row items-center space-x-5">
         <Button
           icon={<ArrowLeftOutlined />}
+          type='primary'
           onClick={() => setSelectedReqId(null)}
         >
           Back

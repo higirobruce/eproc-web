@@ -32,8 +32,8 @@ const TopMenu = ({ setScreen, screen, handleLogout }) => {
             alt=""
             className="pt-3"
             src="/favicon.png"
-            width={20}
-            height={20}
+            width={30}
+            height={30}
           />
         ),
         key: "logo",

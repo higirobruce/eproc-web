@@ -28,6 +28,7 @@ const TendersTable = ({
   handleDeclineRequest,
   updatingId,
   handleSetRow,
+  user
 }) => {
   const [form] = Form.useForm();
   const [data, setData] = useState(dataSet);
@@ -41,7 +42,7 @@ const TendersTable = ({
     setData(dataSet);
   }, [dataSet]);
 
-  const columns = [
+  const columns = user?.userType !== 'VENDOR'? [
     {
       title: "Tender Number",
       dataIndex: "number",
@@ -94,7 +95,9 @@ const TendersTable = ({
       key: "category",
       render: (_, record) => (
         <>
-          <Typography.Text>{record?.purchaseRequest?.serviceCategory}</Typography.Text>
+          <Typography.Text>
+            {record?.purchaseRequest?.serviceCategory}
+          </Typography.Text>
         </>
       ),
     },
@@ -128,12 +131,125 @@ const TendersTable = ({
       key: "action",
       render: (_, record) => (
         <>
-          {(record.status === "open" || record.status === "pending") && (
-            <Badge color="yellow" text='Open'/>
+          {moment().isBefore(moment(record?.submissionDeadLine)) && (
+            <Badge color="yellow" text="Open" />
           )}
 
-          {(record.status === "bidSelected" || record.status === "bidAwarded" || record.status === "closed" )&& (
-            <Badge color="green" text='Closed'/>
+          {(moment().isAfter(moment(record?.submissionDeadLine))) && (
+            <Badge color="green" text="Closed" />
+          )}
+        </>
+      ),
+    },
+    // {
+    //   title: "Action",
+    //   key: "action",
+    //   render: (_, record) => (
+    //     <Space size="middle">
+    //       {updatingId !== record._id && (
+    //         <>
+    //           {record.status !== "approved" && (
+    //             <CheckOutlined
+    //               className="text-green-400 cursor-pointer"
+    //               onClick={() => approve(record._id)}
+    //             />
+    //           )}
+    //           {record.status !== "declined" && (
+    //             <CloseOutlined
+    //               className="text-red-400 cursor-pointer"
+    //               onClick={() => decline(record._id)}
+    //             />
+    //           )}
+    //           <EllipsisOutlined
+    //             className="text-blue-400 cursor-pointer"
+    //             onClick={() => {
+    //               handleSetRow(record);
+    //             }}
+    //           />
+    //         </>
+    //       )}
+
+    //       {updatingId === record._id && (
+    //         <Spin size="small" indicator={antIcon} />
+    //       )}
+    //     </Space>
+    //   ),
+    // },
+  ]: [
+    {
+      title: "Tender Number",
+      dataIndex: "number",
+      render: (_, record) => (
+        <>
+          <div
+            className="font-semibold cursor-pointer space-x-1 flex flex-row items-center text-blue-500 hover:underline"
+            onClick={() => handleSetRow(record)}
+          >
+            <div>
+              <FileProtectOutlined />
+            </div>
+            <div>{record?.number}</div>
+          </div>
+        </>
+      ),
+    },
+    {
+      title: "Title",
+      key: "title",
+      render: (_, record) => (
+        <>
+          <Typography.Text>{record?.purchaseRequest?.title}</Typography.Text>
+        </>
+      ),
+    },
+    
+    {
+      title: "Category",
+      key: "category",
+      render: (_, record) => (
+        <>
+          <Typography.Text>
+            {record?.purchaseRequest?.serviceCategory}
+          </Typography.Text>
+        </>
+      ),
+    },
+
+    {
+      title: "Closing date",
+      key: "submissionDeadLine",
+      render: (_, record) => (
+        <>
+          <Row className="felx flex-row items-center justify-between">
+            <Typography.Text>
+              {moment(record?.submissionDeadLine).format("YYYY-MMM-DD")}{" "}
+            </Typography.Text>
+            {/* <Typography.Text>
+              <Tag color="lime">
+                <Statistic.Countdown
+                  className="text-xs text-gray-500"
+                  valueStyle={{ fontSize: "0.75rem", lineHeight: "1rem" }}
+                  format="DD:HH:mm:ss"
+                  value={moment(record?.submissionDeadLine)}
+                />
+              </Tag>
+            </Typography.Text> */}
+          </Row>
+        </>
+      ),
+    },
+
+    {
+      title: "Status",
+      key: "action",
+      render: (_, record) => (
+        <>
+          {moment().isBefore(moment(record?.submissionDeadLine)) && (
+            <Badge color="yellow" text="Open" />
+          )}
+
+          {(moment().isAfter(moment(record?.submissionDeadLine))) && (
+            <Badge color="green" text="Closed" />
           )}
         </>
       ),

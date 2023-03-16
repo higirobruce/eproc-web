@@ -504,9 +504,9 @@ const RequestDetails = ({
   }
 
   return (
-    <div className="flex flex-row justify-between space-x-5">
+    <div className="grid md:grid-cols-5 gap-1">
       {contextHolder}
-      <div className="flex flex-1 flex-col ring-1 ring-gray-200 p-3 rounded shadow-md bg-white">
+      <div className="md:col-span-4 flex flex-col ring-1 ring-gray-200 p-3 rounded shadow-md bg-white">
         <div>
           <Tabs defaultActiveKey="1" type="card" size={size}>
             <Tabs.TabPane tab="Overview" key="1">
@@ -719,45 +719,45 @@ const RequestDetails = ({
         {previewAttachmentModal()}
         {createContractMOdal()}
       </div>
-      <div className="flex flex-col py-4 rounded h-full">
-        {/* <Typography.Title level={5}>Workflow tracker (V2)</Typography.Title> */}
+      <div className="flex flex-col rounded space-y-5 bg-white px-4 pt-2 shadow ">
+        <div className="text-lg">Workflow tracker </div>
         <Timeline
           // mode="alternate"
           items={[
             {
-              children: "PR-created",
-              color: data?.status !== "rejected" ? "blue" : "red",
-              dot: data?.status !== "rejected" && (
-                <FileAddOutlined className=" text-blue-500" />
+              children: <div className=''>PR-created</div>,
+              color: data?.status !== "declined" ? "blue" : "red",
+              dot: data?.status !== "declined" && (
+                <CheckCircleOutlined className=" text-green-500" />
               ),
             },
             {
-              children: "PR-approved",
+              children: <div className=''>PR-approved</div>,
               color:
                 data?.status === "approved (pm)" || tender ? "blue" : "gray",
               dot: (data?.status === "approved (pm)" || tender) && (
-                <FileDoneOutlined className=" text-blue-500" />
+                <CheckCircleOutlined className=" text-green-500" />
               ),
             },
             {
               children: `Tender-created`,
               color: tender ? "blue" : "gray",
               dot: tender && (
-                <CheckCircleOutlined className="text-lg text-blue-500" />
+                <CheckCircleOutlined className=" text-green-500" />
               ),
             },
             {
               color: contract ? "blue" : "gray",
               children: "Contract-created",
               dot: contract && (
-                <FileProtectOutlined className="text-lg text-blue-500" />
+                <CheckCircleOutlined className=" text-green-500" />
               ),
             },
             {
               children: "PO-created",
               color: po ? "blue" : "gray",
               dot: po && (
-                <ShoppingCartOutlined className="text-xl text-blue-500" />
+                <CheckCircleOutlined className=" text-green-500" />
               ),
             },
             {

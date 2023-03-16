@@ -33,6 +33,7 @@ export default function Tenders({ user }) {
   let apiUsername = process.env.NEXT_PUBLIC_API_USERNAME;
   let apiPassword = process.env.NEXT_PUBLIC_API_PASSWORD;
   let [dataset, setDataset] = useState([]);
+  let [tempDataset, setTempDataset] = useState([]);
   let [updatingId, setUpdatingId] = useState("");
   const [open, setOpen] = useState(false);
   let [title, setTitle] = useState("");
@@ -46,6 +47,7 @@ export default function Tenders({ user }) {
   let [doneCreatingContract, setDoneCreatingContract] = useState(false);
 
   let [searchStatus, setSearchStatus] = useState("all");
+  let [searchText, setSearchText] = useState("");
 
   useEffect(() => {
     loadTenders()
@@ -53,6 +55,7 @@ export default function Tenders({ user }) {
       .then((res) => {
         setDataLoaded(true);
         setDataset(res);
+        setTempDataset(res);
       })
       .catch((err) => {
         messageApi.open({
@@ -71,6 +74,7 @@ export default function Tenders({ user }) {
         setDataLoaded(true);
         setLoadingRowData(false);
         setDataset(res);
+        setTempDataset(res);
       })
       .catch((err) => {
         messageApi.open({
@@ -79,6 +83,7 @@ export default function Tenders({ user }) {
         });
       });
   }
+
   async function loadTenders() {
     if (user?.userType === "VENDOR")
       return fetch(`${url}/tenders/byServiceCategories/`, {
@@ -108,6 +113,67 @@ export default function Tenders({ user }) {
     loadStats();
   }, [dataset]);
 
+  useEffect(() => {
+    if (searchText === "") {
+      refresh();
+    } else {
+      let _dataSet = [...dataset];
+      let filtered = _dataSet.filter((d) => {
+        return (
+          d?.number.toString().indexOf(searchText) > -1 ||
+          d?.createdBy?.purchaseRequest?.number.indexOf(searchText) > -1
+        );
+      });
+      setTempDataset(filtered);
+      // else setTempDataset(dataset)
+    }
+  }, [searchText]);
+
+  useEffect(() => {
+    if (searchStatus === "all") {
+      refresh();
+    } else {
+      setDataLoaded(false);
+      fetch(`${url}/tenders/byStatus/${searchStatus}`, {
+        method: "GET",
+        headers: {
+          Authorization:
+            "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+          "Content-Type": "application/json",
+        },
+      })
+        .then((res) => res.json())
+        .then((res) => {
+          setDataLoaded(true);
+          if (user?.userType !== "VENDOR") {
+            setDataset(res);
+            setTempDataset(res);
+          } else {
+            setDataset(
+              res?.filter(
+                (r) =>
+                  user?.services?.indexOf(r?.purchaseRequest?.serviceCategory) >
+                  -1
+              )
+            );
+            setTempDataset(
+              res?.filter(
+                (r) =>
+                  user?.services?.indexOf(r?.purchaseRequest?.serviceCategory) >
+                  -1
+              )
+            );
+          }
+        })
+        .catch((err) => {
+          messageApi.open({
+            type: "error",
+            content: "Something happened! Please try again.",
+          });
+        });
+    }
+  }, [searchStatus]);
+
   const save = () => {
     console.log("Received values of form:", values);
     setConfirmLoading(true);
@@ -132,6 +198,7 @@ export default function Tenders({ user }) {
           .then((res) => {
             setDataLoaded(true);
             setDataset(res);
+            setTempDataset(res);
             setConfirmLoading(false);
             setOpen(false);
           })
@@ -169,6 +236,7 @@ export default function Tenders({ user }) {
             .then((res) => res.json())
             .then((res) => {
               setDataset(res);
+              setTempDataset(res);
               let r = res.filter((d) => {
                 return d._id === id;
               });
@@ -247,6 +315,7 @@ export default function Tenders({ user }) {
           .then((res2) => res2.json())
           .then((res3) => {
             setDataset(res3);
+            setTempDataset(res3);
             let r = res3.filter((d) => {
               return d._id === rowData._id;
             });
@@ -312,6 +381,7 @@ export default function Tenders({ user }) {
             .then((res2) => res2.json())
             .then((res3) => {
               setDataset(res3);
+              setTempDataset(res3);
               let r = res3.filter((d) => {
                 return d._id === rowData._id;
               });
@@ -360,6 +430,7 @@ export default function Tenders({ user }) {
             .then((res) => res.json())
             .then((res) => {
               setDataset(res);
+              setTempDataset(res);
               let r = res.filter((d) => {
                 return d._id === id;
               });
@@ -405,6 +476,7 @@ export default function Tenders({ user }) {
           .then((res) => res.json())
           .then((res) => {
             setDataset(res);
+            setTempDataset(res);
             let r = res.filter((d) => {
               return d._id === tenderUpdate?._id;
             });
@@ -432,9 +504,9 @@ export default function Tenders({ user }) {
     <>
       {contextHolder}
       {dataLoaded ? (
-        <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 py-5 flex-1 space-y-3 h-full">
-          <Row className="flex flex-row justify-between items-center">
-            <div className="flex flex-col items-start space-y-2">
+        <div className="flex flex-col transition-opacity ease-in-out duration-1000 flex-1 space-y-10 h-full">
+          <Row className="flex flex-row justify-between items-center bg-white px-10 py-3 shadow">
+            <div className="flex flex-row items-center space-x-2">
               <div className="text-xl font-semibold">Tenders</div>
               <div className="flex-1">
                 <Select
@@ -450,16 +522,21 @@ export default function Tenders({ user }) {
                       value: "closed",
                       label: "Closed",
                     },
-                    
                   ]}
                 />
               </div>
             </div>
 
             <Row className="flex flex-row space-x-5 items-center">
-              {/* <div>
-                <Input.Search placeholder="Search tenders" />
-              </div> */}
+              <div>
+                <Input.Search
+                  style={{ width: "300px" }}
+                  onChange={(e) => {
+                    setSearchText(e?.target?.value);
+                  }}
+                  placeholder="Search by tender#, request#"
+                />
+              </div>
               <Button
                 type="text"
                 icon={<ReloadOutlined />}
@@ -468,12 +545,13 @@ export default function Tenders({ user }) {
             </Row>
           </Row>
 
-          <Row className="flex flex-row space-x-5 mt-5 pb-10">
+          <Row className="flex flex-row space-x-5 mx-10">
             <Col flex={5}>
               <TendersTable
                 handleSetRow={handleSetRow}
-                dataSet={dataset}
+                dataSet={tempDataset}
                 updatingId={updatingId}
+                user={user}
               />
             </Col>
           </Row>
@@ -560,7 +638,11 @@ function buildTender(
     <div className="flex flex-col transition-opacity ease-in-out duration-1000 px-36 py-5 flex-1 space-y-3">
       {contextHolder}
       <div className="flex flex-row items-center space-x-5">
-        <Button icon={<ArrowLeftOutlined />} onClick={() => setRowData(null)}>
+        <Button
+          type="primary"
+          icon={<ArrowLeftOutlined />}
+          onClick={() => setRowData(null)}
+        >
           Back
         </Button>
 

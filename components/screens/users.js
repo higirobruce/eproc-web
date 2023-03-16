@@ -532,6 +532,7 @@ export default function Users({ user }) {
           <div>
             <Button
               icon={<ArrowLeftOutlined />}
+              type='primary'
               onClick={() => {
                 setRow(null);
                 setSegment("Permissions");
