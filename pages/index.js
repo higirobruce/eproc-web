@@ -20,7 +20,7 @@ export default function Home() {
         <link rel="icon" href="/favicon.png" />
       </Head>
 
-      <main className="grid md:grid-cols-3 bg-blue-500 w-screen h-screen text-white">
+      <main className="grid md:grid-cols-3 bg-blue-500 w-screen text-white">
         <div className="col-span-2 hidden md:flex flex-col px-10 pt-10 items-start">
           <Image alt="" src="/icons/white icon.png" width={236} height={220} />
           <div className="grid grid-cols-2 px-10 content-center">
@@ -37,14 +37,8 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="opacity-80">
-            <Image
-              alt=""
-              src="/login.svg"
-              width={500}
-              height={500}
-              className=""
-            />
+            <div className="opacity-80 absolute left-1/3 w-96 h-96">
+              <Image alt="" src="/login.svg" fill />
             </div>
           </div>
         </div>

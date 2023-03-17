@@ -77,7 +77,7 @@ export default function Contracts({ user }) {
   let [openViewContract, setOpenViewContract] = useState(false);
   let [startingDelivery, setStartingDelivery] = useState(false);
   const [editContract, setEditContract] = useState(
-    user?.permissions?.canReviewContracts
+    user?.permissions?.canEditContracts
   );
   const [previewAttachment, setPreviewAttachment] = useState(false);
   const [attachmentId, setAttachmentId] = useState("TOR-id.pdf");
@@ -172,10 +172,10 @@ export default function Contracts({ user }) {
         centered
         open={openViewContract}
         onOk={() => {
-          editContract && handleUpdateContract(sections, signatories);
+          editContract && contract?.status==='draft' && handleUpdateContract(sections, signatories);
           setOpenViewContract(false);
         }}
-        okText={editContract ? "Save and Send contract" : "Ok"}
+        okText={editContract && contract?.status==='draft' ? "Save and Send contract" : "Ok"}
         onCancel={() => setOpenViewContract(false)}
         width={"80%"}
         bodyStyle={{ maxHeight: "700px", overflow: "scroll" }}
@@ -204,7 +204,7 @@ export default function Contracts({ user }) {
               <Button icon={<PrinterOutlined />}>Print</Button>
             )}
             {contract?.status === "draft" &&
-              user?.permissions?.canReviewContracts && (
+              user?.permissions?.canEditContracts && (
                 <Switch
                   checkedChildren={<EditOutlined />}
                   unCheckedChildren={<EyeOutlined />}
@@ -296,7 +296,7 @@ export default function Contracts({ user }) {
                     <Typography.Title
                       level={4}
                       editable={
-                        editContract && {
+                        editContract && contract?.status === "draft" && {
                           onChange: (e) => {
                             section.title = e;
                             _sections[index]
@@ -310,7 +310,7 @@ export default function Contracts({ user }) {
                     >
                       {s.title}
                     </Typography.Title>
-                    {editContract && (
+                    {editContract && contract?.status === "draft"&& (
                       <Popconfirm
                         onConfirm={() => {
                           let _sections = [...sections];
@@ -325,8 +325,8 @@ export default function Contracts({ user }) {
                       </Popconfirm>
                     )}
                   </div>
-                  {!editContract && <div>{parse(s?.body)}</div>}
-                  {editContract && (
+                  {(!editContract || contract?.status === "reviewed" )&& <div>{parse(s?.body)}</div>}
+                  {editContract && contract?.status === "draft" && (
                     <ReactQuill
                       theme="snow"
                       modules={modules}
@@ -344,7 +344,7 @@ export default function Contracts({ user }) {
                 </>
               );
             })}
-            {editContract && (
+            {editContract && contract?.status === "draft" && (
               <Button
                 icon={<PlusOutlined />}
                 onClick={() => {
@@ -376,7 +376,7 @@ export default function Contracts({ user }) {
                       <Typography.Text
                         strong
                         editable={
-                          editContract && {
+                          editContract && contract?.status === "draft" && {
                             text: s.onBehalfOf,
                             onChange: (e) => {
                               let _signatories = [...signatories];
@@ -397,7 +397,7 @@ export default function Contracts({ user }) {
                       <Typography.Text
                         strong
                         editable={
-                          editContract && {
+                          editContract && contract?.status === "draft" && {
                             text: s.title,
                             onChange: (e) => {
                               let _signatories = [...signatories];
@@ -418,7 +418,7 @@ export default function Contracts({ user }) {
                       <Typography.Text
                         strong
                         editable={
-                          editContract && {
+                          editContract && contract?.status === "draft" && {
                             text: s.names,
                             onChange: (e) => {
                               let _signatories = [...signatories];
@@ -439,7 +439,7 @@ export default function Contracts({ user }) {
                       <Typography.Text
                         strong
                         editable={
-                          editContract && {
+                          editContract && contract?.status === "draft" && {
                             text: s.email,
                             onChange: (e) => {
                               let _signatories = [...signatories];
@@ -545,10 +545,10 @@ export default function Contracts({ user }) {
         setSignatories([]);
         setSections([{ title: "Set section title", body: "" }]);
         setEditContract(false);
-        updateBidList();
+        // updateBidList();
       })
       .catch((err) => {
-        console.error(err);
+        // console.error(err);
         messageApi.open({
           type: "error",
           content: JSON.stringify(err),

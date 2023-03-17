@@ -145,6 +145,7 @@ const RequestDetails = ({
   let [contractStartDate, setContractStartDate] = useState(moment());
   let [contractEndDate, setContractEndDate] = useState(moment());
   let [reqAttachId, setReqAttachId] = useState(v4());
+  const [creatingPO, setCreatingPO] = useState(false)
 
   const [assetOptions, setAssetOptions] = useState([]);
 
@@ -1340,6 +1341,7 @@ const RequestDetails = ({
         title="New Purchase Order"
         centered
         open={openCreatePO}
+        confirmLoading={creatingPO}
         onOk={async () => {
           let assetItems = [];
           if (docType === "dDocument_Item") {
@@ -1370,6 +1372,7 @@ const RequestDetails = ({
                   })
                 : assetItems,
           };
+          setCreatingPO(true)
           await handleCreatePO(
             vendor?._id,
             null,
@@ -1380,6 +1383,7 @@ const RequestDetails = ({
             signatories,
             data?._id
           );
+          setCreatingPO(false)
           setOpenCreatePO(false);
         }}
         okText="Save and Submit"
