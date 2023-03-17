@@ -1152,7 +1152,7 @@ const TenderDetails = ({
                                                         setTendor(item?.tender);
                                                       }}
                                                     >
-                                                      View Contract {contract?.status==='review' && `(under review)`}
+                                                      View Contract {contract?.status==='draft' && `(under review)`}
                                                     </Button>
                                                   </Form.Item>
                                                 ) : (
