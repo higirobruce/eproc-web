@@ -2,6 +2,7 @@ import {
   CloseCircleOutlined,
   EditOutlined,
   EyeOutlined,
+  LoadingOutlined,
   PlaySquareOutlined,
   PlusOutlined,
   PrinterOutlined,
@@ -22,6 +23,7 @@ import {
   message,
   Tooltip,
   Select,
+  Spin,
 } from "antd";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
@@ -116,12 +118,28 @@ export default function Contracts({ user }) {
   const [signatories, setSignatories] = useState([]);
   const [docDate, setDocDate] = useState(moment());
   const [docType, setDocType] = useState("dDocument_Service");
-  const [signing, setSigning] = useState(false);
   const [searchStatus, setSearchStatus] = useState("all");
+  const [signing, setSigning] = useState(false);
 
   useEffect(() => {
+    getContracts()
+  }, []);
+
+  useEffect(()=>{
+    getContracts()
+  },[searchStatus])
+
+  useEffect(() => {
+    if (openViewContract) {
+      setSections(contract?.sections);
+      setSignatories(contract?.signatories);
+    }
+  }, [openViewContract]);
+
+  function getContracts(){
+    setDataLoaded(false)
     if (user?.userType === "VENDOR") {
-      fetch(`${url}/contracts/byVendorId/${user?._id}`, {
+      fetch(`${url}/contracts/byVendorId/${user?._id}/${searchStatus}`, {
         method: "GET",
         headers: {
           Authorization:
@@ -139,7 +157,7 @@ export default function Contracts({ user }) {
           setDataLoaded(true);
         });
     } else {
-      fetch(`${url}/contracts/`, {
+      fetch(`${url}/contracts/byStatus/${searchStatus}`, {
         method: "GET",
         headers: {
           Authorization:
@@ -156,14 +174,7 @@ export default function Contracts({ user }) {
           setDataLoaded(true);
         });
     }
-  }, []);
-
-  useEffect(() => {
-    if (openViewContract) {
-      setSections(contract?.sections);
-      setSignatories(contract?.signatories);
-    }
-  }, [openViewContract]);
+  }
 
   function viewContractMOdal() {
     return (
@@ -172,10 +183,16 @@ export default function Contracts({ user }) {
         centered
         open={openViewContract}
         onOk={() => {
-          editContract && contract?.status==='draft' && handleUpdateContract(sections, signatories);
-          setOpenViewContract(false);
+          editContract &&
+            contract?.status === "draft" &&
+            handleUpdateContract(sections, signatories);
+            setOpenViewContract(false);
         }}
-        okText={editContract && contract?.status==='draft' ? "Save and Send contract" : "Ok"}
+        okText={
+          editContract && contract?.status === "draft"
+            ? "Save and Send contract"
+            : "Ok"
+        }
         onCancel={() => setOpenViewContract(false)}
         width={"80%"}
         bodyStyle={{ maxHeight: "700px", overflow: "scroll" }}
@@ -296,7 +313,8 @@ export default function Contracts({ user }) {
                     <Typography.Title
                       level={4}
                       editable={
-                        editContract && contract?.status === "draft" && {
+                        editContract &&
+                        contract?.status === "draft" && {
                           onChange: (e) => {
                             section.title = e;
                             _sections[index]
@@ -310,7 +328,7 @@ export default function Contracts({ user }) {
                     >
                       {s.title}
                     </Typography.Title>
-                    {editContract && contract?.status === "draft"&& (
+                    {editContract && contract?.status === "draft" && (
                       <Popconfirm
                         onConfirm={() => {
                           let _sections = [...sections];
@@ -325,7 +343,9 @@ export default function Contracts({ user }) {
                       </Popconfirm>
                     )}
                   </div>
-                  {(!editContract || contract?.status === "reviewed" )&& <div>{parse(s?.body)}</div>}
+                  {(!editContract || contract?.status !== "draft") && (
+                    <div>{parse(s?.body)}</div>
+                  )}
                   {editContract && contract?.status === "draft" && (
                     <ReactQuill
                       theme="snow"
@@ -376,7 +396,8 @@ export default function Contracts({ user }) {
                       <Typography.Text
                         strong
                         editable={
-                          editContract && contract?.status === "draft" && {
+                          editContract &&
+                          contract?.status === "draft" && {
                             text: s.onBehalfOf,
                             onChange: (e) => {
                               let _signatories = [...signatories];
@@ -397,7 +418,8 @@ export default function Contracts({ user }) {
                       <Typography.Text
                         strong
                         editable={
-                          editContract && contract?.status === "draft" && {
+                          editContract &&
+                          contract?.status === "draft" && {
                             text: s.title,
                             onChange: (e) => {
                               let _signatories = [...signatories];
@@ -418,7 +440,8 @@ export default function Contracts({ user }) {
                       <Typography.Text
                         strong
                         editable={
-                          editContract && contract?.status === "draft" && {
+                          editContract &&
+                          contract?.status === "draft" && {
                             text: s.names,
                             onChange: (e) => {
                               let _signatories = [...signatories];
@@ -439,7 +462,8 @@ export default function Contracts({ user }) {
                       <Typography.Text
                         strong
                         editable={
-                          editContract && contract?.status === "draft" && {
+                          editContract &&
+                          contract?.status === "draft" && {
                             text: s.email,
                             onChange: (e) => {
                               let _signatories = [...signatories];
@@ -453,7 +477,28 @@ export default function Contracts({ user }) {
                       </Typography.Text>
                     </div>
 
-                    {s.signed && (
+                    {signing && (
+                      <div className="flex flex-col">
+                        <Typography.Text type="secondary">
+                          <div className="text-xs">IP address</div>
+                        </Typography.Text>
+                        {s.signed && (
+                          <Typography.Text strong>
+                            {s?.ipAddress}
+                          </Typography.Text>
+                        )}
+                        {!s.signed && (
+                          <Spin
+                            indicator={
+                              <LoadingOutlined style={{ fontSize: 24 }} spin />
+                            }
+                            size="small"
+                          />
+                        )}
+                      </div>
+                    )}
+
+                    {s.signed && !signing && (
                       <div className="flex flex-col">
                         <Typography.Text type="secondary">
                           <div className="text-xs">IP address</div>
@@ -482,9 +527,10 @@ export default function Contracts({ user }) {
                     </div>
                   )}
 
-                  {user?.email === s?.email &&
+                  {(user?.email === s?.email||user?.tempEmail === s?.email) &&
                     !s?.signed &&
-                    previousSignatorySigned(signatories, index) && (
+                    previousSignatorySigned(signatories, index) && 
+                    (
                       <Popconfirm
                         title="Confirm Contract Signature"
                         onConfirm={() => handleSignContract(s, index)}
@@ -502,7 +548,7 @@ export default function Contracts({ user }) {
                       </Popconfirm>
                     )}
 
-                  {((user?.email !== s?.email && !s.signed) ||
+                  {((user?.email !== s?.email && user?.tempEmail !== s?.email && !s.signed) ||
                     !previousSignatorySigned(signatories, index)) && (
                     <div className="flex flex-row justify-center space-x-5 items-center border-t-2 bg-gray-50 p-5">
                       <Image
@@ -528,7 +574,7 @@ export default function Contracts({ user }) {
     let _contract = { ...contract };
     _contract.sections = sections;
     _contract.signatories = signatories;
-    _contract.status = "reviewed";
+    _contract.status = "pending-signature";
 
     fetch(`${url}/contracts/${contract?._id}`, {
       method: "PUT",
@@ -545,6 +591,7 @@ export default function Contracts({ user }) {
         setSignatories([]);
         setSections([{ title: "Set section title", body: "" }]);
         setEditContract(false);
+        getContracts()
         // updateBidList();
       })
       .catch((err) => {
@@ -562,14 +609,16 @@ export default function Contracts({ user }) {
     signatory.signed = true;
     let _contract = { ...contract };
 
-    fetch("https://api.db-ip.com/v2/free/self")
+    fetch("https://api.ipify.org?format=json")
       .then((res) => res.json())
       .then((res) => {
         myIpObj = res;
-        signatory.ipAddress = res?.ipAddress;
+        signatory.ipAddress = res?.ip;
         signatory.signedAt = moment();
         _contract.signatories[index] = signatory;
-        setContract(_contract);
+        // setContract(_contract);
+        
+
         fetch(`${url}/contracts/${contract?._id}`, {
           method: "PUT",
           headers: {
@@ -579,6 +628,9 @@ export default function Contracts({ user }) {
           },
           body: JSON.stringify({
             newContract: contract,
+            pending: contract?.status==='pending-signature',
+            paritallySigned: documentFullySignedInternally(contract),
+            signed: documentFullySigned(contract)
           }),
         })
           .then((res) => res.json())
@@ -586,10 +638,13 @@ export default function Contracts({ user }) {
             // setSignatories([]);
             // setSections([{ title: "Set section title", body: "" }]);
             setContract(res);
+            setSignatories(res?.signatories)
+            setSigning(false);
           });
       })
       .catch((err) => {
         console.log(err);
+        setSigning(false);
       });
 
     //call API to sign
@@ -605,46 +660,6 @@ export default function Contracts({ user }) {
   function previousSignatorySigned(signatories, index) {
     let signed = index == 0 ? true : signatories[index - 1]?.signed;
     return signed;
-  }
-
-  function handleSignPo(signatory, index) {
-    setSigning(true);
-    let myIpObj = "";
-    signatory.signed = true;
-    let _po = { ...contract };
-
-    fetch("https://api.db-ip.com/v2/free/self")
-      .then((res) => res.json())
-      .then((res) => {
-        myIpObj = res;
-        signatory.ipAddress = res?.ipAddress;
-        signatory.signedAt = moment();
-        _po.signatories[index] = signatory;
-        setContract(_po);
-
-        fetch(`${url}/purchaseOrders/${contract?._id}`, {
-          method: "PUT",
-          headers: {
-            Authorization:
-              "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            newPo: contract,
-          }),
-        })
-          .then((res) => res.json())
-          .then((res) => {
-            setSignatories([]);
-            setSections([{ title: "Set section title", body: "" }]);
-            setContract(res);
-          });
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-
-    //call API to sign
   }
 
   function getPoTotalVal() {
@@ -717,6 +732,17 @@ export default function Contracts({ user }) {
     return totSignatories?.length === signatures?.length;
   }
 
+  function documentFullySignedInternally(document) {
+    let totIntenalSignatories = document?.signatories?.filter(
+      (s) => s.onBehalfOf === "Irembo Ltd"
+    );
+    let signatures = document?.signatories?.filter(
+      (s) => s.signed && s.onBehalfOf === "Irembo Ltd"
+    );
+
+    return totIntenalSignatories?.length === signatures?.length;
+  }
+
   function previewAttachmentModal() {
     return (
       <Modal
@@ -733,17 +759,6 @@ export default function Contracts({ user }) {
         </div>
       </Modal>
     );
-  }
-
-  function documentFullySignedInternally(document) {
-    let totIntenalSignatories = document?.signatories?.filter(
-      (s) => s.onBehalfOf === "Irembo Ltd"
-    );
-    let signatures = document?.signatories?.filter(
-      (s) => s.signed && s.onBehalfOf === "Irembo Ltd"
-    );
-
-    return totIntenalSignatories?.length === signatures?.length;
   }
 
   return (
@@ -767,7 +782,7 @@ export default function Contracts({ user }) {
                   { value: "all", label: "All" },
                   { value: "draft", label: "Draft" },
                   {
-                    value: "pending",
+                    value: "pending-signature",
                     label: "Pending Signature",
                   },
                   {
@@ -827,7 +842,6 @@ export default function Contracts({ user }) {
                         </Typography.Link>
                       )}
                     </div>
-
                     <div className="flex flex-col space-y-1">
                       <div className="text-xs text-gray-600">Vendor</div>
                       <div className="font-semibold">
@@ -841,42 +855,49 @@ export default function Contracts({ user }) {
                       </div>
                     </div>
 
-                    <div className="flex flex-col space-y-3 text-gray-600">
-                      {contract?.signatories?.map((s) => {
-                        return (
-                          <div
-                            key={s?.email}
-                            className="flex flex-row items-center space-x-2"
-                          >
-                            <div>
-                              {s?.signed ? (
-                                <Tooltip
-                                  title={`signed: ${moment(s?.signedAt).format(
-                                    "DD MMM YYYY"
-                                  )} at ${moment(s?.signedAt)
-                                    .tz("Africa/Kigali")
-                                    .format("h:mm a z")}`}
-                                >
-                                  <span>
-                                    <LockClosedIcon className="h-5 text-green-500" />
-                                  </span>
-                                </Tooltip>
-                              ) : (
-                                <Tooltip title="Signature still pending">
-                                  <span>
-                                    <LockOpenIcon className="h-5 text-yellow-500" />
-                                  </span>
-                                </Tooltip>
-                              )}
+                    {/* Signatories */}
+                    {(user?.userType !== "VENDOR" ||
+                      (user?.userType == "VENDOR" &&
+                        documentFullySignedInternally(contract))) && (
+                      <div className="flex flex-col space-y-3 text-gray-600">
+                        {contract?.signatories?.map((s) => {
+                          return (
+                            <div
+                              key={s?.email}
+                              className="flex flex-row items-center space-x-2"
+                            >
+                              <div>
+                                {s?.signed ? (
+                                  <Tooltip
+                                    title={`signed: ${moment(
+                                      s?.signedAt
+                                    ).format("DD MMM YYYY")} at ${moment(
+                                      s?.signedAt
+                                    )
+                                      .tz("Africa/Kigali")
+                                      .format("h:mm a z")}`}
+                                  >
+                                    <span>
+                                      <LockClosedIcon className="h-5 text-green-500" />
+                                    </span>
+                                  </Tooltip>
+                                ) : (
+                                  <Tooltip title="Signature still pending">
+                                    <span>
+                                      <LockOpenIcon className="h-5 text-yellow-500" />
+                                    </span>
+                                  </Tooltip>
+                                )}
+                              </div>
+                              <div className="flex flex-col text-gray-600">
+                                <div>{s?.onBehalfOf}</div>
+                                <div>{s?.names}</div>
+                              </div>
                             </div>
-                            <div className="flex flex-col text-gray-600">
-                              <div>{s?.onBehalfOf}</div>
-                              <div>{s?.names}</div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
+                          );
+                        })}
+                      </div>
+                    )}
 
                     <div className="flex flex-col space-y-1 items-center justify-center">
                       {/* <Dropdown.Button
@@ -903,10 +924,16 @@ export default function Contracts({ user }) {
 
                     <div className="flex flex-col space-y-1 justify-center">
                       {/* <div className="text-xs text-gray-400">Delivery</div> */}
+                      {(!documentFullySignedInternally(contract) ||
+                        !documentFullySigned(contract)) && (
+                        <div>
+                          <Tag color="yellow">{contract?.status}</Tag>
+                        </div>
+                      )}
                       {documentFullySigned(contract) && (
                         <>
                           <div>
-                            <Tag color="green">Signed</Tag>
+                            <Tag color="green">{contract?.status}</Tag>
                           </div>
                           <Popover
                             placement="topLeft"
@@ -927,15 +954,23 @@ export default function Contracts({ user }) {
                 );
               })}
 
-              <div class="absolute -bottom-0 right-10 opacity-10">
+              {/* <div class="absolute -bottom-0 right-10 opacity-10">
                 <Image src="/icons/blue icon.png" width={110} height={100} />
-              </div>
+              </div> */}
             </div>
           )}
         </div>
       ) : (
-        <div className="flex items-center justify-center h-screen flex-1 ">
-          <Image alt="" src="/web_search.svg" width={800} height={800} />
+        <div className="flex items-center justify-center flex-1 h-screen">
+          <Spin
+            indicator={
+              <LoadingOutlined
+                className="text-gray-500"
+                style={{ fontSize: 42 }}
+                spin
+              />
+            }
+          />
         </div>
       )}
     </>

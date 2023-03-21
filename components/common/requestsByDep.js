@@ -19,10 +19,10 @@ ChartJS.register(
   LinearScale,
   BarElement,
   Title,
-  Tooltip,
+  Tooltip
 );
 
-export default function RequestStats() {
+export default function RequestsByDep() {
   let [byDep, setByDepData] = useState(null);
   let [byCat, setByCatData] = useState(null);
   let url = process.env.NEXT_PUBLIC_BKEND_URL;
@@ -140,14 +140,15 @@ export default function RequestStats() {
 
   return (
     <div className="flex flex-row justify-between">
+
       <Card
-        title="Requests by Category"
+        title="Requests by Department"
         size="default"
         className="w-full"
       >
-        {byCat && <Pie data={byCat} />}
+        {byDep && <Pie data={byDep} />}
       </Card>
-      {/* <div>{byCat && <Pie data={byCat} />}</div> */}
+      
       {contextHolder}
     </div>
   );

@@ -2,7 +2,7 @@ import React from "react";
 import { UploadOutlined } from "@ant-design/icons";
 import { Button, Upload, message } from "antd";
 
-function UploadVatCerts({ label, uuid}) {
+function UploadVatCerts({ label, uuid, setId, setSelected }) {
   const [messageApi, contextHolder] = message.useMessage();
   let url = process.env.NEXT_PUBLIC_BKEND_URL;
   let apiUsername = process.env.NEXT_PUBLIC_API_USERNAME;
@@ -13,6 +13,10 @@ function UploadVatCerts({ label, uuid}) {
       let isPDF = file.type == "application/pdf";
       if (!isPDF) {
         messageApi.error(`${file.name} is not a PDF file`);
+        setSelected(false)
+      } else {
+        // setId(uuid);
+        setSelected(true)
       }
       return isPDF || Upload.LIST_IGNORE;
     },

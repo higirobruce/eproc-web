@@ -17,6 +17,7 @@ import {
   Spin,
   Modal,
   Row,
+  Tooltip,
 } from "antd";
 import UsersTable from "../usersTable";
 import {
@@ -480,18 +481,20 @@ export default function Users({ user }) {
       {contextHolder}
       {buildCreateUserScreen()}
       {dataLoaded ? (
-        <div className="flex flex-col mx-10 flex-1 px-10">
+        <div className="flex flex-col flex-1 px-10">
           <Row className="flex flex-row justify-between items-center">
             <Typography.Title level={4}>Users</Typography.Title>
             <Row className="flex flex-row space-x-5 items-center">
               <div>
                 <Input.Search placeholder="Search users" />
               </div>
+              <Tooltip title='Refresh'>
               <Button
                 type="text"
                 icon={<ReloadOutlined />}
                 onClick={() => refresh()}
               ></Button>
+              </Tooltip>
 
               <Button
                 type="primary"
@@ -501,7 +504,7 @@ export default function Users({ user }) {
                 New user
               </Button>
 
-              <Button type="text" icon={<SettingOutlined />}></Button>
+             
             </Row>
           </Row>
           <UsersTable
@@ -516,8 +519,8 @@ export default function Users({ user }) {
           </div>
         </div>
       ) : (
-        <div className="flex items-center justify-center h-screen">
-          <Image alt="" src="/hire.svg" width={600} height={600} />
+        <div className="flex items-center justify-center flex-1 h-screen">
+          <Spin indicator={<LoadingOutlined className="text-gray-500" style={{ fontSize: 42 }} spin/>}/>
         </div>
       )}
     </>

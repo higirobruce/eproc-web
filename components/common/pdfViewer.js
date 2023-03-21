@@ -10,13 +10,15 @@ const MyPdfViewer = ({fileUrl}) => {
         <Worker workerUrl="https://unpkg.com/pdfjs-dist@2.16.105/build/pdf.worker.js">
             <div
                 style={{
-                    height: '750px',
-                    width: '900px',
+                    height: '700px',
+                    width: '100%',
                     marginLeft: 'auto',
                     marginRight: 'auto',
                 }}
             >
-                <Viewer fileUrl={fileUrl} plugins={[defaultLayoutPluginInstance]} />
+                <Viewer renderError={(error)=>{
+                    return 'File not found'
+                }} fileUrl={fileUrl} plugins={[defaultLayoutPluginInstance]}  />
             </div>
         </Worker>
     );

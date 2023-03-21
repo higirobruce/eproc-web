@@ -14,6 +14,9 @@ import {
   Switch,
   Select,
   Modal,
+  Spin,
+  Popover,
+  Popconfirm,
 } from "antd";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
@@ -23,6 +26,7 @@ import SelectStatuses from "../common/statusSelectTags";
 import {
   ArrowLeftOutlined,
   BankOutlined,
+  CheckOutlined,
   CompassOutlined,
   EditOutlined,
   EyeOutlined,
@@ -30,6 +34,7 @@ import {
   GiftOutlined,
   GlobalOutlined,
   IdcardOutlined,
+  LoadingOutlined,
   MailOutlined,
   PaperClipOutlined,
   PhoneOutlined,
@@ -142,24 +147,26 @@ export default function Vendors({ user }) {
     })
       .then((res) => res.json())
       .then((res) => {
-        let _data = [...dataset];
-
-        // Find item index using _.findIndex (thanks @AJ Richardson for comment)
-        var index = _.findIndex(_data, { _id: id });
-        let elindex = _data[index];
-        elindex.status = res?.status;
-
-        console.log(_data[index]);
-        // Replace item at index using native splice
-        _data.splice(index, 1, elindex);
-
-        setDataset(_data);
         if (res.error) {
+          setUpdatingId(null);
           messageApi.open({
             type: "error",
             content: res.message,
           });
         } else {
+          setUpdatingId(null);
+          let _data = [...dataset];
+          // Find item index using _.findIndex (thanks @AJ Richardson for comment)
+          var index = _.findIndex(_data, { _id: id });
+          let elindex = _data[index];
+          elindex.status = "approved";
+
+          console.log(_data[index]);
+          // Replace item at index using native splice
+          _data.splice(index, 1, elindex);
+
+          setDataset(_data);
+          setUpdatingId(null);
           messageApi.open({
             type: "success",
             content: "Successfully approved!",
@@ -197,8 +204,10 @@ export default function Vendors({ user }) {
         _data.splice(index, 1, elindex);
 
         setDataset(_data);
+        setUpdatingId(null);
       })
       .catch((err) => {
+        setUpdatingId(null);
         messageApi.open({
           type: "error",
           content: "Something happened! Please try again.",
@@ -336,10 +345,17 @@ export default function Vendors({ user }) {
           </div>
         </div>
       ) : (
-        // <div className="flex items-center justify-center h-screen transition-opacity ease-in-out duration-300 flex-1">
-        //   <Image alt="" src="/people_search.svg" width={600} height={600} />
-        // </div>
-        <></>
+        <div className="flex items-center justify-center flex-1 h-screen">
+          <Spin
+            indicator={
+              <LoadingOutlined
+                className="text-gray-500"
+                style={{ fontSize: 42 }}
+                spin
+              />
+            }
+          />
+        </div>
       )}
     </>
   ) : (
@@ -349,13 +365,14 @@ export default function Vendors({ user }) {
   function buildVendor() {
     return (
       <div className="flex flex-col  transition-opacity ease-in-out duration-1000 px-10 py-5 flex-1 space-y-3 h-full">
+        {contextHolder}
         <div className="flex flex-col space-y-5">
           <div className="flex flex-row justify-between">
             <div className="flex flex-row items-center space-x-2">
               <div>
                 <Button
                   icon={<ArrowLeftOutlined />}
-                  type='primary'
+                  type="primary"
                   onClick={() => {
                     setRowData(null);
                     setSegment("Bids");
@@ -399,7 +416,83 @@ export default function Vendors({ user }) {
               <div className="bg-white ring-1 ring-gray-100 rounded shadow p-5">
                 <div className="text-xl font-semibold mb-5 flex flex-row justify-between items-center">
                   <div>General Information</div>
+
+                  {updatingId !== rowData?._id && (
+                    <div>
+                      {rowData.status === "created" && (
+                        <span>
+                          <Popconfirm
+                            title="Approve vendor"
+                            description="Are you sure to approve this vendor?"
+                            okText="Yes"
+                            cancelText="No"
+                            onConfirm={() => approveUser(rowData._id)}
+                          >
+                            <div className="flex flex-row items-center justify-center text-sm ring-1 ring-green-400 rounded px-2 py-1 cursor-pointer bg-green-200">
+                              Approve
+                            </div>
+                          </Popconfirm>
+                        </span>
+                      )}
+
+                      {rowData.status === "declined" && (
+                        <span>
+                          <Popconfirm
+                            title="Activate vendor"
+                            description="Are you sure to activate this vendor?"
+                            okText="Yes"
+                            cancelText="No"
+                            onConfirm={() => activateVendor(rowData._id)}
+                          >
+                            <div className="flex flex-row items-center justify-center text-sm ring-1 ring-green-400 rounded px-2 py-1 cursor-pointer bg-green-200">
+                              Activate
+                            </div>
+                          </Popconfirm>
+                        </span>
+                      )}
+
+                      {rowData.status === "approved" && (
+                        <span>
+                          <Popconfirm
+                            title="Deactive vendor"
+                            description="Are you sure to deactivate this vendor?"
+                            okText="Yes"
+                            cancelText="No"
+                            onConfirm={() => banVendor(rowData._id)}
+                          >
+                            <div className="flex flex-row items-center justify-center text-sm ring-1 ring-red-400 rounded px-2 py-1 cursor-pointer bg-red-200">
+                              Deactivate
+                            </div>
+                          </Popconfirm>
+                        </span>
+                      )}
+                      {rowData.status === "banned" && (
+                        <span>
+                          <Popconfirm
+                            title="Acivate vendor"
+                            description="Are you sure to activate this vendor?"
+                            okText="Yes"
+                            cancelText="No"
+                            onConfirm={() => activateVendor(rowData._id)}
+                          >
+                            <div className="flex flex-row items-center justify-center text-sm ring-1 ring-green-400 rounded px-2 py-1 cursor-pointer bg-green-200">
+                              Activate
+                            </div>
+                          </Popconfirm>
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  {updatingId === rowData?._id && (
+                    <Spin
+                      size="small"
+                      indicator={
+                        <LoadingOutlined style={{ fontSize: 12 }} spin />
+                      }
+                    />
+                  )}
                 </div>
+
                 <div className="flex flex-col space-y-2">
                   <div className="flex flex-row items-center space-x-10">
                     <UserOutlined className="text-gray-400" />
@@ -640,7 +733,10 @@ export default function Vendors({ user }) {
                         }
                       }}
                     >
-                      <Typography.Link>Full RDB registration {!rowData?.rdbCertId && '-not available'}</Typography.Link>
+                      <Typography.Link>
+                        Full RDB registration{" "}
+                        {!rowData?.rdbCertId && "-not available"}
+                      </Typography.Link>
                     </div>
                   </div>
 
@@ -655,7 +751,10 @@ export default function Vendors({ user }) {
                         }
                       }}
                     >
-                      <Typography.Link>VAT certificate {!rowData?.vatCertId && '-not available'}</Typography.Link>
+                      <Typography.Link>
+                        VAT certificate{" "}
+                        {!rowData?.vatCertId && "-not available"}
+                      </Typography.Link>
                     </div>
                   </div>
                 </div>
@@ -747,7 +846,6 @@ export default function Vendors({ user }) {
             </div>
           </div>
           {previewAttachmentModal()}
-
         </div>
       </div>
     );
@@ -761,7 +859,7 @@ export default function Vendors({ user }) {
         open={previewAttachment}
         onOk={() => setPreviewAttachment(false)}
         onCancel={() => setPreviewAttachment(false)}
-        width={"60%"}
+        width={"80%"}
         // bodyStyle={{ maxHeight: "700px", overflow: "scroll" }}
       >
         <div>

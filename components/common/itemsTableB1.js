@@ -83,8 +83,8 @@ const EditableCell = ({
   return <td {...restProps}>{childNode}</td>;
 };
 
-const ItemsTable = ({ setDataSource, dataSource }) => {
-  const [count, setCount] = useState(dataSource?.length+1);
+const ItemsTable = ({ setDataSource, dataSource, assetOptions }) => {
+  const [count, setCount] = useState(dataSource?.length + 1);
   const handleDelete = (key) => {
     const newData = dataSource.filter((item) => item.key !== key && item.key);
     setCount(count - 1);
@@ -94,7 +94,7 @@ const ItemsTable = ({ setDataSource, dataSource }) => {
     {
       title: "Item title",
       dataIndex: "title",
-      width: "30%",
+      
       editable: true,
     },
     {
@@ -103,42 +103,109 @@ const ItemsTable = ({ setDataSource, dataSource }) => {
       editable: true,
     },
     {
-      title: "Tax Group",
-      dataIndex: "taxGroup",
+      title: "Item type",
+      dataIndex: "itemType",
+     
       render: (_, record) => (
-        <Select onChange={(value)=>{
-          let d = [...dataSource]
-          let toEdit = d.filter((data,index)=>data.key === record.key)
-          if(toEdit.length>0) toEdit[0].taxGroup = value 
-          setDataSource(d)
-        }} style={{width:'100%'}} defaultValue='X1' options={[{
-          "value": "I1",
-          "label": "Input VAT",
-      },
-      {
-          "value": "X1",
-          "label": "Exempt Tax",
-      }]} />
+        <Select
+          onChange={(value) => {
+            let d = [...dataSource];
+            let toEdit = d.filter((data, index) => data.key === record.key);
+            if (toEdit.length > 0) toEdit[0].itemType = value;
+            setDataSource(d);
+          }}
+          style={{ width: "100%" }}
+          defaultValue="non-asset"
+          options={[
+            { value: "non-asset", label: "Non-Asset" },
+            { value: "asset", label: "Asset" },
+          ]}
+        />
       ),
     },
     {
-      title: "Estimated cost (RWF)",
+      title: "Asset",
+      dataIndex: "asset",
+      width:'30%',
+      render: (_, record) => (
+        <Select
+          mode="tags"
+          showArrow
+          disabled={record?.itemType==='non-asset' || !record.itemType}
+          style={{ width: "100%" }}
+          onChange={(value) => {
+            // let _v = [...assets];
+            // _v[index] = value;
+            // setAssets(_v);
+
+            let d = [...dataSource];
+            let toEdit = d.filter((data, index) => data.key === record.key);
+            if (toEdit.length > 0) toEdit[0].assetCodes = value;
+            setDataSource(d);
+          }}
+          options={assetOptions}
+          showSearch
+        />
+        // <Select
+        //   onChange={(value) => {
+        //     let d = [...dataSource];
+        //     let toEdit = d.filter((data, index) => data.key === record.key);
+        //     if (toEdit.length > 0) toEdit[0].itemType = value;
+        //     setDataSource(d);
+        //   }}
+        //   style={{ width: "100%" }}
+        //   defaultValue="non-asset"
+        //   options={[
+        //     { value: "non-asset", label: "Non-Asset" },
+        //     { value: "asset", label: "Asset" },
+        //   ]}
+        // />
+      ),
+    },
+    {
+      title: "Tax Group",
+      dataIndex: "taxGroup",
+      render: (_, record) => (
+        <Select
+          onChange={(value) => {
+            let d = [...dataSource];
+            let toEdit = d.filter((data, index) => data.key === record.key);
+            if (toEdit.length > 0) toEdit[0].taxGroup = value;
+            setDataSource(d);
+          }}
+          style={{ width: "100%" }}
+          defaultValue="X1"
+          options={[
+            {
+              value: "I1",
+              label: "Input VAT",
+            },
+            {
+              value: "X1",
+              label: "Exempt Tax",
+            },
+          ]}
+        />
+      ),
+    },
+    {
+      title: "Price (RWF)",
       dataIndex: "estimatedUnitCost",
       editable: true,
     },
-    {
-      title: "Action",
-      dataIndex: "operation",
-      render: (_, record) =>
-        dataSource.length >= 1 ? (
-          <Popconfirm
-            title="Sure to delete?"
-            onConfirm={() => handleDelete(record.key)}
-          >
-            <a>Delete</a>
-          </Popconfirm>
-        ) : null,
-    },
+    // {
+    //   title: "Action",
+    //   dataIndex: "operation",
+    //   render: (_, record) =>
+    //     dataSource.length >= 1 ? (
+    //       <Popconfirm
+    //         title="Sure to delete?"
+    //         onConfirm={() => handleDelete(record.key)}
+    //       >
+    //         <a>Delete</a>
+    //       </Popconfirm>
+    //     ) : null,
+    // },
   ];
   const handleAdd = () => {
     const newData = {
@@ -183,7 +250,7 @@ const ItemsTable = ({ setDataSource, dataSource }) => {
   });
   return (
     <div>
-      <Button
+      {/* <Button
         onClick={handleAdd}
         type="primary"
         style={{
@@ -191,7 +258,7 @@ const ItemsTable = ({ setDataSource, dataSource }) => {
         }}
       >
         Add a row
-      </Button>
+      </Button> */}
       <Table
         components={components}
         rowClassName={() => "editable-row"}

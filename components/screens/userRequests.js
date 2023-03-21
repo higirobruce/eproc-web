@@ -1,6 +1,9 @@
 import {
   ArrowLeftOutlined,
   BackwardOutlined,
+  EditOutlined,
+  EyeOutlined,
+  LoadingOutlined,
   PlusOutlined,
   ReloadOutlined,
   SaveOutlined,
@@ -23,6 +26,8 @@ import {
   Tabs,
   Tag,
   Upload,
+  Spin,
+  Switch,
 } from "antd";
 import moment from "moment/moment";
 import Image from "next/image";
@@ -77,27 +82,27 @@ export default function UserRequests({ user }) {
   let [level1Approvers, setLevel1Approvers] = useState([]);
   let [level1Approver, setLevel1Approver] = useState("");
   let [defaultApprover, setDefaultApprover] = useState({});
+  const [editRequest, setEditRequest] = useState(false);
 
-  let [selectedReqId, setSelectedReqId] = useState(null);
   let [searchStatus, setSearchStatus] = useState("all");
   let [searchText, setSearchText] = useState("");
   const [form] = Form.useForm();
+  const [onlyMine, setOnlyMine] = useState(false)
 
   useEffect(() => {
-    loadRequests()
-      .then((res) => res.json())
-      .then((res) => {
-        setDataLoaded(true);
-        setDataset(res);
-        setTempDataset(res);
-      })
-      .catch((err) => {
-        messageApi.open({
-          type: "error",
-          content: "Something happened! Please try again.",
-        });
-      });
-
+    // loadRequests()
+    //   .then((res) => res.json())
+    //   .then((res) => {
+    //     setDataLoaded(true);
+    //     setDataset(res);
+    //     setTempDataset(res);
+    //   })
+    //   .catch((err) => {
+    //     messageApi.open({
+    //       type: "error",
+    //       content: "Something happened! Please try again.",
+    //     });
+    //   });
     fetch(`${url}/serviceCategories`, {
       method: "GET",
       headers: {
@@ -163,36 +168,36 @@ export default function UserRequests({ user }) {
   }, []);
 
   useEffect(() => {
-    if (searchStatus === "all") {
-      refresh();
-    } else {
-      setDataLoaded(false);
-      fetch(`${url}/requests/byStatus/${searchStatus}`, {
-        method: "GET",
-        headers: {
-          Authorization:
-            "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
-          "Content-Type": "application/json",
-        },
+    setDataLoaded(false);
+    let requestUrl =
+      onlyMine
+        ? `${url}/requests/byStatus/${searchStatus}/${user?._id}`
+        : `${url}/requests/byStatus/${searchStatus}/${null}`;
+    fetch(requestUrl, {
+      method: "GET",
+      headers: {
+        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+        "Content-Type": "application/json",
+      },
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        setDataLoaded(true);
+        setDataset(res);
+        setTempDataset(res);
       })
-        .then((res) => res.json())
-        .then((res) => {
-          setDataLoaded(true);
-          setDataset(res);
-          setTempDataset(res);
-        })
-        .catch((err) => {
-          messageApi.open({
-            type: "error",
-            content: "Something happened! Please try again.",
-          });
+      .catch((err) => {
+        messageApi.open({
+          type: "error",
+          content: "Something happened! Please try again.",
         });
-    }
-  }, [searchStatus]);
+      });
+  }, [searchStatus, onlyMine]);
 
   useEffect(() => {
     if (searchText === "") {
       refresh();
+      setDataset(dataset);
     } else {
       let _dataSet = [...dataset];
       let filtered = _dataSet.filter((d) => {
@@ -209,7 +214,7 @@ export default function UserRequests({ user }) {
 
   function refresh() {
     setDataLoaded(false);
-    setSearchStatus("all");
+    // setSearchStatus("mine");
     loadRequests()
       .then((res) => res.json())
       .then((res) => {
@@ -226,7 +231,17 @@ export default function UserRequests({ user }) {
   }
 
   async function loadRequests() {
-    return fetch(`${url}/requests/`, {
+    // setDataLoaded(false);
+    let requestUrl =
+      onlyMine
+        ? `${url}/requests/byStatus/${searchStatus}/${user?._id}`
+        : `${url}/requests/byStatus/${searchStatus}/${null}`;
+    // let requestUrl =
+    //   searchStatus === "mine"
+    //     ? `${url}/requests/${user?._id}`
+    //     : `${url}/requests/byStatus/${searchStatus}`;
+
+    return fetch(requestUrl, {
       method: "GET",
       headers: {
         Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
@@ -236,7 +251,6 @@ export default function UserRequests({ user }) {
   }
   useEffect(() => {
     setUpdatingId("");
-    console.log(dataset);
   }, [dataset]);
 
   const save = () => {
@@ -423,6 +437,39 @@ export default function UserRequests({ user }) {
     }, 2000);
   }
 
+  function updateRequest() {
+    setLoadingRowData(true);
+    fetch(`${url}/requests/${rowData?._id}`, {
+      method: "PUT",
+      headers: {
+        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        updates: rowData,
+      }),
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        refresh();
+
+        let r = dataset?.filter((d) => {
+          return d._id === id;
+        });
+        console.log(r);
+        setRowData(r[0]);
+        setLoadingRowData(false);
+        setDataLoaded(true);
+      })
+      .catch((err) => {
+        setLoadingRowData(false);
+        messageApi.open({
+          type: "error",
+          content: "Something happened! Please try again.",
+        });
+      });
+  }
+
   function handleSetRow(row) {
     console.log(row);
     setLoadingRowData(true);
@@ -453,11 +500,52 @@ export default function UserRequests({ user }) {
       });
   }
 
-  function updateProgress(poId, progress) {
-    fetch(`${url}/purchaseOrders/progress/${poId}`, {
+  function updateProgress(po, progress, qty, index) {
+    let _po = { ...po };
+    _po.items[index].deliveredQty = qty;
+    _po.deliveryProgress = progress;
+    fetch(`${url}/purchaseOrders/progress/${po?._id}`, {
       method: "PUT",
       body: JSON.stringify({
-        deliveryProgress: progress,
+        updates: _po,
+      }),
+      headers: {
+        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+        "Content-Type": "application/json",
+      },
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        setReload(!reload);
+        loadRequests()
+          .then((res) => res.json())
+          .then((res) => {
+            setDataset(res);
+            setTempDataset(res);
+            let r = res.filter((d) => {
+              return d._id === id;
+            });
+            console.log(r);
+            setRowData(r[0]);
+            setLoadingRowData(false);
+          })
+          .catch((err) => {
+            setLoadingRowData(false);
+            messageApi.open({
+              type: "error",
+              content: "Something happened! Please try again.",
+            });
+          });
+      });
+  }
+
+  function rateDelivery(po, rate) {
+    let _po = { ...po };
+    _po.rate = rate;
+    fetch(`${url}/purchaseOrders/progress/${po?._id}`, {
+      method: "PUT",
+      body: JSON.stringify({
+        updates: _po,
       }),
       headers: {
         Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
@@ -497,7 +585,8 @@ export default function UserRequests({ user }) {
     items,
     B1Data,
     signatories,
-    request
+    request,
+    reqAttachmentDocId
   ) {
     return fetch(`${url}/purchaseOrders/`, {
       method: "POST",
@@ -515,6 +604,7 @@ export default function UserRequests({ user }) {
         request: rowData?._id,
         signatories,
         request,
+        reqAttachmentDocId,
       }),
     })
       .then((res) => res.json())
@@ -639,6 +729,7 @@ export default function UserRequests({ user }) {
                   onChange={(value) => setSearchStatus(value)}
                   value={searchStatus}
                   options={[
+                    // { value: "mine", label: "My requests" },
                     { value: "all", label: "All requests" },
                     { value: "pending", label: "Pending for approval" },
                     {
@@ -654,14 +745,19 @@ export default function UserRequests({ user }) {
               </div>
             </div>
             <Row className="flex flex-row space-x-5 items-center">
+              
               <div>
                 <Input.Search
-                style={{width:'300px'}}
+                  style={{ width: "300px" }}
                   onChange={(e) => {
                     setSearchText(e?.target?.value);
                   }}
                   placeholder="Search by request#, initiator"
                 />
+              </div>
+              <div className="flex flex-row items-center space-x-1">
+                <div>My requests only</div>
+                <Checkbox checked={onlyMine} onChange={(e) => {setOnlyMine(e.target.checked)}} />
               </div>
               <Button
                 type="text"
@@ -673,7 +769,10 @@ export default function UserRequests({ user }) {
                 <Button
                   type="primary"
                   icon={<PlusOutlined />}
-                  onClick={() => setOpen(true)}
+                  onClick={() => {
+                    form.resetFields();
+                    setOpen(true);
+                  }}
                 >
                   New request
                 </Button>
@@ -682,13 +781,13 @@ export default function UserRequests({ user }) {
           </Row>
           {/* <RequestStats totalRequests={dataset?.length}/> */}
           <div className="mx-10">
-          <UsersRequestsTable
-            handleSetRow={handleSetRow}
-            dataSet={tempDataset}
-            handleApproveRequest={approveRequest}
-            handleDeclineRequest={declineRequest}
-            updatingId={updatingId}
-          />
+            <UsersRequestsTable
+              handleSetRow={handleSetRow}
+              dataSet={tempDataset}
+              handleApproveRequest={approveRequest}
+              handleDeclineRequest={declineRequest}
+              updatingId={updatingId}
+            />
           </div>
 
           <Modal
@@ -701,14 +800,7 @@ export default function UserRequests({ user }) {
             }}
             onCancel={() => {
               setOpen(false);
-              setFileList([]);
-              setDueDate(null);
-              setDescription("");
-              setServiceCategory("");
               setValues([]);
-              setBudgeted(true);
-              setBudgetLine("");
-              setTitle("");
             }}
             okText="Submit for approval"
             okButtonProps={{ size: "small" }}
@@ -746,6 +838,7 @@ export default function UserRequests({ user }) {
                         <DatePicker
                           style={{ width: "100%" }}
                           defaultValue={null}
+                          value={dueDate}
                           onChange={(v, dstr) => setDueDate(dstr)}
                         />
                       </Form.Item>
@@ -888,6 +981,7 @@ export default function UserRequests({ user }) {
                         <Radio.Group
                           onChange={(e) => {
                             setBudgeted(e.target.value);
+                            if (e.target.value === false) setBudgetLine(null);
                           }}
                           value={budgeted}
                         >
@@ -978,8 +1072,16 @@ export default function UserRequests({ user }) {
           </div>
         </div>
       ) : (
-        <div className="flex items-center justify-center h-screen flex-1">
-          <Image alt="" src="/file_searching.svg" width={600} height={600} />
+        <div className="flex items-center justify-center flex-1 h-screen">
+          <Spin
+            indicator={
+              <LoadingOutlined
+                className="text-gray-500"
+                style={{ fontSize: 42 }}
+                spin
+              />
+            }
+          />
         </div>
       )}
     </>
@@ -1000,48 +1102,104 @@ export default function UserRequests({ user }) {
       createContract
     )
   );
-}
-function buildRequest(
-  selectedReqId,
-  setSelectedReqId,
-  updateStatus,
-  loadingRowData,
-  rowData,
-  createTender,
-  declineRequest,
-  setConfirmRejectLoading,
-  confirmRejectLoading,
-  updateProgress,
-  reload,
-  createPO,
-  createContract
-) {
-  return (
-    <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 py-5 flex-1 space-y-3 h-full">
-      <div className="flex flex-row items-center space-x-5">
-        <Button
-          icon={<ArrowLeftOutlined />}
-          type='primary'
-          onClick={() => setSelectedReqId(null)}
-        >
-          Back
-        </Button>
+  function buildRequest(
+    selectedReqId,
+    setSelectedReqId,
+    updateStatus,
+    loadingRowData,
+    rowData,
+    createTender,
+    declineRequest,
+    setConfirmRejectLoading,
+    confirmRejectLoading,
+    updateProgress,
+    reload,
+    createPO,
+    createContract
+  ) {
+    return (
+      <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 py-5 flex-1 space-y-3 h-full">
+        <div className="flex flex-row justify-between items-center">
+          <div className="flex flex-row space-x-10 items-center">
+            <div>
+              <Button
+                icon={<ArrowLeftOutlined />}
+                type="primary"
+                onClick={() => {
+                  setSelectedReqId(null);
+                  setEditRequest(false);
+                }}
+              >
+                Back
+              </Button>
+            </div>
 
-        <div className="text-xl font-semibold">Request - {selectedReqId?.title} </div>
+            {editRequest && (
+              <div className="flex flex-row items-center text-xl font-semibold">
+                <Typography.Text
+                  level={5}
+                  editable={
+                    editRequest && {
+                      text: selectedReqId?.title,
+                      onChange: (e) => {
+                        let req = { ...selectedReqId };
+                        req.title = e;
+                        setSelectedReqId(req);
+                      },
+                    }
+                  }
+                >
+                  {selectedReqId?.title}
+                </Typography.Text>
+              </div>
+            )}
+
+            {editRequest && (
+              <div>
+                <Button
+                  icon={<SaveOutlined />}
+                  type="primary"
+                  onClick={() => {
+                    updateRequest();
+                  }}
+                >
+                  Save
+                </Button>
+              </div>
+            )}
+
+            {!editRequest && (
+              <div className="text-xl font-semibold">
+                Request - {selectedReqId?.title}
+              </div>
+            )}
+          </div>
+          {rowData?.level1Approver?._id === user?._id &&
+            rowData?.status === "pending" && (
+              <Switch
+                checkedChildren={<EditOutlined />}
+                unCheckedChildren={<EyeOutlined />}
+                onChange={(e) => setEditRequest(e)}
+              />
+            )}
+        </div>
+        <RequestDetails
+          handleUpdateStatus={updateStatus}
+          loading={loadingRowData}
+          data={rowData}
+          handleCreateTender={createTender}
+          handleReject={declineRequest}
+          setConfirmRejectLoading={setConfirmRejectLoading}
+          confirmRejectLoading={confirmRejectLoading}
+          handleUpdateProgress={updateProgress}
+          reload={reload}
+          handleCreatePO={createPO}
+          handleCreateContract={createContract}
+          edit={editRequest}
+          handleUpdateRequest={setSelectedReqId}
+          handleRateDelivery={rateDelivery}
+        />
       </div>
-      <RequestDetails
-        handleUpdateStatus={updateStatus}
-        loading={loadingRowData}
-        data={rowData}
-        handleCreateTender={createTender}
-        handleReject={declineRequest}
-        setConfirmRejectLoading={setConfirmRejectLoading}
-        confirmRejectLoading={confirmRejectLoading}
-        handleUpdateProgress={updateProgress}
-        reload={reload}
-        handleCreatePO={createPO}
-        handleCreateContract={createContract}
-      />
-    </div>
-  );
+    );
+  }
 }

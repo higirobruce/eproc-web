@@ -83,6 +83,7 @@ const SignupForm = () => {
   const [rdbCertId, setRdbCertId] = useState(null);
   const [vatCertId, setVatCertId] = useState(null);
   const [rdbSelected, setRDBSelected] = useState(false);
+  const [vatSelected, setVatSelected] = useState(false);
 
   const onFinish = (values) => {
     setSubmitting(true);
@@ -112,8 +113,8 @@ const SignupForm = () => {
         country: values.country,
         passportNid: values.passportNid,
         services: values.services,
-        rdbCertId,
-        vatCertId,
+        rdbCertId: rdbSelected ? rdbCertId : null,
+        vatCertId: vatSelected ? vatCertId : null,
       }),
     })
       .then((res) => res.json())
@@ -494,7 +495,15 @@ const SignupForm = () => {
                             Area(s) of expertise
                             <div className="text-red-500">*</div>
                           </div>
-                          <Form.Item name="services" rules={[{required:true, message:"Areas of expertise are required"}]}>
+                          <Form.Item
+                            name="services"
+                            rules={[
+                              {
+                                required: true,
+                                message: "Areas of expertise are required",
+                              },
+                            ]}
+                          >
                             <Select
                               mode="multiple"
                               allowClear
@@ -583,7 +592,9 @@ const SignupForm = () => {
                                 rdbSelected
                                   ? Promise.resolve()
                                   : Promise.reject(
-                                      new Error("Should attach the incorporation document")
+                                      new Error(
+                                        "Should attach the incorporation document"
+                                      )
                                     ),
                             },
                           ]}
@@ -591,13 +602,18 @@ const SignupForm = () => {
                           <UploadRDCerts
                             uuid={rdbCertId}
                             setSelected={setRDBSelected}
+                            setId={setRdbCertId}
                           />
                         </Form.Item>
                       </div>
                       <div>
                         <div>VAT Certificate</div>
                         <Form.Item name="vatCertificate">
-                          <UploadVatCerts uuid={vatCertId} />
+                          <UploadVatCerts
+                            uuid={vatCertId}
+                            setId={setVatCertId}
+                            setSelected={setVatSelected}
+                          />
                         </Form.Item>
                       </div>
                       <div></div>

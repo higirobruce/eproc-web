@@ -25,6 +25,8 @@ import {
   message,
   Tooltip,
   Timeline,
+  Progress,
+  Switch,
 } from "antd";
 import UploadFiles from "./uploadFiles";
 import {
@@ -43,6 +45,8 @@ import {
   FileAddOutlined,
   ShoppingOutlined,
   ShoppingCartOutlined,
+  EditOutlined,
+  EyeOutlined,
 } from "@ant-design/icons";
 import moment from "moment";
 import dayjs from "dayjs";
@@ -65,6 +69,7 @@ import { v4 } from "uuid";
 import UploadTenderDoc from "./uploadTenderDoc";
 import UploadReqAttach from "./uploadReqAttach";
 import MyPdfViewer from "./pdfViewer";
+import _ from "lodash";
 
 let modules = {
   toolbar: [
@@ -106,11 +111,15 @@ const RequestDetails = ({
   reload,
   handleCreatePO,
   handleCreateContract,
+  edit,
+  handleUpdateRequest,
+  handleRateDelivery,
 }) => {
   const [size, setSize] = useState("small");
   const [currentCode, setCurrentCode] = useState(-1);
   let [deadLine, setDeadLine] = useState(null);
   const [open, setOpen] = useState(false);
+  const [openApprove, setOpenApprove] = useState(false);
   let [reason, setReason] = useState("");
   const [messageApi, contextHolder] = message.useMessage();
   let user = JSON.parse(localStorage.getItem("user"));
@@ -145,13 +154,14 @@ const RequestDetails = ({
   let [contractStartDate, setContractStartDate] = useState(moment());
   let [contractEndDate, setContractEndDate] = useState(moment());
   let [reqAttachId, setReqAttachId] = useState(v4());
-  const [creatingPO, setCreatingPO] = useState(false)
+  const [creatingPO, setCreatingPO] = useState(false);
 
   const [assetOptions, setAssetOptions] = useState([]);
 
   const [assets, setAssets] = useState([]);
 
   let [tendor, setTendor] = useState("");
+  const [deliveredQty, setDeliveredQty] = useState(0);
 
   const showPopconfirm = () => {
     setOpen(true);
@@ -196,12 +206,14 @@ const RequestDetails = ({
       title: "Quantity",
       dataIndex: "quantity",
       key: "quantity",
+      editable: true,
       render: (_, item) => <>{(item?.quantity).toLocaleString()}</>,
     },
     {
       title: "Unit Price (RWF)",
       dataIndex: "estimatedUnitCost",
       key: "estimatedUnitCost",
+      editable: true,
       render: (_, item) => (
         <>{(item?.estimatedUnitCost * 1).toLocaleString()}</>
       ),
@@ -217,8 +229,26 @@ const RequestDetails = ({
     },
   ];
 
+  let [servCategories, setServCategories] = useState([]);
   useEffect(() => {
     refresh();
+    fetch(`${url}/serviceCategories`, {
+      method: "GET",
+      headers: {
+        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+        "Content-Type": "application/json",
+      },
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        setServCategories(res);
+      })
+      .catch((err) => {
+        messageApi.open({
+          type: "error",
+          content: "Connection Error!",
+        });
+      });
   }, [data]);
 
   useEffect(() => {
@@ -352,6 +382,7 @@ const RequestDetails = ({
     if (status === "approved (hod)") return 0;
     else if (status === "approved (fd)") return 1;
     else if (status === "approved (pm)") return 2;
+    else if (status === "approved") return 3;
     else return -1;
   }
 
@@ -385,13 +416,13 @@ const RequestDetails = ({
     let _signatories = [
       {
         onBehalfOf: "Irembo Ltd",
-        title: "Finance Manager",
+        title: "Procurement Manager",
         names: "",
         email: "",
       },
       {
         onBehalfOf: "Irembo Ltd",
-        title: "Procurement Manager",
+        title: "Finance Manager",
         names: "",
         email: "",
       },
@@ -507,7 +538,7 @@ const RequestDetails = ({
   return (
     <div className="grid md:grid-cols-5 gap-1">
       {contextHolder}
-      <div className="md:col-span-4 flex flex-col ring-1 ring-gray-200 p-3 rounded shadow-md bg-white">
+      <div className="md:col-span-4 flex flex-col ring-1 ring-gray-200 p-3 rounded shadow-md bg-white  overflow-y-scroll">
         <div>
           <Tabs defaultActiveKey="1" type="card" size={size}>
             <Tabs.TabPane tab="Overview" key="1">
@@ -544,7 +575,7 @@ const RequestDetails = ({
                       </div> */}
                     </div>
                     <div className="flex flex-row justify-between items-start">
-                      <div className="grid md:grid-cols-4 gap-y-5 w-full">
+                      <div className="grid md:grid-cols-4 gap-5 w-full">
                         {/* Request number */}
                         <div className="flex flex-col space-y-1 items-start">
                           <div className="text-xs ml-3 text-gray-400">
@@ -582,9 +613,35 @@ const RequestDetails = ({
                           <div className="text-xs ml-3 text-gray-400">
                             Due date:
                           </div>
-                          <div className="text-sm font-semibold ml-3 text-gray-600">
-                            {moment(data?.dueDate).format("YYYY-MMM-DD")}
-                          </div>
+                          {!edit && (
+                            <div className="text-sm font-semibold ml-3 text-gray-600">
+                              {moment(data?.dueDate).format("YYYY-MMM-DD")}
+                            </div>
+                          )}
+                          {edit && (
+                            <div className="text-sm font-semibold ml-3 text-gray-600">
+                              <Form.Item
+                                name="dueDate"
+                                rules={[
+                                  {
+                                    required: true,
+                                    message: "Due date is required",
+                                  },
+                                ]}
+                              >
+                                <DatePicker
+                                  style={{ width: "100%" }}
+                                  defaultValue={moment(data?.dueDate)}
+                                  value={data?.dueDate}
+                                  onChange={(v, dstr) => {
+                                    let _d = data;
+                                    _d.dueDate = dstr;
+                                    handleUpdateRequest(_d);
+                                  }}
+                                />
+                              </Form.Item>
+                            </div>
+                          )}
                         </div>
 
                         {/* Service Category */}
@@ -592,9 +649,38 @@ const RequestDetails = ({
                           <div className="text-xs ml-3 text-gray-400">
                             Service category:
                           </div>
-                          <div className="text-sm font-semibold ml-3 text-gray-600">
-                            {data?.serviceCategory}
-                          </div>
+                          {!edit && (
+                            <div className="text-sm font-semibold ml-3 text-gray-600">
+                              {data?.serviceCategory}
+                            </div>
+                          )}
+
+                          {edit && (
+                            <Select
+                              // mode="multiple"
+                              // allowClear
+                              className="ml-3"
+                              defaultValue={data?.serviceCategory}
+                              style={{ width: "100%" }}
+                              placeholder="Please select"
+                              onChange={(value) => {
+                                let r = { ...data };
+                                r.serviceCategory = value;
+                                handleUpdateRequest(r);
+                              }}
+                            >
+                              {servCategories?.map((s) => {
+                                return (
+                                  <Select.Option
+                                    key={s._id}
+                                    value={s.description}
+                                  >
+                                    {s.description}
+                                  </Select.Option>
+                                );
+                              })}
+                            </Select>
+                          )}
                         </div>
 
                         {/* Budgeted */}
@@ -602,9 +688,31 @@ const RequestDetails = ({
                           <div className="text-xs ml-3 text-gray-400">
                             Budgeted:
                           </div>
-                          <div className="text-sm font-semibold ml-3 text-gray-600">
-                            {data?.budgeted ? "Yes" : "No"}
-                          </div>
+                          {!edit && (
+                            <div className="text-sm font-semibold ml-3 text-gray-600">
+                              {data?.budgeted ? "Yes" : "No"}
+                            </div>
+                          )}
+                          {edit && (
+                            <div className="text-xs ml-3 text-gray-400">
+                              <Select
+                                // mode="multiple"
+                                // allowClear
+                                defaultValue={data?.budgeted ? "Yes" : "No"}
+                                // style={{ width: "100%" }}
+                                placeholder="Please select"
+                                onChange={(value) => {
+                                  let r = { ...data };
+                                  r.budgeted = value;
+                                  handleUpdateRequest(r);
+                                }}
+                                options={[
+                                  { value: true, label: "Yes" },
+                                  { value: false, label: "No" },
+                                ]}
+                              />
+                            </div>
+                          )}
                         </div>
 
                         {/* Budgete Line */}
@@ -622,9 +730,29 @@ const RequestDetails = ({
                           <div className="text-xs ml-3 text-gray-400">
                             Description:
                           </div>
-                          <div className="text-sm font-semibold ml-3 text-gray-600">
-                            {data?.description}
-                          </div>
+                          {!edit && (
+                            <div className="text-sm font-semibold ml-3 text-gray-600">
+                              {data?.description}
+                            </div>
+                          )}
+                          {edit && (
+                            <div className="text-xs ml-3 text-gray-400">
+                              <Typography.Text
+                                editable={
+                                  edit && {
+                                    text: data?.description,
+                                    onChange: (e) => {
+                                      let req = { ...data };
+                                      req.description = e;
+                                      handleUpdateRequest(req);
+                                    },
+                                  }
+                                }
+                              >
+                                {data?.description}
+                              </Typography.Text>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -634,14 +762,16 @@ const RequestDetails = ({
                         size="small"
                         dataSource={data.items}
                         columns={columns}
+                        rowClassName={() => "editable-row"}
                         bordered
                         pagination={false}
                       />
                     </div>
 
-                    {data.status !== "approved" &&
-                      data.status !== "po created" &&
-                      data.status !== "declined" &&
+                    {
+                    // data.status !== "approved" &&
+                    //   data.status !== "po created" &&
+                    //   data.status !== "declined" &&
                       buildApprovalFlow(
                         currentCode,
                         changeStatus,
@@ -663,17 +793,33 @@ const RequestDetails = ({
                         submitContractData
                       )}
 
+                    {po?.status === "started" && (
+                      <div className="ml-5 w-1/3">
+                        <div>Delivery progress</div>
+                        <Progress
+                          percent={_.round(po?.deliveryProgress, 1)}
+                          size="small"
+                          status="active"
+                        />
+                      </div>
+                    )}
+
                     {po?.status === "started" &&
-                      po?.deliveryProgress < 100 &&
-                      po?.items.map((i) => {
+                      po?.deliveryProgress < 100 && user?._id===data?.createdBy?._id &&
+                      po?.items.map((i, index) => {
                         return (
                           <div key={i.key} className="m-5">
-                            <div>Delivery for {i.title}</div>
+                            <div>
+                              Delivery for {i.title}{" "}
+                              <Tag>{i?.deliveredQty} delivered</Tag>
+                            </div>
+
                             {buildConfirmDeliveryForm(
                               po,
                               handleGetProgress,
                               handleUpdateProgress,
-                              progress
+                              progress,
+                              index
                             )}
                           </div>
                         );
@@ -689,7 +835,19 @@ const RequestDetails = ({
                         <Typography.Title level={5}>
                           Supplier & Delivery Rate
                         </Typography.Title>
-                        <Rate allowHalf defaultValue={2.5} />
+                        <Rate
+                          allowHalf
+                          disabled={user?._id !== data?.createdBy?._id}
+                          defaultValue={po?.rate || 2.5}
+                          tooltips={[
+                            "Mediocre",
+                            "Moderately good",
+                            "Good",
+                            "Very good",
+                            "Excellent",
+                          ]}
+                          onChange={(value) => handleRateDelivery(po, value)}
+                        />
                       </>
                     )}
 
@@ -726,14 +884,14 @@ const RequestDetails = ({
           // mode="alternate"
           items={[
             {
-              children: <div className=''>PR-created</div>,
+              children: <div className="">PR-created</div>,
               color: data?.status !== "declined" ? "blue" : "red",
               dot: data?.status !== "declined" && (
                 <CheckCircleOutlined className=" text-green-500" />
               ),
             },
             {
-              children: <div className=''>PR-approved</div>,
+              children: <div className="">PR-approved</div>,
               color:
                 data?.status === "approved (pm)" || tender ? "blue" : "gray",
               dot: (data?.status === "approved (pm)" || tender) && (
@@ -757,13 +915,12 @@ const RequestDetails = ({
             {
               children: "PO-created",
               color: po ? "blue" : "gray",
-              dot: po && (
-                <CheckCircleOutlined className=" text-green-500" />
-              ),
+              dot: po && <CheckCircleOutlined className=" text-green-500" />,
             },
             {
               children: "Delivered",
-              color: progress === 100 ? "blue" : "gray",
+              color: progress >= 100 ? "blue" : "gray",
+              dot: po && <CheckCircleOutlined className=" text-green-500" />,
             },
           ]}
         />
@@ -799,6 +956,7 @@ const RequestDetails = ({
             <div className="ml-3 text-lg font-semibold">
               Request Approval Queue
             </div>
+            {/* Approval flow */}
             <div className="mx-3 mt-5 ">
               <Steps
                 direction="vertical"
@@ -829,18 +987,36 @@ const RequestDetails = ({
                         </div>
                         <div className="flex flex-row space-x-5">
                           <div>
-                            <Button
-                              disabled={
-                                !user?.permissions?.canApproveAsHod ||
-                                user?._id !== data?.level1Approver?._id ||
-                                currentCode > 0
+                            <Popconfirm
+                              title="Approve request"
+                              open={openApprove}
+                              icon={
+                                <QuestionCircleOutlined
+                                  style={{ color: "red" }}
+                                />
                               }
-                              onClick={() => changeStatus(0)}
-                              type="primary"
-                              size="small"
+                              onConfirm={() => {
+                                changeStatus(0);
+                                setOpenApprove(false);
+                              }}
+                              // okButtonProps={{
+                              //   loading: confirmRejectLoading,
+                              // }}
+                              onCancel={() => setOpenApprove(false)}
                             >
-                              Approve
-                            </Button>
+                              <Button
+                                disabled={
+                                  !user?.permissions?.canApproveAsHod ||
+                                  user?._id !== data?.level1Approver?._id ||
+                                  currentCode > 0
+                                }
+                                onClick={() => setOpenApprove(true)}
+                                type="primary"
+                                size="small"
+                              >
+                                Approve
+                              </Button>
+                            </Popconfirm>
                           </div>
                           <div>
                             <Popconfirm
@@ -877,7 +1053,7 @@ const RequestDetails = ({
                                 }
                                 danger
                                 size="small"
-                                type="text"
+                                type="primary"
                                 onClick={showPopconfirm}
                               >
                                 Reject
@@ -911,18 +1087,36 @@ const RequestDetails = ({
                         </div>
                         <div className="flex flex-row space-x-5">
                           <div>
-                            <Button
-                              disabled={
-                                !user?.permissions?.canApproveAsHof ||
-                                currentCode > 1 ||
-                                currentCode < 0
+                            <Popconfirm
+                              title="Approve request"
+                              open={openApprove}
+                              icon={
+                                <QuestionCircleOutlined
+                                  style={{ color: "red" }}
+                                />
                               }
-                              onClick={() => changeStatus(1)}
-                              type="primary"
-                              size="small"
+                              onConfirm={() => {
+                                changeStatus(1);
+                                setOpenApprove(false);
+                              }}
+                              // okButtonProps={{
+                              //   loading: confirmRejectLoading,
+                              // }}
+                              onCancel={() => setOpenApprove(false)}
                             >
-                              Approve
-                            </Button>
+                              <Button
+                                disabled={
+                                  !user?.permissions?.canApproveAsHof ||
+                                  currentCode > 1 ||
+                                  currentCode < 0
+                                }
+                                onClick={() => setOpenApprove(true)}
+                                type="primary"
+                                size="small"
+                              >
+                                Approve
+                              </Button>
+                            </Popconfirm>
                           </div>
                           <div>
                             <Popconfirm
@@ -934,6 +1128,10 @@ const RequestDetails = ({
                                 />
                               }
                               onConfirm={handleOk}
+                              okButtonProps={{
+                                loading: confirmRejectLoading,
+                              }}
+                              onCancel={handleCancel}
                               description={
                                 <>
                                   <Typography.Text>
@@ -945,10 +1143,6 @@ const RequestDetails = ({
                                   ></Input>
                                 </>
                               }
-                              okButtonProps={{
-                                loading: confirmRejectLoading,
-                              }}
-                              onCancel={handleCancel}
                             >
                               <Button
                                 disabled={
@@ -965,7 +1159,6 @@ const RequestDetails = ({
                               </Button>
                             </Popconfirm>
                           </div>
-                          
                         </div>
                       </div>
                     ),
@@ -978,7 +1171,7 @@ const RequestDetails = ({
                     // title: "Waiting",
                     title: "Level 3 (Procurement)",
                     icon: <ClipboardDocumentCheckIcon className="h-6" />,
-                    subTitle: currentCode == 2 && (
+                    subTitle: currentCode >= 2 && (
                       <div className="flex flex-row items-center space-x-1">
                         <div>
                           <CheckOutlined className="h-5 w-5 text-green-500" />{" "}
@@ -996,18 +1189,36 @@ const RequestDetails = ({
                         </div>
                         <div className="flex flex-row space-x-5">
                           <div>
-                            <Button
-                              disabled={
-                                !user?.permissions?.canApproveAsPM ||
-                                currentCode > 2 ||
-                                currentCode < 1
+                            <Popconfirm
+                              title="Approve request"
+                              open={openApprove}
+                              icon={
+                                <QuestionCircleOutlined
+                                  style={{ color: "red" }}
+                                />
                               }
-                              onClick={() => changeStatus(2)}
-                              type="primary"
-                              size="small"
+                              onConfirm={() => {
+                                changeStatus(2);
+                                setOpenApprove(false);
+                              }}
+                              // okButtonProps={{
+                              //   loading: confirmRejectLoading,
+                              // }}
+                              onCancel={() => setOpenApprove(false)}
                             >
-                              Approve
-                            </Button>
+                              <Button
+                                disabled={
+                                  !user?.permissions?.canApproveAsPM ||
+                                  currentCode > 2 ||
+                                  currentCode < 1
+                                }
+                                onClick={() => setOpenApprove(true)}
+                                type="primary"
+                                size="small"
+                              >
+                                Approve
+                              </Button>
+                            </Popconfirm>
                           </div>
                           <div>
                             <Popconfirm
@@ -1036,21 +1247,20 @@ const RequestDetails = ({
                               onCancel={handleCancel}
                             >
                               <Button
-                              disabled={
-                                !user?.permissions?.canApproveAsPM ||
-                                currentCode > 2 ||
-                                currentCode < 1
-                              }
-                              type="primary"
-                              danger
-                              size="small"
-                              onClick={showPopconfirm}
-                            >
-                              Reject
-                            </Button>
+                                disabled={
+                                  !user?.permissions?.canApproveAsPM ||
+                                  currentCode > 2 ||
+                                  currentCode < 1
+                                }
+                                type="primary"
+                                danger
+                                size="small"
+                                onClick={showPopconfirm}
+                              >
+                                Reject
+                              </Button>
                             </Popconfirm>
                           </div>
-                          
                         </div>
                       </div>
                     ),
@@ -1064,132 +1274,140 @@ const RequestDetails = ({
             </div>
           </div>
           <div>
-            {currentCode === 2 && (
-              <>
-                <Form>
-                  <div className="text-lg font-semibold">
-                    Sourcing Method Selection
-                  </div>
-                  <div className="mt-5 items-center">
-                    <div>Indicate available reference</div>
-                    <Form.Item name="refDoc">
-                      <Select
-                        onChange={(value) => setRefDoc(value)}
-                        style={{ width: "50%" }}
-                        defaultValue={false}
-                        options={[
-                          {
-                            value: "contract",
-                            label: "Sourcing from Existing Contract",
-                          },
+            {currentCode === 2 &&
+              (user?.permissions?.canCreateTenders ||
+                user?.permissions?.canCreatePurchaseOrders ||
+                user?.permissions?.canCreateContracts) && (
+                <>
+                  <Form>
+                    <div className="text-lg font-semibold">
+                      Sourcing Method Selection
+                    </div>
+                    <div className="mt-5 items-center">
+                      <div>Indicate available reference</div>
+                      <Form.Item name="refDoc">
+                        <Select
+                          onChange={(value) => setRefDoc(value)}
+                          style={{ width: "50%" }}
+                          defaultValue={false}
+                          options={[
+                            {
+                              value: "contract",
+                              label: "Sourcing from Existing Contract",
+                            },
 
-                          {
-                            value: "external",
-                            label: "Direct contracting",
-                          },
-                          {
-                            value: "none",
-                            label: "Tendering",
-                          },
-                        ]}
-                      />
-                    </Form.Item>
-                  </div>
+                            {
+                              value: "external",
+                              label: "Direct contracting",
+                            },
+                            {
+                              value: "none",
+                              label: "Tendering",
+                            },
+                          ]}
+                        />
+                      </Form.Item>
+                    </div>
 
-                  {refDoc === "none" &&
-                    buildTenderForm(setDeadLine, user, docId, submitTenderData)}
+                    {refDoc === "none" &&
+                      buildTenderForm(
+                        setDeadLine,
+                        user,
+                        docId,
+                        submitTenderData
+                      )}
 
-                  {refDoc === "contract" &&
-                    buildPOForm(
-                      setSelectedContract,
-                      contracts,
-                      user,
-                      submitPOData,
-                      setVendor,
-                      selectedContract
-                    )}
+                    {refDoc === "contract" &&
+                      buildPOForm(
+                        setSelectedContract,
+                        contracts,
+                        user,
+                        submitPOData,
+                        setVendor,
+                        selectedContract
+                      )}
 
-                  {refDoc === "external" && (
-                    <div>
-                      <div className="items-center">
-                        <div>Select registered vendor</div>
-                        <Form.Item name="vendor">
-                          <Select
-                            onChange={(value, option) => {
-                              setVendor(option.payload);
-                            }}
-                            style={{ width: "50%" }}
-                            showSearch
-                            filterSort={(optionA, optionB) =>
-                              (optionA?.label ?? "")
-                                .toLowerCase()
-                                .localeCompare(
-                                  (optionB?.label ?? "").toLowerCase()
-                                )
-                            }
-                            filterOption={(inputValue, option) =>
-                              option.label
-                                .toLowerCase()
-                                .includes(inputValue.toLowerCase())
-                            }
-                            options={vendors?.map((v) => {
-                              return {
-                                value: v?._id,
-                                label: v?.companyName,
-                                payload: v,
-                              };
-                            })}
-                          />
-                        </Form.Item>
-                      </div>
-                      <div className="items-center">
-                        <div>Upload reference document</div>
-                        <Form.Item name="vendor">
-                          <UploadReqAttach uuid={reqAttachId} />
-                        </Form.Item>
-                      </div>
+                    {refDoc === "external" && (
                       <div>
-                        <div className="flex flex-row items-center space-x-5">
-                          <div className="flex flex-row space-x-1 items-center">
-                            <Form.Item>
-                              <Button
-                                icon={<FileDoneOutlined />}
-                                type="primary"
-                                htmlType="submit"
-                                onClick={submitContractData}
-                                disabled={
-                                  !user?.permissions?.canCreateTenders ||
-                                  !vendor
-                                }
-                              >
-                                Create Contract
-                              </Button>
-                            </Form.Item>
-                          </div>
+                        <div className="items-center">
+                          <div>Select registered vendor</div>
+                          <Form.Item name="vendor">
+                            <Select
+                              onChange={(value, option) => {
+                                setVendor(option.payload);
+                              }}
+                              style={{ width: "50%" }}
+                              showSearch
+                              filterSort={(optionA, optionB) =>
+                                (optionA?.label ?? "")
+                                  .toLowerCase()
+                                  .localeCompare(
+                                    (optionB?.label ?? "").toLowerCase()
+                                  )
+                              }
+                              filterOption={(inputValue, option) =>
+                                option.label
+                                  .toLowerCase()
+                                  .includes(inputValue.toLowerCase())
+                              }
+                              options={vendors?.map((v) => {
+                                return {
+                                  value: v?._id,
+                                  label: v?.companyName,
+                                  payload: v,
+                                };
+                              })}
+                            />
+                          </Form.Item>
+                        </div>
+                        <div className="items-center">
+                          <div>Upload reference document</div>
+                          <Form.Item name="vendor">
+                            <UploadReqAttach uuid={reqAttachId} />
+                          </Form.Item>
+                        </div>
+                        <div>
+                          <div className="flex flex-row items-center space-x-5">
+                            <div className="flex flex-row space-x-1 items-center">
+                              <Form.Item>
+                                <Button
+                                  icon={<FileDoneOutlined />}
+                                  type="primary"
+                                  htmlType="submit"
+                                  onClick={submitContractData}
+                                  disabled={
+                                    !user?.permissions?.canCreateContracts ||
+                                    !vendor
+                                  }
+                                >
+                                  Create Contract
+                                </Button>
+                              </Form.Item>
+                            </div>
 
-                          <div className="flex flex-row space-x-1 items-center">
-                            <Form.Item>
-                              <Button
-                                icon={<FileDoneOutlined />}
-                                type="primary"
-                                htmlType="submit"
-                                onClick={submitPOData}
-                                disabled={
-                                  !user?.permissions?.canCreateTenders ||
-                                  !vendor
-                                }
-                              >
-                                Create PO
-                              </Button>
-                            </Form.Item>
+                            <div className="flex flex-row space-x-1 items-center">
+                              <Form.Item>
+                                <Button
+                                  icon={<FileDoneOutlined />}
+                                  type="primary"
+                                  htmlType="submit"
+                                  onClick={submitPOData}
+                                  disabled={
+                                    !user?.permissions
+                                      ?.canCreatePurchaseOrders || !vendor
+                                  }
+                                >
+                                  Create PO
+                                </Button>
+                              </Form.Item>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  )}
-                </Form>
-              </>
-            )}
+                    )}
+                  </Form>
+                </>
+              )}
           </div>
         </div>
       </>
@@ -1268,7 +1486,8 @@ const RequestDetails = ({
     po,
     handleGetProgress,
     handleUpdateProgress,
-    progress
+    progress,
+    index
   ) {
     return (
       <div className="mt-2 ">
@@ -1301,30 +1520,47 @@ const RequestDetails = ({
                 </Form.Item>
               </Form>
             </div> */}
+
             <div>
               <Form layout="inline">
                 <Form.Item required>
                   <InputNumber
                     style={{ width: "100%" }}
                     placeholder="qty approved"
-                    onChange={(value) => handleGetProgress(value)}
+                    
+                    onChange={(value) => {
+                      handleGetProgress(value);
+                      setDeliveredQty(po?.items[index].deliveredQty + value);
+                    }}
                   />
                 </Form.Item>
 
                 <Form.Item>
                   {/* <Popover content="Confirm Quantity approved"> */}
-                  <Button
-                    type="primary"
-                    icon={<CheckOutlined />}
-                    onClick={() => {
-                      handleUpdateProgress(
-                        po?._id,
-                        parseFloat(progress) + parseFloat(po?.deliveryProgress)
-                      );
-                    }}
+                  <Popconfirm
+                  title='Confirm Delivered Quantity'
+                  open={open}
+                  onCancel={()=>setOpen(false)}
+                  onConfirm={() => {
+                   handleUpdateProgress(
+                      po,
+                      parseFloat(progress) +
+                        parseFloat(po?.deliveryProgress),
+                      deliveredQty,
+                      index
+                    );
+                    
+                    setOpen(false)
+                  }}
                   >
-                    Confirm Quantity Received
-                  </Button>
+                    <Button
+                      type="primary"
+                      icon={<CheckOutlined />}
+                      onClick={() => setOpen(true)}
+                    >
+                      Confirm Quantity Received
+                    </Button>
+                  </Popconfirm>
                   {/* </Popover> */}
                 </Form.Item>
               </Form>
@@ -1343,47 +1579,81 @@ const RequestDetails = ({
         open={openCreatePO}
         confirmLoading={creatingPO}
         onOk={async () => {
+          // setCreatingPo(trOe);
           let assetItems = [];
-          if (docType === "dDocument_Item") {
-            items.map((i, index) => {
-              assets[index]?.map((a) => {
+          let nonAssetItems = [];
+
+          items
+            .filter((i) => i.itemType === "asset")
+            .map((i, index) => {
+              i?.assetCodes?.map((a) => {
                 assetItems.push({
                   ItemCode: a,
-                  Quantity: i.quantity / assets[index]?.length,
+                  Quantity: i.quantity / i?.assetCodes?.length,
                   UnitPrice: i.estimatedUnitCost,
                   VatGroup: i.taxGroup ? i.taxGroup : "X1",
                 });
               });
             });
-          }
-          let B1Data = {
-            CardName: vendor?.companyName,
-            DocType: docType,
-            DocDate: docDate,
-            DocumentLines:
-              docType === "dDocument_Service"
-                ? items.map((i) => {
-                    return {
-                      ItemDescription: i.title,
-                      Quantity: i.quantity,
-                      UnitPrice: i.estimatedUnitCost,
-                      VatGroup: i.taxGroup ? i.taxGroup : "X1",
-                    };
-                  })
-                : assetItems,
-          };
-          setCreatingPO(true)
+
+          items
+            .filter((i) => i.itemType === "non-asset" || !i.itemType)
+            .map((i, index) => {
+              nonAssetItems.push({
+                // ItemCode: a,
+                Quantity: i.quantity,
+                UnitPrice: i.estimatedUnitCost,
+                VatGroup: i.taxGroup ? i.taxGroup : "X1",
+              });
+            });
+
+          // if (docType === "dDocument_Item") {
+          //   items.map((i, index) => {
+          //     assets[index]?.map((a) => {
+          //       assetItems.push({
+          //         ItemCode: a,
+          //         Quantity: i.quantity / assets[index]?.length,
+          //         UnitPrice: i.estimatedUnitCost,
+          //         VatGroup: i.taxGroup ? i.taxGroup : "X1",
+          //       });
+          //     });
+          //   });
+          // }
+          let B1Data_Assets;
+          assetItems?.length >= 1
+            ? (B1Data_Assets = {
+                CardName: vendor?.companyName,
+                DocType: "dDocument_Item",
+                DocDate: docDate,
+                DocumentLines: assetItems,
+              })
+            : (B1Data_Assets = null);
+
+          let B1Data_NonAssets;
+          nonAssetItems?.length >= 1
+            ? (B1Data_NonAssets = {
+                CardName: vendor?.companyName,
+                DocType: "dDocument_Service",
+                DocDate: docDate,
+                DocumentLines: nonAssetItems,
+              })
+            : (B1Data_NonAssets = null);
+
           await handleCreatePO(
             vendor?._id,
-            null,
+            tendor?._id,
             user?._id,
             sections,
             items,
-            B1Data,
+            {
+              B1Data_Assets,
+              B1Data_NonAssets,
+            },
             signatories,
-            data?._id
+            data?._id,
+            refDoc === "external" ? reqAttachId : ""
           );
-          setCreatingPO(false)
+          setCreatingPO(false);
           setOpenCreatePO(false);
         }}
         okText="Save and Submit"
@@ -1398,13 +1668,13 @@ const RequestDetails = ({
           {/* header */}
           <div className="grid grid-cols-2 w-1/2">
             {/* PO Document date */}
-            <div>
+            {/* <div>
               <div>Document date</div>
               <DatePicker onChange={(v, dstr) => setDocDate(dstr)} />
-            </div>
+            </div> */}
 
             {/* PO type */}
-            <div>
+            {/* <div>
               <div>PO Type</div>
               <Select
                 onChange={(value) => setDocType(value)}
@@ -1414,7 +1684,7 @@ const RequestDetails = ({
                   { value: "dDocument_Item", label: "Item" },
                 ]}
               />
-            </div>
+            </div> */}
           </div>
 
           {/* Parties */}
@@ -1512,7 +1782,11 @@ const RequestDetails = ({
                 </div>
               </div>
             )}
-            <ItemsTable dataSource={items} setDataSource={setItems} />
+            <ItemsTable
+              dataSource={items}
+              setDataSource={setItems}
+              assetOptions={assetOptions}
+            />
             <Typography.Title level={5} className="self-end">
               Total (Tax Excl.): {totalVal?.toLocaleString()} RWF
             </Typography.Title>
@@ -1678,7 +1952,6 @@ const RequestDetails = ({
                           </Typography.Text>
                         </div>
                       </div>
-
                       <div
                         onClick={() => {
                           let _signatories = [...signatories];
@@ -1695,9 +1968,9 @@ const RequestDetails = ({
               {/* New Signatory */}
               <div
                 onClick={() => {
-                  let signs = [];
+                  let signs = [...signatories];
                   let newSignatory =
-                    signs?.length < 1
+                    signs?.length <=1
                       ? { onBehalfOf: "Irembo Ltd" }
                       : {
                           onBehalfOf: vendor?.companyName,
@@ -1724,6 +1997,7 @@ const RequestDetails = ({
       </Modal>
     );
   }
+
   function createContractMOdal() {
     return (
       <Modal
@@ -1742,8 +2016,6 @@ const RequestDetails = ({
             refDoc === "external" ? reqAttachId : ""
           );
           setOpenCreateContract(false);
-          setSignatories([]);
-          setSections([{ title: "Set section title", body: "" }]);
         }}
         okText="Submit for review"
         onCancel={() => setOpenCreateContract(false)}

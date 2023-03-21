@@ -109,74 +109,74 @@ const VendorsTable = ({
       ),
       
     },
-    {
-      title: "Action",
-      key: "action",
-      render: (_, record) => (
-        <Space size="middle">
-          {updatingId !== record._id && (
-            <>
-              {record.status === "created" && (
-                <Popover content="Approve">
-                  <span><Popconfirm
-                    title="Approve vendor"
-                    description="Are you sure to approve this vendor?"
-                    okText="Yes"
-                    cancelText="No"
-                    onConfirm={() => approve(record._id)}
-                  >
-                    <CheckOutlined className="text-green-400 cursor-pointer" />
-                  </Popconfirm></span>
-                </Popover>
-              )}
-              {record.status === "declined" && (
-                <Popover content="Activate">
-                 <span> <Popconfirm
-                    title="Activate vendor"
-                    description="Are you sure to activate this vendor?"
-                    okText="Yes"
-                    cancelText="No"
-                    onConfirm={() => activate(record._id)}
-                  >
-                    <SafetyCertificateOutlined className="text-green-400 cursor-pointer" />
-                  </Popconfirm></span>
-                </Popover>
-              )}
-              {record.status === "approved" && (
-                <Popover content="Ban">
-                  <span><Popconfirm
-                    title="Ban vendor"
-                    description="Are you sure to ban this vendor?"
-                    okText="Yes"
-                    cancelText="No"
-                    onConfirm={() => ban(record._id)}
-                  >
-                    <StopOutlined className="text-red-400 cursor-pointer" />
-                  </Popconfirm></span>
-                </Popover>
-              )}
-              {record.status === "banned" && (
-                <Popover content="Activate">
-                  <span><Popconfirm
-                    title="Acivate vendor"
-                    description="Are you sure to activate this vendor?"
-                    okText="Yes"
-                    cancelText="No"
-                    onConfirm={() => activate(record._id)}
-                  >
-                    <SafetyCertificateOutlined className="text-green-400 cursor-pointer" />
-                  </Popconfirm></span>
-                </Popover>
-              )}
-            </>
-          )}
+    // {
+    //   title: "Action",
+    //   key: "action",
+    //   render: (_, record) => (
+    //     <Space size="middle">
+    //       {updatingId !== record._id && (
+    //         <>
+    //           {record.status === "created" && (
+    //             <Popover content="Approve">
+    //               <span><Popconfirm
+    //                 title="Approve vendor"
+    //                 description="Are you sure to approve this vendor?"
+    //                 okText="Yes"
+    //                 cancelText="No"
+    //                 onConfirm={() => approve(record._id)}
+    //               >
+    //                 <CheckOutlined className="text-green-400 cursor-pointer" />
+    //               </Popconfirm></span>
+    //             </Popover>
+    //           )}
+    //           {record.status === "declined" && (
+    //             <Popover content="Activate">
+    //              <span> <Popconfirm
+    //                 title="Activate vendor"
+    //                 description="Are you sure to activate this vendor?"
+    //                 okText="Yes"
+    //                 cancelText="No"
+    //                 onConfirm={() => activate(record._id)}
+    //               >
+    //                 <SafetyCertificateOutlined className="text-green-400 cursor-pointer" />
+    //               </Popconfirm></span>
+    //             </Popover>
+    //           )}
+    //           {record.status === "approved" && (
+    //             <Popover content="Ban">
+    //               <span><Popconfirm
+    //                 title="Ban vendor"
+    //                 description="Are you sure to ban this vendor?"
+    //                 okText="Yes"
+    //                 cancelText="No"
+    //                 onConfirm={() => ban(record._id)}
+    //               >
+    //                 <StopOutlined className="text-red-400 cursor-pointer" />
+    //               </Popconfirm></span>
+    //             </Popover>
+    //           )}
+    //           {record.status === "banned" && (
+    //             <Popover content="Activate">
+    //               <span><Popconfirm
+    //                 title="Acivate vendor"
+    //                 description="Are you sure to activate this vendor?"
+    //                 okText="Yes"
+    //                 cancelText="No"
+    //                 onConfirm={() => activate(record._id)}
+    //               >
+    //                 <SafetyCertificateOutlined className="text-green-400 cursor-pointer" />
+    //               </Popconfirm></span>
+    //             </Popover>
+    //           )}
+    //         </>
+    //       )}
 
-          {updatingId === record._id && (
-            <Spin size="small" indicator={antIcon} />
-          )}
-        </Space>
-      ),
-    },
+    //       {updatingId === record._id && (
+    //         <Spin size="small" indicator={antIcon} />
+    //       )}
+    //     </Space>
+    //   ),
+    // },
   ];
 
   async function approve(id) {

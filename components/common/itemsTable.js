@@ -104,7 +104,7 @@ const ItemsTable = ({ setDataSource, dataSource, setFileList, fileList }) => {
       editable: true,
     },
     {
-      title: "Estimated cost (RWF)",
+      title: "Estimated Unit cost (RWF)",
       dataIndex: "estimatedUnitCost",
       editable: true,
     },
@@ -154,6 +154,7 @@ const ItemsTable = ({ setDataSource, dataSource, setFileList, fileList }) => {
       cell: EditableCell,
     },
   };
+
   const columns = defaultColumns.map((col) => {
     if (!col.editable) {
       return col;
@@ -169,6 +170,7 @@ const ItemsTable = ({ setDataSource, dataSource, setFileList, fileList }) => {
       }),
     };
   });
+  
   return (
     <div>
       <Button

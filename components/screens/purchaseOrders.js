@@ -1,4 +1,8 @@
-import { PlaySquareOutlined, PrinterOutlined } from "@ant-design/icons";
+import {
+  LoadingOutlined,
+  PlaySquareOutlined,
+  PrinterOutlined,
+} from "@ant-design/icons";
 import {
   Button,
   Dropdown,
@@ -13,6 +17,7 @@ import {
   Tag,
   Tooltip,
   Select,
+  Spin,
 } from "antd";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
@@ -20,6 +25,8 @@ import parse from "html-react-parser";
 import * as _ from "lodash";
 import moment from "moment-timezone";
 import { LockClosedIcon, LockOpenIcon } from "@heroicons/react/24/solid";
+import { PaperClipIcon } from "@heroicons/react/24/outline";
+import MyPdfViewer from "../common/pdfViewer";
 
 export default function PurchaseOrders({ user }) {
   const [dataLoaded, setDataLoaded] = useState(false);
@@ -41,6 +48,9 @@ export default function PurchaseOrders({ user }) {
       label: "View PO",
     },
   ];
+
+  const [previewAttachment, setPreviewAttachment] = useState(false);
+  const [attachmentId, setAttachmentId] = useState("TOR-id.pdf");
 
   const onMenuClick = (e) => {
     setOpenViewPO(true);
@@ -312,7 +322,7 @@ export default function PurchaseOrders({ user }) {
                     </div>
                   )}
 
-                  {user?.email === s?.email &&
+                  {(user?.email === s?.email || user?.tempEmail === s?.email) &&
                     !s?.signed &&
                     previousSignatorySigned(po?.signatories, index) && (
                       <Popconfirm
@@ -332,7 +342,7 @@ export default function PurchaseOrders({ user }) {
                         </div>
                       </Popconfirm>
                     )}
-                  {((user?.email !== s?.email && !s.signed) ||
+                  {(((user?.email !== s?.email && user?.tempEmail !== s?.email) && !s.signed) ||
                     !previousSignatorySigned(po?.signatories, index)) && (
                     <div className="flex flex-row justify-center space-x-5 items-center border-t-2 bg-gray-50 p-5">
                       <Image
@@ -365,12 +375,13 @@ export default function PurchaseOrders({ user }) {
     signatory.signed = true;
     let _po = { ...po };
 
-    fetch("https://api.db-ip.com/v2/free/self")
+    fetch("https://api.ipify.org?format=json")
       .then((res) => res.json())
       .then((res) => {
         myIpObj = res;
-        signatory.ipAddress = res?.ipAddress;
+        signatory.ipAddress = res?.ip;
         signatory.signedAt = moment();
+
         _po.signatories[index] = signatory;
         setPO(_po);
 
@@ -383,6 +394,9 @@ export default function PurchaseOrders({ user }) {
           },
           body: JSON.stringify({
             newPo: po,
+            pending: po?.status === "pending-signature" || !po?.status,
+            paritallySigned: documentFullySignedInternally(po),
+            signed: documentFullySigned(po),
           }),
         })
           .then((res) => res.json())
@@ -395,6 +409,7 @@ export default function PurchaseOrders({ user }) {
       .catch((err) => {
         console.log(err);
       });
+    setSigning(false);
 
     //call API to sign
   }
@@ -480,12 +495,31 @@ export default function PurchaseOrders({ user }) {
     return totIntenalSignatories?.length === signatures?.length;
   }
 
+  function previewAttachmentModal() {
+    return (
+      <Modal
+        title="Attachment view"
+        centered
+        open={previewAttachment}
+        onOk={() => setPreviewAttachment(false)}
+        onCancel={() => setPreviewAttachment(false)}
+        width={"60%"}
+        // bodyStyle={{ maxHeight: "700px", overflow: "scroll" }}
+      >
+        <div>
+          <MyPdfViewer fileUrl={`${url}/file/${attachmentId}`} />
+        </div>
+      </Modal>
+    );
+  }
+
   return (
     <>
       {dataLoaded ? (
         <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 py-5 flex-1">
           {viewPOMOdal()}
 
+          {previewAttachmentModal()}
           <div className="flex flex-col items-start space-y-2 ml-3">
             <div className="text-xl font-semibold">Purchase Orders</div>
             <div className="flex-1">
@@ -529,15 +563,41 @@ export default function PurchaseOrders({ user }) {
                 return (
                   <div
                     key={po?.number}
-                    className="grid md:grid-cols-6 gap-3 ring-1 ring-gray-200 bg-white rounded px-5 py-3 shadow hover:shadow-md m-3"
+                    className="grid md:grid-cols-7 gap-3 ring-1 ring-gray-200 bg-white rounded px-5 py-3 shadow hover:shadow-md m-3"
                   >
-                    <div className="flex flex-col space-y-1">
+                    <div className="flex flex-col space-y-2">
                       <div className="text-xs text-gray-600">
                         Purchase Order
                       </div>
                       <div className="font-semibold">{po?.number}</div>
                       <div className="text-gray-600">
-                        {po?.tender?.purchaseRequest?.description}
+                        {po?.tender?.purchaseRequest?.description || po?.request?.description}
+                      </div>
+                      {po?.reqAttachmentDocId && (
+                        <Typography.Link
+                          className="flex flex-row items-center space-x-1"
+                          onClick={() => {
+                            setPreviewAttachment(!previewAttachment);
+                            setAttachmentId(
+                              "reqAttachments/" +
+                                po?.reqAttachmentDocId +
+                                ".pdf"
+                            );
+                          }}
+                        >
+                          <div>{po?.request?.title}</div>{" "}
+                          <PaperClipIcon className="h-4 w-4" />
+                        </Typography.Link>
+                      )}
+                    </div>
+                    <div className="flex flex-col space-y-2">
+                      <div className="text-xs text-gray-600">
+                        SAP B1 reference(s)
+                      </div>
+                      <div className="text-gray-600">
+                        {po?.referenceDocs?.map((ref,i) => {
+                          return <Tag key={i}>{ref}</Tag>;
+                        })}
                       </div>
                     </div>
                     <div className="flex flex-col space-y-1">
@@ -621,7 +681,10 @@ export default function PurchaseOrders({ user }) {
                           user?.userType === "VENDOR" &&
                           !documentFullySignedInternally(po)
                         }
-                        onClick={()=>{setPO(po); setOpenViewPO(true)}}
+                        onClick={() => {
+                          setPO(po);
+                          setOpenViewPO(true);
+                        }}
                       >
                         View Document
                       </Button>
@@ -634,7 +697,7 @@ export default function PurchaseOrders({ user }) {
                           <Tag color="green">Signed</Tag>
                         </div>
                       )}
-                      {po?.status !== "started" && po?.status !== "stopped" && (
+                      {po?.status !== "started" && po?.status !== "stopped" && user?.userType==='VENDOR' && (
                         <Button
                           type="primary"
                           disabled={!documentFullySigned(po)}
@@ -663,8 +726,16 @@ export default function PurchaseOrders({ user }) {
           )}
         </div>
       ) : (
-        <div className="flex items-center justify-center h-screen flex-1 ">
-          <Image alt="" src="/web_search.svg" width={800} height={800} />
+        <div className="flex items-center justify-center flex-1 h-screen">
+          <Spin
+            indicator={
+              <LoadingOutlined
+                className="text-gray-500"
+                style={{ fontSize: 42 }}
+                spin
+              />
+            }
+          />
         </div>
       )}
     </>

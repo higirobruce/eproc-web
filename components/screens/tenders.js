@@ -1,5 +1,6 @@
 import {
   ArrowLeftOutlined,
+  LoadingOutlined,
   PlusOutlined,
   ReloadOutlined,
   SaveOutlined,
@@ -17,6 +18,7 @@ import {
   Input,
   Empty,
   Select,
+  Spin,
 } from "antd";
 import Image from "next/image";
 import React, { useState, useEffect } from "react";
@@ -600,8 +602,8 @@ export default function Tenders({ user }) {
       ) : dataLoaded && dataset?.length === 0 ? (
         <Empty />
       ) : (
-        <div className="flex items-center justify-center h-screen flex-1">
-          <Image alt="" src="/file_searching.svg" width={600} height={600} />
+        <div className="flex items-center justify-center flex-1 h-screen">
+          <Spin indicator={<LoadingOutlined className="text-gray-500" style={{ fontSize: 42 }} spin/>}/>
         </div>
       )}
     </>

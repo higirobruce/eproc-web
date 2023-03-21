@@ -9,6 +9,7 @@ import {
   Space,
   Spin,
   Table,
+  Tooltip,
   Typography,
 } from "antd";
 import {
@@ -23,7 +24,7 @@ const UsersTable = ({
   handleApproveUser,
   handleDeclineUser,
   updatingId,
-  handleSetRow
+  handleSetRow,
 }) => {
   const [form] = Form.useForm();
   const [data, setData] = useState(dataSet);
@@ -39,23 +40,6 @@ const UsersTable = ({
 
   const columns = [
     {
-      title: "First Name",
-      dataIndex: "firstName",
-    },
-    {
-      title: "Last Name",
-      dataIndex: "lastName",
-    },
-    {
-      title: "Department",
-      dataIndex: "department",
-      render: (_, record) => (
-        <>
-          {record?.department?.description}
-        </>
-      ),
-    },
-    {
       title: "Email",
       dataIndex: "email",
       render: (_, record) => (
@@ -69,6 +53,20 @@ const UsersTable = ({
         </>
       ),
     },
+    {
+      title: "First Name",
+      dataIndex: "firstName",
+    },
+    {
+      title: "Last Name",
+      dataIndex: "lastName",
+    },
+    {
+      title: "Department",
+      dataIndex: "department",
+      render: (_, record) => <>{record?.department?.description}</>,
+    },
+    
     {
       title: "Phone",
       dataIndex: "telephone",
@@ -100,16 +98,22 @@ const UsersTable = ({
           {updatingId !== record._id && (
             <>
               {record.status !== "approved" && (
-                <CheckOutlined
-                  className="text-green-400 cursor-pointer"
-                  onClick={() => approve(record._id)}
-                />
+                <Tooltip title="Approve">
+                  <span>
+                    <CheckOutlined
+                      className="text-green-400 cursor-pointer"
+                      onClick={() => approve(record._id)}
+                    />
+                  </span>
+                </Tooltip>
               )}
               {record.status !== "declined" && (
-                <CloseOutlined
-                  className="text-red-400 cursor-pointer"
-                  onClick={() => decline(record._id)}
-                />
+                <Tooltip title="Reject">
+                  <CloseOutlined
+                    className="text-red-400 cursor-pointer"
+                    onClick={() => decline(record._id)}
+                  />
+                </Tooltip>
               )}
             </>
           )}

@@ -42,10 +42,12 @@ import {
   EyeOutlined,
   FileDoneOutlined,
   FileTextOutlined,
+  FolderOpenOutlined,
   LikeOutlined,
   LoadingOutlined,
   PlusOutlined,
   PrinterOutlined,
+  UsergroupAddOutlined,
 } from "@ant-design/icons";
 import moment from "moment-timezone";
 import BidList from "./bidList";
@@ -96,6 +98,7 @@ const TenderDetails = ({
   user,
   handleSendEvalApproval,
 }) => {
+  const [form] = Form.useForm();
   let url = process.env.NEXT_PUBLIC_BKEND_URL;
   let apiUsername = process.env.NEXT_PUBLIC_API_USERNAME;
   let apiPassword = process.env.NEXT_PUBLIC_API_PASSWORD;
@@ -280,7 +283,8 @@ const TenderDetails = ({
   const [assets, setAssets] = useState([]);
   const [assetList, setAssetList] = useState([]);
   const [assetOptions, setAssetOptions] = useState([]);
-  const [creatingPo, setCreatingPo] = useState(false)
+  const [creatingPo, setCreatingPo] = useState(false);
+  const [proposalSelected, setProposalSelected] = useState(false);
 
   useEffect(() => {
     let statusCode = getRequestStatusCode(data?.status);
@@ -377,7 +381,7 @@ const TenderDetails = ({
     let _contract = { ...contract };
     _contract.sections = sections;
     _contract.signatories = signatories;
-    _contract.status = "reviewed";
+    _contract.status = "pending-signature";
 
     fetch(`${url}/contracts/${contract?._id}`, {
       method: "PUT",
@@ -665,6 +669,12 @@ const TenderDetails = ({
             name="deliveryDate"
             // label="Delivery date"
             className="w-full"
+            rules={[
+              {
+                required: true,
+                message: "Delivery Date is required",
+              },
+            ]}
           >
             <DatePicker
               className="w-full"
@@ -676,7 +686,16 @@ const TenderDetails = ({
         <div className="flex flex-col">
           <div>Total Bid Amount</div>
           <Form.Item>
-            <Form.Item name="price" noStyle>
+            <Form.Item
+              name="price"
+              noStyle
+              rules={[
+                {
+                  required: true,
+                  message: "Total bid amount is required",
+                },
+              ]}
+            >
               <InputNumber
                 style={{ width: "100%" }}
                 addonBefore={
@@ -752,8 +771,23 @@ const TenderDetails = ({
         <div className="grid grid-cols-2">
           <div className="flex flex-col">
             <div>My proposal</div>
-            <Form.Item name="proposal">
-              <UploadBidDoc uuid={proposalDocId} />
+            <Form.Item
+              name="proposal"
+              rules={[
+                {
+                  validator: (_, value) =>
+                    proposalSelected
+                      ? Promise.resolve()
+                      : Promise.reject(
+                          new Error("Should attach the proposal document")
+                        ),
+                },
+              ]}
+            >
+              <UploadBidDoc
+                uuid={proposalDocId}
+                setSelected={setProposalSelected}
+              />
             </Form.Item>
           </div>
 
@@ -765,7 +799,7 @@ const TenderDetails = ({
           </div>
         </div>
         <div className="flex flex-col">
-          <div>Comment</div>
+          <div>Any additional comments</div>
           <Form.Item name="comment">
             <Input.TextArea onChange={(e) => setComment(e.target.value)} />
           </Form.Item>
@@ -780,6 +814,7 @@ const TenderDetails = ({
           <div>My Banking details</div>
           <Form.Item name="bankAccountNumber" noStyle>
             <Input
+              required
               placeholder="1892-0092-0900"
               style={{ width: "100%" }}
               onChange={(v) => {
@@ -858,7 +893,7 @@ const TenderDetails = ({
                       data?.status === "open" &&
                       !iSubmitted && (
                         <>
-                          <Form onFinish={submitSubmissionData}>
+                          <Form form={form} onFinish={submitSubmissionData}>
                             <div className="ml-3 mt-5 items-center">
                               <Divider></Divider>
 
@@ -897,20 +932,18 @@ const TenderDetails = ({
             {user?.userType !== "VENDOR" && (
               <>
                 <Tabs.TabPane tab="Bidding" key="2">
-                  <div className="flex flex-col space-y-5 p-3">
+                  <div className="flex flex-col space-y-2 p-3">
                     {buildTabHeader()}
                     {/* Evaluators section */}
                     {data?.invitees && (
                       <div className="ml-3 flex flex-col space-y-2">
                         {data?.evaluationReportId && (
                           <>
-                            <div className="flex flex-row space-x-1 items-center border border-b-2 border-gray-600">
-                              <UsersIcon className="h-5" />{" "}
-                              <div>Evaluators</div>
-                            </div>
-                            <div className="flex flex-row space-x-2">
+                            <div className="text-xl flex flex-row items-center space-x-5">
+                              <UsergroupAddOutlined /> Evaluators List{" "}
                               <a
                                 href="#"
+                                className="text-sm"
                                 onClick={() => {
                                   setAttachmentId(
                                     `evaluationReports/${data?.evaluationReportId}.pdf`
@@ -920,6 +953,8 @@ const TenderDetails = ({
                               >
                                 <FileTextOutlined /> Evaluation report
                               </a>
+                            </div>
+                            <div className="flex flex-row space-x-2">
                               {iBelongToEvaluators() &&
                                 !iHaveApprovedEvalReport() && (
                                   <>
@@ -1044,6 +1079,9 @@ const TenderDetails = ({
                       </div>
                     )}
                     <Divider></Divider>
+                    <div className="text-xl ml-3">
+                      <FolderOpenOutlined /> Bids List
+                    </div>
                     <div>
                       <BidList
                         tenderId={data._id}
@@ -1066,6 +1104,7 @@ const TenderDetails = ({
                   <div className="flex flex-col space-y-5 p-3">
                     {buildTabHeader()}
                     <Divider></Divider>
+
                     {
                       // (contract?.status === "reviewed" ||
                       //   (contract?.status === "draft" &&
@@ -1075,6 +1114,9 @@ const TenderDetails = ({
                       1 ? (
                         !poCreated || !contractCreated ? (
                           <div>
+                            <div className="text-xl ml-3">
+                              <FolderOpenOutlined /> Selected Bid
+                            </div>
                             {bidList
                               ?.filter((d) => d.status === "awarded")
                               ?.map((item) => {
@@ -1152,7 +1194,10 @@ const TenderDetails = ({
                                                         setTendor(item?.tender);
                                                       }}
                                                     >
-                                                      View Contract {contract?.status==='draft' && `(under review)`}
+                                                      View Contract{" "}
+                                                      {contract?.status ===
+                                                        "draft" &&
+                                                        `(under review)`}
                                                     </Button>
                                                   </Form.Item>
                                                 ) : (
@@ -1195,7 +1240,7 @@ const TenderDetails = ({
                                                               onBehalfOf:
                                                                 "Irembo Ltd",
                                                               title:
-                                                                "Finance Manager",
+                                                                "Procurement Manager",
                                                               names: "",
                                                               email: "",
                                                             },
@@ -1203,10 +1248,11 @@ const TenderDetails = ({
                                                               onBehalfOf:
                                                                 "Irembo Ltd",
                                                               title:
-                                                                "Procurement Manager",
+                                                                "Finance Manager",
                                                               names: "",
                                                               email: "",
                                                             },
+
                                                             {
                                                               onBehalfOf:
                                                                 item?.createdBy
@@ -1298,7 +1344,7 @@ const TenderDetails = ({
                     {bidList?.filter((d) => d.status === "awarded").length >=
                     1 ? (
                       (!poCreated || !contractCreated) &&
-                      contract?.status === "reviewed" &&
+                      contract?.status !== "draft" &&
                       documentFullySignedInternally(contract) &&
                       documentFullySignedInternally(po) ? (
                         <div>
@@ -1391,7 +1437,7 @@ const TenderDetails = ({
                             })}
                         </div>
                       ) : contract?.vendor?._id === user?._id &&
-                        contract?.status === "reviewed" &&
+                        contract?.status !== "draft" &&
                         documentFullySignedInternally(contract) &&
                         documentFullySignedInternally(po) ? (
                         <div className="mx-3 flex flex-row space-x-5 items-center justify-center">
@@ -1456,47 +1502,79 @@ const TenderDetails = ({
         open={openCreatePO}
         confirmLoading={creatingPo}
         onOk={async () => {
-          setCreatingPo(true)
+          // setCreatingPo(true);
           let assetItems = [];
-          if (docType === "dDocument_Item") {
-            items.map((i, index) => {
-              assets[index]?.map((a) => {
+          let nonAssetItems = [];
+
+          items
+            .filter((i) => i.itemType === "asset")
+            .map((i, index) => {
+              i?.assetCodes?.map((a) => {
                 assetItems.push({
                   ItemCode: a,
-                  Quantity: i.quantity / assets[index]?.length,
+                  Quantity: i.quantity / i?.assetCodes?.length,
                   UnitPrice: i.estimatedUnitCost,
                   VatGroup: i.taxGroup ? i.taxGroup : "X1",
                 });
               });
             });
-          }
-          let B1Data = {
-            CardName: vendor?.companyName,
-            DocType: docType,
-            DocDate: docDate,
-            DocumentLines:
-              docType === "dDocument_Service"
-                ? items.map((i) => {
-                    return {
-                      ItemDescription: i.title,
-                      Quantity: i.quantity,
-                      UnitPrice: i.estimatedUnitCost,
-                      VatGroup: i.taxGroup ? i.taxGroup : "X1",
-                    };
-                  })
-                : assetItems,
-          };
-          
+
+          items
+            .filter((i) => i.itemType === "non-asset" || !i.itemType)
+            .map((i, index) => {
+              nonAssetItems.push({
+                // ItemCode: a,
+                Quantity: i.quantity,
+                UnitPrice: i.estimatedUnitCost,
+                VatGroup: i.taxGroup ? i.taxGroup : "X1",
+              });
+            });
+
+          // if (docType === "dDocument_Item") {
+          //   items.map((i, index) => {
+          //     assets[index]?.map((a) => {
+          //       assetItems.push({
+          //         ItemCode: a,
+          //         Quantity: i.quantity / assets[index]?.length,
+          //         UnitPrice: i.estimatedUnitCost,
+          //         VatGroup: i.taxGroup ? i.taxGroup : "X1",
+          //       });
+          //     });
+          //   });
+          // }
+          let B1Data_Assets;
+          assetItems?.length >= 1
+            ? (B1Data_Assets = {
+                CardName: vendor?.companyName,
+                DocType: "dDocument_Item",
+                DocDate: docDate,
+                DocumentLines: assetItems,
+              })
+            : (B1Data_Assets = null);
+
+          let B1Data_NonAssets;
+          nonAssetItems?.length >= 1
+            ? (B1Data_NonAssets = {
+                CardName: vendor?.companyName,
+                DocType: "dDocument_Service",
+                DocDate: docDate,
+                DocumentLines: nonAssetItems,
+              })
+            : (B1Data_NonAssets = null);
+
           await handleCreatePO(
             vendor?._id,
             tendor?._id,
             user?._id,
             sections,
             items,
-            B1Data,
+            {
+              B1Data_Assets,
+              B1Data_NonAssets,
+            },
             signatories
           );
-          setCreatingPo(false)
+          setCreatingPo(false);
           setOpenCreatePO(false);
         }}
         okText="Save and Submit"
@@ -1511,13 +1589,13 @@ const TenderDetails = ({
           {/* header */}
           <div className="grid grid-cols-2 w-1/2">
             {/* PO Document date */}
-            <div>
+            {/* <div>
               <div>Document date</div>
               <DatePicker onChange={(v, dstr) => setDocDate(dstr)} />
-            </div>
+            </div> */}
 
             {/* PO type */}
-            <div>
+            {/* <div>
               <div>PO Type</div>
               <Select
                 onChange={(value) => setDocType(value)}
@@ -1527,7 +1605,7 @@ const TenderDetails = ({
                   { value: "dDocument_Item", label: "Item" },
                 ]}
               />
-            </div>
+            </div> */}
           </div>
 
           {/* Parties */}
@@ -1625,7 +1703,11 @@ const TenderDetails = ({
                 </div>
               </div>
             )}
-            <ItemsTable dataSource={items} setDataSource={setItems} />
+            <ItemsTable
+              dataSource={items}
+              setDataSource={setItems}
+              assetOptions={assetOptions}
+            />
             <Typography.Title level={5} className="self-end">
               Total (Tax Excl.): {totalVal?.toLocaleString()} RWF
             </Typography.Title>
@@ -1807,9 +1889,9 @@ const TenderDetails = ({
               {/* New Signatory */}
               <div
                 onClick={() => {
-                  let signs = [];
+                  let signs = [...signatories];
                   let newSignatory =
-                    signs?.length < 1
+                    signs?.length <= 1
                       ? { onBehalfOf: "Irembo Ltd" }
                       : {
                           onBehalfOf: vendor?.companyName,
@@ -2319,7 +2401,12 @@ const TenderDetails = ({
                         <Typography.Text type="secondary">
                           <div className="text-xs">IP address</div>
                         </Typography.Text>
-                        <Typography.Text strong>{s?.ipAddress}</Typography.Text>
+                        {!signing && (
+                          <Typography.Text strong>
+                            {s?.ipAddress}
+                          </Typography.Text>
+                        )}
+                        {signing && <Spin size="small" />}
                       </div>
                     )}
                   </div>
@@ -2343,7 +2430,7 @@ const TenderDetails = ({
                     </div>
                   )}
 
-                  {user?.email === s?.email && !s?.signed && (
+                  {(user?.email === s?.email || user?.tempEmail === s?.email) && !s?.signed && (
                     <Popconfirm
                       title="Confirm Contract Signature"
                       onConfirm={() => handleSignPo(s, index)}
@@ -2361,7 +2448,7 @@ const TenderDetails = ({
                       </div>
                     </Popconfirm>
                   )}
-                  {user?.email !== s?.email && !s.signed && (
+                  {(user?.email !== s?.email && user?.tempEmail !== s?.email) && !s.signed && (
                     <div className="flex flex-row justify-center space-x-5 items-center border-t-2 bg-gray-50 p-5">
                       <Image
                         width={40}
@@ -2519,7 +2606,8 @@ const TenderDetails = ({
                     <Typography.Title
                       level={4}
                       editable={
-                        editContract && contract?.status === "draft" && {
+                        editContract &&
+                        contract?.status === "draft" && {
                           onChange: (e) => {
                             section.title = e;
                             _sections[index]
@@ -2548,7 +2636,9 @@ const TenderDetails = ({
                       </Popconfirm>
                     )}
                   </div>
-                  {(!editContract || contract?.status) !== "draft" && <div>{parse(s?.body)}</div>}
+                  {(!editContract || contract?.status) !== "draft" && (
+                    <div>{parse(s?.body)}</div>
+                  )}
                   {editContract && contract?.status === "draft" && (
                     <ReactQuill
                       theme="snow"
@@ -2599,7 +2689,8 @@ const TenderDetails = ({
                       <Typography.Text
                         strong
                         editable={
-                          editContract && contract?.status === "draft" && {
+                          editContract &&
+                          contract?.status === "draft" && {
                             text: s.onBehalfOf,
                             onChange: (e) => {
                               let _signatories = [...signatories];
@@ -2620,7 +2711,8 @@ const TenderDetails = ({
                       <Typography.Text
                         strong
                         editable={
-                          editContract && contract?.status === "draft" && {
+                          editContract &&
+                          contract?.status === "draft" && {
                             text: s.title,
                             onChange: (e) => {
                               let _signatories = [...signatories];
@@ -2641,7 +2733,8 @@ const TenderDetails = ({
                       <Typography.Text
                         strong
                         editable={
-                          editContract && contract?.status === "draft" && {
+                          editContract &&
+                          contract?.status === "draft" && {
                             text: s.names,
                             onChange: (e) => {
                               let _signatories = [...signatories];
@@ -2662,7 +2755,8 @@ const TenderDetails = ({
                       <Typography.Text
                         strong
                         editable={
-                          editContract && contract?.status === "draft" && {
+                          editContract &&
+                          contract?.status === "draft" && {
                             text: s.email,
                             onChange: (e) => {
                               let _signatories = [...signatories];
@@ -2676,7 +2770,16 @@ const TenderDetails = ({
                       </Typography.Text>
                     </div>
 
-                    {s.signed && (
+                    {signing && !s.signed && (
+                      <div className="flex flex-col">
+                        <Typography.Text type="secondary">
+                          <div className="text-xs">IP address</div>
+                        </Typography.Text>
+                        <Spin size="small" indicator={<LoadingOutlined />} />
+                      </div>
+                    )}
+
+                    {s.signed && !signing && (
                       <div className="flex flex-col">
                         <Typography.Text type="secondary">
                           <div className="text-xs">IP address</div>
@@ -2705,7 +2808,7 @@ const TenderDetails = ({
                     </div>
                   )}
 
-                  {user?.email === s?.email &&
+                  {(user?.email === s?.email || user?.tempEmail === s?.email) &&
                     !s?.signed &&
                     previousSignatorySigned(signatories, index) && (
                       <Popconfirm
@@ -2725,7 +2828,8 @@ const TenderDetails = ({
                       </Popconfirm>
                     )}
 
-                  {((user?.email !== s?.email && !s.signed) ||
+                  {(((user?.email !== s?.email && user?.tempEmail !== s?.email) &&
+                    !s.signed) ||
                     !previousSignatorySigned(signatories, index)) && (
                     <div className="flex flex-row justify-center space-x-5 items-center border-t-2 bg-gray-50 p-5">
                       <Image
@@ -2833,14 +2937,14 @@ const TenderDetails = ({
     signatory.signed = true;
     let _contract = { ...contract };
 
-    fetch("https://api.db-ip.com/v2/free/self")
+    fetch("https://api.ipify.org?format=json")
       .then((res) => res.json())
       .then((res) => {
         myIpObj = res;
-        signatory.ipAddress = res?.ipAddress;
+        signatory.ipAddress = res?.ip;
         signatory.signedAt = moment();
         _contract.signatories[index] = signatory;
-        setContract(_contract);
+        // setContract(_contract);
 
         fetch(`${url}/contracts/${contract?._id}`, {
           method: "PUT",
@@ -2851,6 +2955,9 @@ const TenderDetails = ({
           },
           body: JSON.stringify({
             newContract: contract,
+            pending: contract?.status === "pending-signature",
+            paritallySigned: documentFullySignedInternally(contract),
+            signed: documentFullySigned(contract),
           }),
         })
           .then((res) => res.json())
@@ -2859,6 +2966,7 @@ const TenderDetails = ({
             // setSections([{ title: "Set section title", body: "" }]);
             setContract(res);
             updateBidList();
+            setSigning(false);
           });
       })
       .catch((err) => {
@@ -2874,12 +2982,13 @@ const TenderDetails = ({
     signatory.signed = true;
     let _po = { ...po };
 
-    fetch("https://api.db-ip.com/v2/free/self")
+    fetch("https://api.ipify.org?format=json")
       .then((res) => res.json())
       .then((res) => {
         myIpObj = res;
-        signatory.ipAddress = res?.ipAddress;
+        signatory.ipAddress = res?.ip;
         signatory.signedAt = moment();
+
         _po.signatories[index] = signatory;
         setPO(_po);
 
@@ -2892,6 +3001,9 @@ const TenderDetails = ({
           },
           body: JSON.stringify({
             newPo: po,
+            pending: po?.status === "pending-signature" || !po?.status,
+            paritallySigned: documentFullySignedInternally(po),
+            signed: documentFullySigned(po),
           }),
         })
           .then((res) => res.json())
@@ -2904,6 +3016,7 @@ const TenderDetails = ({
       .catch((err) => {
         console.log(err);
       });
+    setSigning(false);
 
     //call API to sign
   }

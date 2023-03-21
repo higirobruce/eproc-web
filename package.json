@@ -12,6 +12,9 @@
     "@ant-design/icons": "^4.8.0",
     "@heroicons/react": "^2.0.16",
     "@next/font": "^13.1.6",
+    "@react-pdf-viewer/core": "3.6.0",
+    "@react-pdf-viewer/default-layout": "3.6.0",
+    "@react-pdf/renderer": "^3.1.8",
     "antd": "^5.3.0",
     "antd-input-tag": "^1.0.14",
     "autoprefixer": "^10.4.13",
@@ -20,10 +23,12 @@
     "eslint": "8.30.0",
     "eslint-config-next": "13.0.7",
     "html-react-parser": "^3.0.8",
+    "jspdf": "^2.5.1",
     "lodash": "^4.17.21",
     "moment": "^2.29.4",
     "moment-timezone": "^0.5.41",
     "next": "13.0.7",
+    "pdfjs-dist": "^2.16.105",
     "postcss": "^8.4.20",
     "rc-virtual-list": "^3.4.13",
     "react": "18.2.0",
@@ -34,10 +39,7 @@
     "react-scrollbar": "^0.5.6",
     "sharp": "^0.31.3",
     "tailwindcss": "^3.2.4",
-    "uuid": "^9.0.0",
-    "@react-pdf-viewer/core": "3.6.0",
-    "@react-pdf-viewer/default-layout": "3.6.0",
-    "pdfjs-dist": "^2.16.105"
+    "uuid": "^9.0.0"
   },
   "devDependencies": {}
 }
