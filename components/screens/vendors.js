@@ -310,13 +310,13 @@ export default function Vendors({ user }) {
           <Row className="flex flex-row justify-between items-center">
             <div className="flex flex-row items-start space-x-5 w-1/4">
               <div className="text-xl font-semibold">Vendors List</div>
-              <div className="flex-1">
+              {/* <div className="flex-1">
                 <SelectStatuses />
-              </div>
+              </div> */}
             </div>
             <Row className="flex flex-row space-x-5 items-center">
               <div>
-                <Input.Search placeholder="Search requests" />
+                <Input.Search placeholder="Search vendors" />
               </div>
               <Button
                 type="text"

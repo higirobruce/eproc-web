@@ -262,7 +262,7 @@ export default function Dashboard({ user }) {
             </div>
             <div className="flex flex-col space-y-2">
               <div className="text-xs font-bold">
-                Breakdown by Budget vs Unbudgeted
+                Breakdown by Budgeted vs Unbudgeted
               </div>
               <div className="flex flex-row justify-between items-center pt-5">
                 <div className="flex flex-row space-x-2 items-center">
