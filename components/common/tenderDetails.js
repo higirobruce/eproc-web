@@ -57,6 +57,8 @@ import UploadBidDoc from "./uploadBidDoc";
 import { v4 } from "uuid";
 import { LockClosedIcon, LockOpenIcon } from "@heroicons/react/24/solid";
 import MyPdfViewer from "./pdfViewer";
+import { PDFDownloadLink } from "@react-pdf/renderer";
+import MyDocument from "./MyDocument";
 
 let modules = {
   toolbar: [
@@ -2254,18 +2256,22 @@ const TenderDetails = ({
         bodyStyle={{ maxHeight: "700px", overflow: "scroll" }}
       >
         <div className="space-y-10 px-20 py-5 overflow-x-scroll">
+          <div>
+            {/* <PDFDownloadLink document={<MyDocument title={`PURCHASE ORDER: ${po?.vendor?.companyName}`}/>} fileName="test.pdf">
+              {({loading, error }) => {
+                // error ? alert(JSON.stringify(error)) : "";
+                return loading ? "Loading document..." : "Download now!";
+              }}
+            </PDFDownloadLink> */}
+          </div>
           <div className="flex flex-row justify-between items-center">
             <Typography.Title level={4} className="flex flex-row items-center">
               PURCHASE ORDER: {po?.vendor?.companyName}{" "}
-              <Image
-                src="/icons/icons8-approval-90.png"
-                width={20}
-                height={20}
-              />
             </Typography.Title>
             <Button icon={<PrinterOutlined />}>Print</Button>
           </div>
           <div className="grid grid-cols-2 gap-5 ">
+            
             <div className="flex flex-col ring-1 ring-gray-300 rounded p-5 space-y-3">
               <div className="flex flex-col">
                 <Typography.Text type="secondary">
@@ -2430,36 +2436,39 @@ const TenderDetails = ({
                     </div>
                   )}
 
-                  {(user?.email === s?.email || user?.tempEmail === s?.email) && !s?.signed && (
-                    <Popconfirm
-                      title="Confirm Contract Signature"
-                      onConfirm={() => handleSignPo(s, index)}
-                    >
-                      <div className="flex flex-row justify-center space-x-5 items-center border-t-2 bg-blue-50 p-5 cursor-pointer hover:opacity-75">
+                  {(user?.email === s?.email || user?.tempEmail === s?.email) &&
+                    !s?.signed && (
+                      <Popconfirm
+                        title="Confirm Contract Signature"
+                        onConfirm={() => handleSignPo(s, index)}
+                      >
+                        <div className="flex flex-row justify-center space-x-5 items-center border-t-2 bg-blue-50 p-5 cursor-pointer hover:opacity-75">
+                          <Image
+                            width={40}
+                            height={40}
+                            src="/icons/icons8-signature-80.png"
+                          />
+
+                          <div className="text-blue-400 text-lg">
+                            Sign with one click
+                          </div>
+                        </div>
+                      </Popconfirm>
+                    )}
+                  {user?.email !== s?.email &&
+                    user?.tempEmail !== s?.email &&
+                    !s.signed && (
+                      <div className="flex flex-row justify-center space-x-5 items-center border-t-2 bg-gray-50 p-5">
                         <Image
                           width={40}
                           height={40}
-                          src="/icons/icons8-signature-80.png"
+                          src="/icons/icons8-signature-80-2.png"
                         />
-
-                        <div className="text-blue-400 text-lg">
-                          Sign with one click
+                        <div className="text-gray-400 text-lg">
+                          {s.signed ? "Signed" : "Waiting for signature"}
                         </div>
                       </div>
-                    </Popconfirm>
-                  )}
-                  {(user?.email !== s?.email && user?.tempEmail !== s?.email) && !s.signed && (
-                    <div className="flex flex-row justify-center space-x-5 items-center border-t-2 bg-gray-50 p-5">
-                      <Image
-                        width={40}
-                        height={40}
-                        src="/icons/icons8-signature-80-2.png"
-                      />
-                      <div className="text-gray-400 text-lg">
-                        {s.signed ? "Signed" : "Waiting for signature"}
-                      </div>
-                    </div>
-                  )}
+                    )}
                 </div>
               );
             })}
@@ -2828,7 +2837,8 @@ const TenderDetails = ({
                       </Popconfirm>
                     )}
 
-                  {(((user?.email !== s?.email && user?.tempEmail !== s?.email) &&
+                  {((user?.email !== s?.email &&
+                    user?.tempEmail !== s?.email &&
                     !s.signed) ||
                     !previousSignatorySigned(signatories, index)) && (
                     <div className="flex flex-row justify-center space-x-5 items-center border-t-2 bg-gray-50 p-5">
