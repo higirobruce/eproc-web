@@ -6,6 +6,7 @@ import {
   PlaySquareOutlined,
   PlusOutlined,
   PrinterOutlined,
+  ReloadOutlined,
 } from "@ant-design/icons";
 import {
   Button,
@@ -24,6 +25,8 @@ import {
   Tooltip,
   Select,
   Spin,
+  Row,
+  Input,
 } from "antd";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
@@ -122,12 +125,12 @@ export default function Contracts({ user }) {
   const [signing, setSigning] = useState(false);
 
   useEffect(() => {
-    getContracts()
+    getContracts();
   }, []);
 
-  useEffect(()=>{
-    getContracts()
-  },[searchStatus])
+  useEffect(() => {
+    getContracts();
+  }, [searchStatus]);
 
   useEffect(() => {
     if (openViewContract) {
@@ -136,8 +139,10 @@ export default function Contracts({ user }) {
     }
   }, [openViewContract]);
 
-  function getContracts(){
-    setDataLoaded(false)
+
+
+  function getContracts() {
+    setDataLoaded(false);
     if (user?.userType === "VENDOR") {
       fetch(`${url}/contracts/byVendorId/${user?._id}/${searchStatus}`, {
         method: "GET",
@@ -186,7 +191,7 @@ export default function Contracts({ user }) {
           editContract &&
             contract?.status === "draft" &&
             handleUpdateContract(sections, signatories);
-            setOpenViewContract(false);
+          setOpenViewContract(false);
         }}
         okText={
           editContract && contract?.status === "draft"
@@ -527,10 +532,9 @@ export default function Contracts({ user }) {
                     </div>
                   )}
 
-                  {(user?.email === s?.email||user?.tempEmail === s?.email) &&
+                  {(user?.email === s?.email || user?.tempEmail === s?.email) &&
                     !s?.signed &&
-                    previousSignatorySigned(signatories, index) && 
-                    (
+                    previousSignatorySigned(signatories, index) && (
                       <Popconfirm
                         title="Confirm Contract Signature"
                         onConfirm={() => handleSignContract(s, index)}
@@ -548,7 +552,9 @@ export default function Contracts({ user }) {
                       </Popconfirm>
                     )}
 
-                  {((user?.email !== s?.email && user?.tempEmail !== s?.email && !s.signed) ||
+                  {((user?.email !== s?.email &&
+                    user?.tempEmail !== s?.email &&
+                    !s.signed) ||
                     !previousSignatorySigned(signatories, index)) && (
                     <div className="flex flex-row justify-center space-x-5 items-center border-t-2 bg-gray-50 p-5">
                       <Image
@@ -591,7 +597,7 @@ export default function Contracts({ user }) {
         setSignatories([]);
         setSections([{ title: "Set section title", body: "" }]);
         setEditContract(false);
-        getContracts()
+        getContracts();
         // updateBidList();
       })
       .catch((err) => {
@@ -617,7 +623,6 @@ export default function Contracts({ user }) {
         signatory.signedAt = moment();
         _contract.signatories[index] = signatory;
         // setContract(_contract);
-        
 
         fetch(`${url}/contracts/${contract?._id}`, {
           method: "PUT",
@@ -628,9 +633,9 @@ export default function Contracts({ user }) {
           },
           body: JSON.stringify({
             newContract: contract,
-            pending: contract?.status==='pending-signature',
+            pending: contract?.status === "pending-signature",
             paritallySigned: documentFullySignedInternally(contract),
-            signed: documentFullySigned(contract)
+            signed: documentFullySigned(contract),
           }),
         })
           .then((res) => res.json())
@@ -638,7 +643,7 @@ export default function Contracts({ user }) {
             // setSignatories([]);
             // setSections([{ title: "Set section title", body: "" }]);
             setContract(res);
-            setSignatories(res?.signatories)
+            setSignatories(res?.signatories);
             setSigning(false);
           });
       })
@@ -766,10 +771,57 @@ export default function Contracts({ user }) {
       {contextHolder}
       {previewAttachmentModal()}
       {dataLoaded ? (
-        <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 py-5 flex-1">
+        <div className="flex flex-col transition-opacity ease-in-out duration-1000 flex-1 space-y-1 h-full">
           {viewContractMOdal()}
 
-          <div className="flex flex-col items-start space-y-2 ml-3">
+          <Row className="flex flex-col space-y-2 bg-white px-10 py-3 shadow">
+            <div className="flex flex-row justify-between items-center">
+              <div className="text-xl font-semibold">Contracts List</div>
+            </div>
+
+            <Row className="flex flex-row space-x-5 items-center justify-between">
+              <div className="flex-1">
+                <Select
+                  // mode="tags"
+                  style={{ width: "300px" }}
+                  placeholder="Select status"
+                  onChange={(value) => setSearchStatus(value)}
+                  value={searchStatus}
+                  options={[
+                    { value: "all", label: "All" },
+                    { value: "draft", label: "Draft" },
+                    {
+                      value: "pending-signature",
+                      label: "Pending Signature",
+                    },
+                    {
+                      value: "partially-signed",
+                      label: "Paritally Signed",
+                    },
+                    {
+                      value: "signed",
+                      label: "Signed",
+                    },
+                  ]}
+                />
+              </div>
+              <div className="">
+                <Input.Search
+                  style={{ width: "300px" }}
+                  // onChange={(e) => {
+                  //   setSearchText(e?.target?.value);
+                  // }}
+                  placeholder="Search by contract#, vendor name"
+                />
+              </div>
+              <Button
+                type="text"
+                icon={<ReloadOutlined />}
+                onClick={() => getContracts()}
+              ></Button>
+            </Row>
+          </Row>
+          {/* <div className="flex flex-col items-start space-y-2 ml-3">
             <div className="text-xl font-semibold">Contract List</div>
             <div className="flex-1">
               <Select
@@ -796,17 +848,17 @@ export default function Contracts({ user }) {
                 ]}
               />
             </div>
-          </div>
+          </div> */}
 
           {(contracts?.length < 1 || !contracts) && <Empty />}
           {contracts && contracts?.length >= 1 && (
             <div
-              className="space-y-4 pb-5"
-              style={{
-                height: "800px",
-                overflowX: "scroll",
-                overflowY: "unset",
-              }}
+              className="space-y-4 pb-5 h-[800px] overflow-y-scroll"
+              // style={{
+              //   height: "800px",
+              //   overflowX: "scroll",
+              //   overflowY: "unset",
+              // }}
             >
               {contracts?.map((contract) => {
                 let t = 0;

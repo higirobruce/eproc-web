@@ -87,7 +87,7 @@ export default function UserRequests({ user }) {
   let [searchStatus, setSearchStatus] = useState("all");
   let [searchText, setSearchText] = useState("");
   const [form] = Form.useForm();
-  const [onlyMine, setOnlyMine] = useState(false)
+  const [onlyMine, setOnlyMine] = useState(true);
 
   useEffect(() => {
     // loadRequests()
@@ -169,10 +169,9 @@ export default function UserRequests({ user }) {
 
   useEffect(() => {
     setDataLoaded(false);
-    let requestUrl =
-      onlyMine
-        ? `${url}/requests/byStatus/${searchStatus}/${user?._id}`
-        : `${url}/requests/byStatus/${searchStatus}/${null}`;
+    let requestUrl = onlyMine
+      ? `${url}/requests/byStatus/${searchStatus}/${user?._id}`
+      : `${url}/requests/byStatus/${searchStatus}/${null}`;
     fetch(requestUrl, {
       method: "GET",
       headers: {
@@ -232,10 +231,9 @@ export default function UserRequests({ user }) {
 
   async function loadRequests() {
     // setDataLoaded(false);
-    let requestUrl =
-      onlyMine
-        ? `${url}/requests/byStatus/${searchStatus}/${user?._id}`
-        : `${url}/requests/byStatus/${searchStatus}/${null}`;
+    let requestUrl = onlyMine
+      ? `${url}/requests/byStatus/${searchStatus}/${user?._id}`
+      : `${url}/requests/byStatus/${searchStatus}/${null}`;
     // let requestUrl =
     //   searchStatus === "mine"
     //     ? `${url}/requests/${user?._id}`
@@ -718,9 +716,21 @@ export default function UserRequests({ user }) {
       {contextHolder}
       {dataLoaded ? (
         <div className="flex flex-col transition-opacity ease-in-out duration-1000 flex-1 space-y-10 h-full">
-          <Row className="flex flex-row justify-between items-center bg-white px-10 py-3 shadow">
-            <div className="flex flex-row items-center space-x-2">
+          <Row className="flex flex-col bg-white px-10 py-3 shadow space-y-2">
+            <div className="flex flex-row items-center justify-between">
               <div className="text-xl font-semibold">Purchase Requests</div>
+              <div className="flex flex-row items-center space-x-1">
+                <div>View my requests only</div>
+                <Checkbox
+                  checked={onlyMine}
+                  onChange={(e) => {
+                    setOnlyMine(e.target.checked);
+                  }}
+                />
+              </div>
+            </div>
+            <Row className="flex flex-row justify-between items-center space-x-4">
+
               <div className="flex-1">
                 <Select
                   // mode="tags"
@@ -743,9 +753,12 @@ export default function UserRequests({ user }) {
                   ]}
                 />
               </div>
-            </div>
-            <Row className="flex flex-row space-x-5 items-center">
               
+              <Button
+                type="text"
+                icon={<ReloadOutlined />}
+                onClick={() => refresh()}
+              ></Button>
               <div>
                 <Input.Search
                   style={{ width: "300px" }}
@@ -755,15 +768,8 @@ export default function UserRequests({ user }) {
                   placeholder="Search by request#, initiator"
                 />
               </div>
-              <div className="flex flex-row items-center space-x-1">
-                <div>My requests only</div>
-                <Checkbox checked={onlyMine} onChange={(e) => {setOnlyMine(e.target.checked)}} />
-              </div>
-              <Button
-                type="text"
-                icon={<ReloadOutlined />}
-                onClick={() => refresh()}
-              ></Button>
+
+             
 
               {user?.permissions?.canCreateRequests && (
                 <Button

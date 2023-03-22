@@ -63,6 +63,9 @@ export default function Vendors({ user }) {
   const [editVendor, setEditVendor] = useState(false);
   let [servCategories, setServCategories] = useState([]);
 
+  let [searchStatus, setSearchStatus] = useState("all");
+  let [searchText, setSearchText] = useState("");
+
   useEffect(() => {
     loadVendors();
     fetch(`${url}/serviceCategories`, {
@@ -306,13 +309,58 @@ export default function Vendors({ user }) {
     <>
       {contextHolder}
       {dataLoaded ? (
-        <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 flex-1 py-5 space-y-5">
-          <Row className="flex flex-row justify-between items-center">
+        <div className="flex flex-col transition-opacity ease-in-out duration-1000 flex-1 space-y-1 h-full">
+          <Row className="flex flex-col space-y-2 bg-white px-10 py-3 shadow">
+            <div className="flex flex-row justify-between items-center">
+              <div className="text-xl font-semibold">Vendors List</div>
+            </div>
+
+            <Row className="flex flex-row space-x-5 items-center justify-between">
+              <div className="flex-1">
+                <Select
+                  // mode="tags"
+                  style={{ width: "300px" }}
+                  placeholder="Select status"
+                  onChange={(value) => setSearchStatus(value)}
+                  value={searchStatus}
+                  options={[
+                    { value: "all", label: "All" },
+                    {
+                      value: "pending",
+                      label: "Pending for approval",
+                    },
+                    {
+                      value: "approved",
+                      label: "Approved",
+                    },
+                    {
+                      value: "declined",
+                      label: "Rejected",
+                    },
+                  ]}
+                />
+              </div>
+              <div className="">
+                <Input.Search
+                  style={{ width: "300px" }}
+                  // onChange={(e) => {
+                  //   setSearchText(e?.target?.value);
+                  // }}
+                  placeholder="Search by vendor#, vendor name, TIN"
+                />
+              </div>
+              <Button
+                type="text"
+                icon={<ReloadOutlined />}
+                onClick={() => refresh()}
+              ></Button>
+            </Row>
+          </Row>
+          
+          {/* <Row className="flex flex-row justify-between items-center">
             <div className="flex flex-row items-start space-x-5 w-1/4">
               <div className="text-xl font-semibold">Vendors List</div>
-              {/* <div className="flex-1">
-                <SelectStatuses />
-              </div> */}
+             
             </div>
             <Row className="flex flex-row space-x-5 items-center">
               <div>
@@ -325,8 +373,9 @@ export default function Vendors({ user }) {
               ></Button>
               <Button type="text" icon={<SettingOutlined />}></Button>
             </Row>
-          </Row>
-          <Row className="flex flex-row space-x-5">
+          </Row> */}
+
+          <Row className="flex flex-row space-x-5 mx-10 pt-5">
             <Col flex={4}>
               <VendorsTable
                 dataSet={dataset}

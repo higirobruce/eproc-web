@@ -507,10 +507,14 @@ export default function Tenders({ user }) {
       {contextHolder}
       {dataLoaded ? (
         <div className="flex flex-col transition-opacity ease-in-out duration-1000 flex-1 space-y-10 h-full">
-          <Row className="flex flex-row justify-between items-center bg-white px-10 py-3 shadow">
-            <div className="flex flex-row items-center space-x-2">
+          <Row className="flex flex-col space-y-2 bg-white px-10 py-3 shadow">
+            <div className="flex flex-row justify-between items-center">
               <div className="text-xl font-semibold">Tenders</div>
-              <div className="flex-1">
+              
+            </div>
+
+            <Row className="flex flex-row space-x-5 items-center justify-between">
+            <div className="flex-1">
                 <Select
                   // mode="tags"
                   style={{ width: "300px" }}
@@ -527,10 +531,7 @@ export default function Tenders({ user }) {
                   ]}
                 />
               </div>
-            </div>
-
-            <Row className="flex flex-row space-x-5 items-center">
-              <div>
+              <div className="">
                 <Input.Search
                   style={{ width: "300px" }}
                   onChange={(e) => {

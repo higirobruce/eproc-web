@@ -2,6 +2,7 @@ import {
   LoadingOutlined,
   PlaySquareOutlined,
   PrinterOutlined,
+  ReloadOutlined,
 } from "@ant-design/icons";
 import {
   Button,
@@ -18,6 +19,8 @@ import {
   Tooltip,
   Select,
   Spin,
+  Row,
+  Input,
 } from "antd";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
@@ -95,6 +98,11 @@ export default function PurchaseOrders({ user }) {
   const [searchStatus, setSearchStatus] = useState("all");
 
   useEffect(() => {
+    refresh()
+  }, []);
+
+  function refresh(){
+    setDataLoaded(false)
     if (user?.userType === "VENDOR") {
       fetch(`${url}/purchaseOrders/byVendorId/${user?._id}`, {
         method: "GET",
@@ -131,7 +139,7 @@ export default function PurchaseOrders({ user }) {
           setDataLoaded(true);
         });
     }
-  }, []);
+  }
 
   function getPOs() {}
 
@@ -342,7 +350,9 @@ export default function PurchaseOrders({ user }) {
                         </div>
                       </Popconfirm>
                     )}
-                  {(((user?.email !== s?.email && user?.tempEmail !== s?.email) && !s.signed) ||
+                  {((user?.email !== s?.email &&
+                    user?.tempEmail !== s?.email &&
+                    !s.signed) ||
                     !previousSignatorySigned(po?.signatories, index)) && (
                     <div className="flex flex-row justify-center space-x-5 items-center border-t-2 bg-gray-50 p-5">
                       <Image
@@ -516,11 +526,57 @@ export default function PurchaseOrders({ user }) {
   return (
     <>
       {dataLoaded ? (
-        <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 py-5 flex-1">
+        <div className="flex flex-col transition-opacity ease-in-out duration-1000 flex-1 space-y-1 h-full">
           {viewPOMOdal()}
 
           {previewAttachmentModal()}
-          <div className="flex flex-col items-start space-y-2 ml-3">
+          <Row className="flex flex-col space-y-2 bg-white px-10 py-3 shadow">
+            <div className="flex flex-row justify-between items-center">
+              <div className="text-xl font-semibold">Purchase Orders List</div>
+            </div>
+
+            <Row className="flex flex-row space-x-5 items-center justify-between">
+              <div className="flex-1">
+                <Select
+                  // mode="tags"
+                  style={{ width: "300px" }}
+                  placeholder="Select status"
+                  onChange={(value) => setSearchStatus(value)}
+                  value={searchStatus}
+                  options={[
+                    { value: "all", label: "All" },
+                    {
+                      value: "pending",
+                      label: "Pending Signature",
+                    },
+                    {
+                      value: "partially-signed",
+                      label: "Paritally Signed",
+                    },
+                    {
+                      value: "signed",
+                      label: "Signed",
+                    },
+                  ]}
+                />
+              </div>
+              <div className="">
+                <Input.Search
+                  style={{ width: "300px" }}
+                  // onChange={(e) => {
+                  //   setSearchText(e?.target?.value);
+                  // }}
+                  placeholder="Search by po#, vendor name"
+                />
+              </div>
+              <Button
+                type="text"
+                icon={<ReloadOutlined />}
+                onClick={() => refresh()}
+              ></Button>
+            </Row>
+          </Row>
+          {/* <div className="flex flex-col items-start space-y-2 ml-3">
             <div className="text-xl font-semibold">Purchase Orders</div>
             <div className="flex-1">
               <Select
@@ -546,7 +602,7 @@ export default function PurchaseOrders({ user }) {
                 ]}
               />
             </div>
-          </div>
+          </div> */}
 
           {(pOs?.length < 1 || !pOs) && <Empty />}
           {pOs && pOs?.length >= 1 && (
@@ -571,7 +627,8 @@ export default function PurchaseOrders({ user }) {
                       </div>
                       <div className="font-semibold">{po?.number}</div>
                       <div className="text-gray-600">
-                        {po?.tender?.purchaseRequest?.description || po?.request?.description}
+                        {po?.tender?.purchaseRequest?.description ||
+                          po?.request?.description}
                       </div>
                       {po?.reqAttachmentDocId && (
                         <Typography.Link
@@ -595,7 +652,7 @@ export default function PurchaseOrders({ user }) {
                         SAP B1 reference(s)
                       </div>
                       <div className="text-gray-600">
-                        {po?.referenceDocs?.map((ref,i) => {
+                        {po?.referenceDocs?.map((ref, i) => {
                           return <Tag key={i}>{ref}</Tag>;
                         })}
                       </div>
@@ -697,18 +754,20 @@ export default function PurchaseOrders({ user }) {
                           <Tag color="green">Signed</Tag>
                         </div>
                       )}
-                      {po?.status !== "started" && po?.status !== "stopped" && user?.userType==='VENDOR' && (
-                        <Button
-                          type="primary"
-                          disabled={!documentFullySigned(po)}
-                          size="small"
-                          loading={po.status === "starting"}
-                          icon={<PlaySquareOutlined />}
-                          onClick={() => handleStartDelivery(po)}
-                        >
-                          Start delivering
-                        </Button>
-                      )}
+                      {po?.status !== "started" &&
+                        po?.status !== "stopped" &&
+                        user?.userType === "VENDOR" && (
+                          <Button
+                            type="primary"
+                            disabled={!documentFullySigned(po)}
+                            size="small"
+                            loading={po.status === "starting"}
+                            icon={<PlaySquareOutlined />}
+                            onClick={() => handleStartDelivery(po)}
+                          >
+                            Start delivering
+                          </Button>
+                        )}
                       <Progress
                         percent={_.round(po?.deliveryProgress, 1)}
                         size="small"

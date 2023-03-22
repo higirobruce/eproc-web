@@ -18,6 +18,7 @@ import {
   Modal,
   Row,
   Tooltip,
+  Col,
 } from "antd";
 import UsersTable from "../usersTable";
 import {
@@ -69,6 +70,8 @@ export default function Users({ user }) {
   const [vatCertId, setVatCertId] = useState(null);
   const [rdbSelected, setRDBSelected] = useState(false);
 
+  let [searchStatus, setSearchStatus] = useState("all");
+  let [searchText, setSearchText] = useState("");
   const [openCreateUser, setOpenCreateUser] = useState(false);
 
   const antIcon = <LoadingOutlined style={{ fontSize: 24 }} spin />;
@@ -195,7 +198,6 @@ export default function Users({ user }) {
     })
       .then((res) => res.json())
       .then((res) => {
-
         let _data = [...dataset];
 
         // Find item index using _.findIndex (thanks @AJ Richardson for comment)
@@ -443,17 +445,16 @@ export default function Users({ user }) {
   }
 
   function createUser(newUser) {
-
     let permissions = {};
     newUser?.permissions?.map((p) => {
-      permissions[p] = true
+      permissions[p] = true;
     });
 
-    newUser.permissions = permissions
-    newUser.password = "password"
-    newUser.createdBy = user?._id
-    newUser.userType = 'DPT-USER'
-    newUser.companyName = newUser?.firstName + ' ' + newUser?.lastName
+    newUser.permissions = permissions;
+    newUser.password = "password";
+    newUser.createdBy = user?._id;
+    newUser.userType = "DPT-USER";
+    newUser.companyName = newUser?.firstName + " " + newUser?.lastName;
     fetch(`${url}/users`, {
       method: "POST",
       headers: {
@@ -465,7 +466,7 @@ export default function Users({ user }) {
       .then((res) => res.json())
       .then((res) => {
         loadUsers();
-        form.resetFields()
+        form.resetFields();
       })
       .catch((err) => {
         messageApi.open({
@@ -473,7 +474,6 @@ export default function Users({ user }) {
           content: "Something happened! Please try again.",
         });
       });
-
   }
 
   return !row ? (
@@ -481,8 +481,8 @@ export default function Users({ user }) {
       {contextHolder}
       {buildCreateUserScreen()}
       {dataLoaded ? (
-        <div className="flex flex-col flex-1 px-10">
-          <Row className="flex flex-row justify-between items-center">
+        <div className="flex flex-col transition-opacity ease-in-out duration-1000 flex-1 space-y-1 h-full">
+          {/* <Row className="flex flex-row justify-between items-center">
             <Typography.Title level={4}>Users</Typography.Title>
             <Row className="flex flex-row space-x-5 items-center">
               <div>
@@ -506,21 +506,87 @@ export default function Users({ user }) {
 
              
             </Row>
+          </Row> */}
+          <Row className="flex flex-col space-y-2 bg-white px-10 py-3 shadow">
+            <div className="flex flex-row justify-between items-center">
+              <div className="text-xl font-semibold">Users List</div>
+            </div>
+
+            <Row className="flex flex-row space-x-5 items-center justify-between">
+              <div className="flex-1">
+                <Select
+                  // mode="tags"
+                  style={{ width: "300px" }}
+                  placeholder="Select status"
+                  onChange={(value) => setSearchStatus(value)}
+                  value={searchStatus}
+                  options={[
+                    { value: "all", label: "All" },
+                    {
+                      value: "pending",
+                      label: "Pending for approval",
+                    },
+                    {
+                      value: "approved",
+                      label: "Approved",
+                    },
+                    {
+                      value: "declined",
+                      label: "Rejected",
+                    },
+                  ]}
+                />
+              </div>
+              <div className="">
+                <Input.Search
+                  style={{ width: "300px" }}
+                  // onChange={(e) => {
+                  //   setSearchText(e?.target?.value);
+                  // }}
+                  placeholder="Search by vendor#, vendor name, TIN"
+                />
+              </div>
+              <Button
+                type="text"
+                icon={<ReloadOutlined />}
+                onClick={() => refresh()}
+              ></Button>
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={() => setOpenCreateUser(true)}
+              >
+                New user
+              </Button>
+            </Row>
           </Row>
-          <UsersTable
-            dataSet={dataset}
-            handleApproveUser={approveUser}
-            handleDeclineUser={declineUser}
-            updatingId={updatingId}
-            handleSetRow={setRow}
-          />
+          <Row className="flex flex-row space-x-5 mx-10 pt-5">
+            <Col flex={4}>
+              <UsersTable
+                dataSet={dataset}
+                handleApproveUser={approveUser}
+                handleDeclineUser={declineUser}
+                updatingId={updatingId}
+                handleSetRow={setRow}
+              />
+            </Col>
+          </Row>
+
           <div class="absolute -bottom-28 right-10 opacity-10">
             <Image src="/icons/blue icon.png" width={110} height={100} />
           </div>
         </div>
       ) : (
         <div className="flex items-center justify-center flex-1 h-screen">
-          <Spin indicator={<LoadingOutlined className="text-gray-500" style={{ fontSize: 42 }} spin/>}/>
+          <Spin
+            indicator={
+              <LoadingOutlined
+                className="text-gray-500"
+                style={{ fontSize: 42 }}
+                spin
+              />
+            }
+          />
         </div>
       )}
     </>
@@ -535,7 +601,7 @@ export default function Users({ user }) {
           <div>
             <Button
               icon={<ArrowLeftOutlined />}
-              type='primary'
+              type="primary"
               onClick={() => {
                 setRow(null);
                 setSegment("Permissions");
@@ -747,7 +813,7 @@ export default function Users({ user }) {
           form.validateFields().then(
             (value) => {
               createUser(value);
-              setOpenCreateUser(false)
+              setOpenCreateUser(false);
             },
             (reason) => {}
           );
