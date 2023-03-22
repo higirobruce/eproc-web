@@ -269,7 +269,7 @@ export default function Dashboard({ user }) {
                   <div className="h-2 w-2 bg-green-500 rounded-full"></div>
                   <div className="text-sm text-gray-600">Budgeted</div>
                 </div>
-                <div className="text-xs text-gray-600">{budgeted}%</div>
+                <div className="text-xs text-gray-600">{budgeted||0}%</div>
               </div>
               <Divider></Divider>
               <div className="flex flex-row justify-between items-center">
@@ -278,7 +278,7 @@ export default function Dashboard({ user }) {
                   <div className="text-sm text-gray-600">Unbudgeted</div>
                 </div>
 
-                <div className="text-xs text-gray-600">{unbudgeted}%</div>
+                <div className="text-xs text-gray-600">{unbudgeted||0}%</div>
               </div>
             </div>
             {/* <TendersStats />
@@ -297,7 +297,7 @@ export default function Dashboard({ user }) {
                   <div className="h-2 w-2 bg-yellow-500 rounded-full"></div>
                   <div className="text-sm text-gray-600">Open</div>
                 </div>
-                <div className="text-xs text-gray-600">{openTenders}%</div>
+                <div className="text-xs text-gray-600">{openTenders||0}%</div>
               </div>
               <Divider></Divider>
               <div className="flex flex-row justify-between items-center">
@@ -305,12 +305,12 @@ export default function Dashboard({ user }) {
                   <div className="h-2 w-2 bg-green-400 rounded-full"></div>
                   <div className="text-sm text-gray-600">Closed</div>
                 </div>
-                <div className="text-xs text-gray-600">{closedTenders}%</div>
+                <div className="text-xs text-gray-600">{closedTenders||0}%</div>
               </div>
               
 
               <div className="pt-5">
-                <div className="text-xs font-bold"> {avgBids} bid(s) submitted per Tender on Average</div>
+                <div className="text-xs font-bold"> {avgBids||0} bid(s) submitted per Tender on Average</div>
                
               </div>
             </div>
