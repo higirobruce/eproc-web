@@ -920,7 +920,7 @@ const RequestDetails = ({
             {
               children: "Delivered",
               color: progress >= 100 ? "blue" : "gray",
-              dot: po && <CheckCircleOutlined className=" text-green-500" />,
+              dot: po && progress >= 100 && <CheckCircleOutlined className=" text-green-500" />,
             },
           ]}
         />

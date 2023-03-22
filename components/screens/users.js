@@ -473,6 +473,7 @@ export default function Users({ user }) {
 
     newUser.permissions = permissions;
     newUser.password = "password";
+    newUser.tempPassword = "p";
     newUser.createdBy = user?._id;
     newUser.userType = "DPT-USER";
     newUser.companyName = newUser?.firstName + " " + newUser?.lastName;

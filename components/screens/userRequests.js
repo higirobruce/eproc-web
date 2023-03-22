@@ -608,6 +608,7 @@ export default function UserRequests({ user }) {
       .then((res) => res.json())
       .then((res1) => {
         if (res1.error) {
+          alert(JSON.stringify(res1))
           messageApi.open({
             type: "error",
             content: res1.message,
@@ -1126,6 +1127,7 @@ export default function UserRequests({ user }) {
   ) {
     return (
       <div className="flex flex-col mx-10 transition-opacity ease-in-out duration-1000 py-5 flex-1 space-y-3 h-full">
+        {contextHolder}
         <div className="flex flex-row justify-between items-center">
           <div className="flex flex-row space-x-10 items-center">
             <div>
