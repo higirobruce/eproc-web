@@ -122,8 +122,9 @@ export default function Tenders({ user }) {
       let _dataSet = [...dataset];
       let filtered = _dataSet.filter((d) => {
         return (
-          d?.number.toString().indexOf(searchText) > -1 ||
-          d?.createdBy?.purchaseRequest?.number.indexOf(searchText) > -1
+          d?.number?.toString().indexOf(searchText) > -1 ||
+          d?.purchaseRequest?.number?.toString().indexOf(searchText) > -1
+
         );
       });
       setTempDataset(filtered);
@@ -534,6 +535,7 @@ export default function Tenders({ user }) {
               <div className="">
                 <Input.Search
                   style={{ width: "300px" }}
+                  autoFocus
                   onChange={(e) => {
                     setSearchText(e?.target?.value);
                   }}

@@ -77,6 +77,7 @@ export default function Contracts({ user }) {
   let apiUsername = process.env.NEXT_PUBLIC_API_USERNAME;
   let apiPassword = process.env.NEXT_PUBLIC_API_PASSWORD;
   let [contracts, setContracts] = useState(null);
+  let [tempContracts, setTempContracts] = useState(null);
   let [contract, setContract] = useState(null);
   let [totalValue, setTotalValue] = useState(0);
   let [openViewContract, setOpenViewContract] = useState(false);
@@ -123,6 +124,7 @@ export default function Contracts({ user }) {
   const [docType, setDocType] = useState("dDocument_Service");
   const [searchStatus, setSearchStatus] = useState("all");
   const [signing, setSigning] = useState(false);
+  const [searchText, setSearchText] = useState('')
 
   useEffect(() => {
     getContracts();
@@ -131,6 +133,23 @@ export default function Contracts({ user }) {
   useEffect(() => {
     getContracts();
   }, [searchStatus]);
+
+  useEffect(() => {
+    if (searchText === "") {
+      getContracts();
+    } else {
+      let _dataSet = [...contracts];
+      let filtered = _dataSet.filter((d) => {
+        return (
+          d?.number?.toString().toLowerCase().indexOf(searchText.toLowerCase()) > -1 ||
+          d?.vendor?.companyName?.toString().toLowerCase().indexOf(searchText.toLowerCase()) > -1
+
+        );
+      });
+      setTempContracts(filtered);
+      // else setTempDataset(dataset)
+    }
+  }, [searchText]);
 
   useEffect(() => {
     if (openViewContract) {
@@ -156,6 +175,7 @@ export default function Contracts({ user }) {
         .then((res) => {
           console.log(res);
           setContracts(res);
+          setTempContracts(res);
           setDataLoaded(true);
         })
         .catch((err) => {
@@ -173,6 +193,7 @@ export default function Contracts({ user }) {
         .then((res) => res.json())
         .then((res) => {
           setContracts(res);
+          setTempContracts(res);
           setDataLoaded(true);
         })
         .catch((err) => {
@@ -692,6 +713,7 @@ export default function Contracts({ user }) {
     _pos.splice(index, 1, elindex);
 
     setContracts(_pos);
+    setTempContracts(_pos);
 
     fetch(`${url}/purchaseOrders/status/${po?._id}`, {
       method: "PUT",
@@ -716,6 +738,7 @@ export default function Contracts({ user }) {
           _pos.splice(index, 1, elindex);
 
           setContracts(_pos);
+          setTempContracts(_pos);
         } else {
           let _pos = [...contracts];
           // Find item index using _.findIndex (thanks @AJ Richardson for comment)
@@ -726,6 +749,7 @@ export default function Contracts({ user }) {
           _pos.splice(index, 1, elindex);
 
           setContracts(_pos);
+          setTempContracts(_pos);
         }
       });
   }
@@ -808,9 +832,10 @@ export default function Contracts({ user }) {
               <div className="">
                 <Input.Search
                   style={{ width: "300px" }}
-                  // onChange={(e) => {
-                  //   setSearchText(e?.target?.value);
-                  // }}
+                  autoFocus
+                  onChange={(e) => {
+                    setSearchText(e?.target?.value);
+                  }}
                   placeholder="Search by contract#, vendor name"
                 />
               </div>
@@ -850,8 +875,8 @@ export default function Contracts({ user }) {
             </div>
           </div> */}
 
-          {(contracts?.length < 1 || !contracts) && <Empty />}
-          {contracts && contracts?.length >= 1 && (
+          {(tempContracts?.length < 1 || !contracts) && <Empty />}
+          {contracts && tempContracts?.length >= 1 && (
             <div
               className="space-y-4 pb-5 h-[800px] overflow-y-scroll"
               // style={{
@@ -860,7 +885,7 @@ export default function Contracts({ user }) {
               //   overflowY: "unset",
               // }}
             >
-              {contracts?.map((contract) => {
+              {tempContracts?.map((contract) => {
                 let t = 0;
                 return (
                   <div

@@ -54,6 +54,7 @@ export default function Vendors({ user }) {
   let apiUsername = process.env.NEXT_PUBLIC_API_USERNAME;
   let apiPassword = process.env.NEXT_PUBLIC_API_PASSWORD;
   let [dataset, setDataset] = useState([]);
+  let [tempDataset, setTempDataset] = useState([]);
   let [updatingId, setUpdatingId] = useState("");
   let [rowData, setRowData] = useState(null);
   let [segment, setSegment] = useState("Bids");
@@ -86,6 +87,22 @@ export default function Vendors({ user }) {
         });
       });
   }, []);
+
+  useEffect(() => {
+    if (searchText === "") {
+      refresh();
+    } else {
+      let _dataSet = [...dataset];
+      let filtered = _dataSet.filter((d) => {
+        return (
+          d?.companyName?.toString().toLowerCase().indexOf(searchText.toLowerCase()) > -1 ||
+          d?.tin?.toString().indexOf(searchText.toLowerCase()) > -1
+        );
+      });
+      setTempDataset(filtered);
+      // else setTempDataset(dataset)
+    }
+  }, [searchText]);
 
   useEffect(() => {
     if (rowData) {
@@ -127,6 +144,7 @@ export default function Vendors({ user }) {
       .then((res) => {
         setDataLoaded(true);
         setDataset(res);
+        setTempDataset(res);
       })
       .catch((err) => {
         messageApi.open({
@@ -169,6 +187,7 @@ export default function Vendors({ user }) {
           _data.splice(index, 1, elindex);
 
           setDataset(_data);
+          setTempDataset(_data);
           setUpdatingId(null);
           messageApi.open({
             type: "success",
@@ -207,6 +226,7 @@ export default function Vendors({ user }) {
         _data.splice(index, 1, elindex);
 
         setDataset(_data);
+        setTempDataset(_data);
         setUpdatingId(null);
       })
       .catch((err) => {
@@ -241,6 +261,7 @@ export default function Vendors({ user }) {
         _data.splice(index, 1, elindex);
 
         setDataset(_data);
+        setTempDataset(_data);
       })
       .catch((err) => {
         messageApi.open({
@@ -273,6 +294,7 @@ export default function Vendors({ user }) {
         _data.splice(index, 1, elindex);
 
         setDataset(_data);
+        setTempDataset(_data);
       })
       .catch((err) => {
         messageApi.open({
@@ -342,11 +364,12 @@ export default function Vendors({ user }) {
               </div>
               <div className="">
                 <Input.Search
+                autoFocus
                   style={{ width: "300px" }}
-                  // onChange={(e) => {
-                  //   setSearchText(e?.target?.value);
-                  // }}
-                  placeholder="Search by vendor#, vendor name, TIN"
+                  onChange={(e) => {
+                    setSearchText(e?.target?.value);
+                  }}
+                  placeholder="Search by vendor name, TIN"
                 />
               </div>
               <Button
@@ -378,7 +401,7 @@ export default function Vendors({ user }) {
           <Row className="flex flex-row space-x-5 mx-10 pt-5">
             <Col flex={4}>
               <VendorsTable
-                dataSet={dataset}
+                dataSet={tempDataset}
                 handleApproveUser={approveUser}
                 handleDeclineUser={declineUser}
                 updatingId={updatingId}

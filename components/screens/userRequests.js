@@ -202,8 +202,8 @@ export default function UserRequests({ user }) {
       let filtered = _dataSet.filter((d) => {
         return (
           d?.number.toString().indexOf(searchText) > -1 ||
-          d?.createdBy?.firstName.indexOf(searchText) > -1 ||
-          d?.createdBy?.lastName.indexOf(searchText) > -1
+          d?.createdBy?.firstName.toLowerCase().indexOf(searchText.toLowerCase()) > -1 ||
+          d?.createdBy?.lastName.toLowerCase().indexOf(searchText.toLowerCase()) > -1
         );
       });
       setTempDataset(filtered);
@@ -762,6 +762,7 @@ export default function UserRequests({ user }) {
               <div>
                 <Input.Search
                   style={{ width: "300px" }}
+                  autoFocus
                   onChange={(e) => {
                     setSearchText(e?.target?.value);
                   }}

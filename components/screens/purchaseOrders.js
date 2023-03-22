@@ -37,6 +37,7 @@ export default function PurchaseOrders({ user }) {
   let apiUsername = process.env.NEXT_PUBLIC_API_USERNAME;
   let apiPassword = process.env.NEXT_PUBLIC_API_PASSWORD;
   let [pOs, setPOs] = useState(null);
+  let [tempPOs, setTempPOs] = useState(null);
   let [po, setPO] = useState(null);
   let [totalValue, setTotalValue] = useState(0);
   let [openViewPO, setOpenViewPO] = useState(false);
@@ -96,10 +97,32 @@ export default function PurchaseOrders({ user }) {
   const [signing, setSigning] = useState(false);
 
   const [searchStatus, setSearchStatus] = useState("all");
+  const [searchText, setSearchText] = useState('')
 
   useEffect(() => {
     refresh()
   }, []);
+
+  useEffect(() => {
+    refresh();
+  }, [searchStatus]);
+
+
+  useEffect(() => {
+    if (searchText === "") {
+      refresh();
+    } else {
+      let _dataSet = [...pOs];
+      let filtered = _dataSet.filter((d) => {
+        return (
+          d?.number?.toString().indexOf(searchText.toLowerCase()) > -1 ||
+          d?.vendor?.companyName?.toString().toLowerCase().indexOf(searchText.toLowerCase()) > -1
+        );
+      });
+      setTempPOs(filtered);
+      // else setTempDataset(dataset)
+    }
+  }, [searchText]);
 
   function refresh(){
     setDataLoaded(false)
@@ -116,6 +139,7 @@ export default function PurchaseOrders({ user }) {
         .then((res) => {
           console.log(res);
           setPOs(res);
+          setTempPOs(res);
           setDataLoaded(true);
         })
         .catch((err) => {
@@ -133,6 +157,7 @@ export default function PurchaseOrders({ user }) {
         .then((res) => res.json())
         .then((res) => {
           setPOs(res);
+          setTempPOs(res);
           setDataLoaded(true);
         })
         .catch((err) => {
@@ -449,6 +474,7 @@ export default function PurchaseOrders({ user }) {
     _pos.splice(index, 1, elindex);
 
     setPOs(_pos);
+    setTempPOs(_pos);
 
     fetch(`${url}/purchaseOrders/status/${po?._id}`, {
       method: "PUT",
@@ -473,6 +499,7 @@ export default function PurchaseOrders({ user }) {
           _pos.splice(index, 1, elindex);
 
           setPOs(_pos);
+          setTempPOs(_pos);
         } else {
           let _pos = [...pOs];
           // Find item index using _.findIndex (thanks @AJ Richardson for comment)
@@ -483,6 +510,7 @@ export default function PurchaseOrders({ user }) {
           _pos.splice(index, 1, elindex);
 
           setPOs(_pos);
+          setTempPOs(_pos);
         }
       });
   }
@@ -563,9 +591,10 @@ export default function PurchaseOrders({ user }) {
               <div className="">
                 <Input.Search
                   style={{ width: "300px" }}
-                  // onChange={(e) => {
-                  //   setSearchText(e?.target?.value);
-                  // }}
+                  autoFocus
+                  onChange={(e) => {
+                    setSearchText(e?.target?.value);
+                  }}
                   placeholder="Search by po#, vendor name"
                 />
               </div>
@@ -604,8 +633,8 @@ export default function PurchaseOrders({ user }) {
             </div>
           </div> */}
 
-          {(pOs?.length < 1 || !pOs) && <Empty />}
-          {pOs && pOs?.length >= 1 && (
+          {(tempPOs?.length < 1 || !tempPOs) && <Empty />}
+          {tempPOs && tempPOs?.length >= 1 && (
             <div
               className="space-y-4 pb-5"
               style={{
@@ -614,7 +643,7 @@ export default function PurchaseOrders({ user }) {
                 overflowY: "unset",
               }}
             >
-              {pOs?.map((po) => {
+              {tempPOs?.map((po) => {
                 let t = 0;
                 return (
                   <div

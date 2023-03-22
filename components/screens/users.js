@@ -55,6 +55,7 @@ export default function Users({ user }) {
   let apiUsername = process.env.NEXT_PUBLIC_API_USERNAME;
   let apiPassword = process.env.NEXT_PUBLIC_API_PASSWORD;
   let [dataset, setDataset] = useState([]);
+  let [tempDataset, setTempDataset] = useState([]);
   let [updatingId, setUpdatingId] = useState("");
   let [row, setRow] = useState(null);
   let [segment, setSegment] = useState("Permissions");
@@ -133,6 +134,23 @@ export default function Users({ user }) {
   }, []);
 
   useEffect(() => {
+    if (searchText === "") {
+      refresh();
+    } else {
+      let _dataSet = [...dataset];
+      let filtered = _dataSet.filter((d) => {
+        return (
+          d?.email?.toString().toLowerCase().indexOf(searchText.toLowerCase()) > -1 ||
+          d?.firstName?.toString().toLowerCase().indexOf(searchText.toLowerCase()) > -1 ||
+          d?.lastName?.toString().toLowerCase().indexOf(searchText.toLowerCase()) > -1
+        );
+      });
+      setTempDataset(filtered);
+      // else setTempDataset(dataset)
+    }
+  }, [searchText]);
+
+  useEffect(() => {
     setUpdatingId("");
     console.log(dataset);
   }, [dataset]);
@@ -178,6 +196,7 @@ export default function Users({ user }) {
       .then((res) => {
         setDataLoaded(true);
         setDataset(res);
+        setTempDataset(res);
       })
       .catch((err) => {
         messageApi.open({
@@ -210,6 +229,7 @@ export default function Users({ user }) {
         _data.splice(index, 1, elindex);
 
         setDataset(_data);
+        setTempDataset(_data);
       })
       .catch((err) => {
         messageApi.open({
@@ -242,6 +262,7 @@ export default function Users({ user }) {
         _data.splice(index, 1, elindex);
 
         setDataset(_data);
+        setTempDataset(_data);
       })
       .catch((err) => {
         messageApi.open({
@@ -539,11 +560,12 @@ export default function Users({ user }) {
               </div>
               <div className="">
                 <Input.Search
+                autoFocus
                   style={{ width: "300px" }}
-                  // onChange={(e) => {
-                  //   setSearchText(e?.target?.value);
-                  // }}
-                  placeholder="Search by vendor#, vendor name, TIN"
+                  onChange={(e) => {
+                    setSearchText(e?.target?.value);
+                  }}
+                  placeholder="Search email, names"
                 />
               </div>
               <Button
@@ -563,7 +585,7 @@ export default function Users({ user }) {
           <Row className="flex flex-row space-x-5 mx-10 pt-5">
             <Col flex={4}>
               <UsersTable
-                dataSet={dataset}
+                dataSet={tempDataset}
                 handleApproveUser={approveUser}
                 handleDeclineUser={declineUser}
                 updatingId={updatingId}
