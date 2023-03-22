@@ -30,6 +30,7 @@ import {
   Popconfirm,
   Segmented,
   Select,
+  Spin,
   Switch,
   Tag,
   Typography,
