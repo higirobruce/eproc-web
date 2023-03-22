@@ -115,6 +115,7 @@ const SignupForm = () => {
         services: values.services,
         rdbCertId: rdbSelected ? rdbCertId : null,
         vatCertId: vatSelected ? vatCertId : null,
+        tempPassword: 'password'
       }),
     })
       .then((res) => res.json())
