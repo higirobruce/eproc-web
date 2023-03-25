@@ -24,10 +24,12 @@ import {
   Checkbox,
   Empty,
   Form,
+  Input,
   List,
   message,
   Modal,
   Popconfirm,
+  Row,
   Segmented,
   Select,
   Spin,
@@ -41,6 +43,7 @@ import MyPdfViewer from "../common/pdfViewer";
 import PermissionsTable from "../permissionsTable";
 
 export default function Profile({ user }) {
+  const [form] = Form.useForm();
   const [dataLoaded, setDataLoaded] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
   let url = process.env.NEXT_PUBLIC_BKEND_URL;
@@ -59,15 +62,60 @@ export default function Profile({ user }) {
   const [editVendor, setEditVendor] = useState(false);
   let [servCategories, setServCategories] = useState([]);
 
-  return <div>{user?.userType==='VENDOR'? buildVendor() : buildUser()}</div>;
+  let [submitting, setSubmitting] = useState(false);
+
+  const antIcon = <LoadingOutlined style={{ fontSize: 24 }} spin />;
+
+  return <div>{user?.userType === "VENDOR" ? buildVendor() : buildUser()}</div>;
+
+  function onFinish(values){
+    setSubmitting(true)
+    fetch(`${url}/users/updatePassword/${user?._id}`, {
+      method: "PUT",
+      headers: {
+        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        currentPassword: values.currentPassword,
+        newPassword: values.newPassword
+      }),
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        setSubmitting(false);
+        form.resetFields()
+        if (!res.error) {
+          messageApi.open({
+            type: "success",
+            content: "Password successfully reset!",
+          });
+        } else {
+          messageApi.open({
+            type: "error",
+            content: res.errorMessage,
+          });
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+        setSubmitting(false);
+        messageApi.open({
+          type: "error",
+          content: "Something happened! Please try again.",
+        });
+      });
+  }
 
   function buildUser() {
     return (
       <div className="flex flex-col  transition-opacity ease-in-out duration-1000 px-10 py-5 flex-1 space-y-3 h-full overflow-x-scroll">
+        {contextHolder}
         <div className="flex flex-col space-y-5">
           <div className="grid md:grid-cols-3 gap-5">
             {/* Data */}
             <div className="flex flex-col space-y-5">
+              {/* General Infromation */}
               <div className="bg-white ring-1 ring-gray-100 rounded shadow p-5">
                 <div className="text-xl font-semibold mb-5 flex flex-row justify-between items-center">
                   <div>General Information</div>
@@ -108,154 +156,257 @@ export default function Profile({ user }) {
                   </div>
                 </div>
               </div>
+
+              {/* Reset password */}
+              <div className="bg-white ring-1 ring-gray-100 rounded shadow p-5">
+                <div className="text-xl font-semibold mb-5 flex flex-row justify-between items-center">
+                  <div>Reset password</div>
+                </div>
+                <Form
+                  // {...formItemLayout}
+                  form={form}
+                  name="register"
+                  onFinish={onFinish}
+                 
+                  scrollToFirstError
+                  style={{ width: "100%" }}
+                >
+                  <div>
+                    <div>Current password</div>
+                    <Form.Item
+                      name="currentPassword"
+                      // label="Password"
+                      rules={[
+                        {
+                          required: true,
+                          message: "Please input your current password!",
+                        },
+                      ]}
+                      hasFeedback
+                    >
+                      <Input.Password />
+                    </Form.Item>
+                  </div>
+
+                  <div>
+                    <div>New password</div>
+                    <Form.Item
+                      name="newPassword"
+                      // label="Password"
+                      rules={[
+                        {
+                          required: true,
+                          message: "Please input your new password!",
+                        },
+                      ]}
+                      hasFeedback
+                    >
+                      <Input.Password />
+                    </Form.Item>
+                  </div>
+
+                  <div>
+                    <div>Confirm new password</div>
+                    <Form.Item
+                      name="confirmPassword"
+                      // label="Password"
+                      rules={[
+                        {
+                          required: true,
+                          message: "Please confirm your password!",
+                        },
+                        ({ getFieldValue }) => ({
+                          validator(_, value) {
+                            if (
+                              !value ||
+                              getFieldValue("newPassword") === value
+                            ) {
+                              return Promise.resolve();
+                            }
+                            return Promise.reject(
+                              new Error(
+                                "The two passwords that you entered do not match!"
+                              )
+                            );
+                          },
+                        }),
+                      ]}
+                      hasFeedback
+                    >
+                      <Input.Password />
+                    </Form.Item>
+                  </div>
+
+                  <Form.Item>
+                    {submitting ? (
+                      <Spin indicator={antIcon} />
+                    ) : (
+                      <div className="flex flex-row items-center justify-between">
+                        <Button type="primary" danger htmlType="submit">
+                          Update my password
+                        </Button>
+
+                        
+                      </div>
+                    )}
+                  </Form.Item>
+                </Form>
+              </div>
             </div>
 
             {/* Transactions */}
-            {user?.userType!=='VENDOR' && <div className="col-span-2 flex flex-col space-y-5 bg-white ring-1 ring-gray-100 rounded shadow p-10">
-              <Segmented
-                block
-                size="large"
-                options={[
-                  {
-                    label: "Permissions",
-                    value: "Permissions",
-                    icon: <BarsOutlined />,
-                  },
-                  {
-                    label: "Requests History",
-                    value: "Requests History",
-                    icon: <FieldTimeOutlined />,
-                  },
-                ]}
-                onChange={setSegment}
-              />
-              {segment === "Permissions" && (
-                <div>
-                  <PermissionsTable
-                    canApproveRequests={user?.permissions?.canApproveRequests}
-                    canCreateRequests={user?.permissions?.canCreateRequests}
-                    canEditRequests={user?.permissions?.canEditRequests}
-                    canViewRequests={user?.permissions?.canViewRequests}
-                    canApproveTenders={user?.permissions?.canApproveTenders}
-                    canCreateTenders={user?.permissions?.canCreateTenders}
-                    canEditTenders={user?.permissions?.canEditTenders}
-                    canViewTenders={user?.permissions?.canViewTenders}
-                    canApproveBids={user?.permissions?.canApproveBids}
-                    canCreateBids={user?.permissions?.canCreateBids}
-                    canEditBids={user?.permissions?.canEditBids}
-                    canViewBids={user?.permissions?.canViewBids}
-                    canApproveContracts={user?.permissions?.canApproveContracts}
-                    canCreateContracts={user?.permissions?.canCreateContracts}
-                    canEditContracts={user?.permissions?.canEditContracts}
-                    canViewContracts={user?.permissions?.canViewContracts}
-                    canApprovePurchaseOrders={
-                      user?.permissions?.canApprovePurchaseOrders
-                    }
-                    canCreatePurchaseOrders={
-                      user?.permissions?.canCreatePurchaseOrders
-                    }
-                    canEditPurchaseOrders={
-                      user?.permissions?.canEditPurchaseOrders
-                    }
-                    canViewPurchaseOrders={
-                      user?.permissions?.canViewPurchaseOrders
-                    }
-                    canApproveVendors={user?.permissions?.canApproveVendors}
-                    canCreateVendors={user?.permissions?.canCreateVendors}
-                    canEditVendors={user?.permissions?.canEditVendors}
-                    canViewVendors={user?.permissions?.canViewVendors}
-                    canApproveUsers={user?.permissions?.canApproveUsers}
-                    canCreateUsers={user?.permissions?.canCreateUsers}
-                    canEditUsers={user?.permissions?.canEditUsers}
-                    canViewUsers={user?.permissions?.canViewUsers}
-                    canApproveDashboard={user?.permissions?.canApproveDashboard}
-                    canCreateDashboard={user?.permissions?.canCreateDashboard}
-                    canEditDashboard={user?.permissions?.canEditDashboard}
-                    canViewDashboard={user?.permissions?.canViewDashboard}
-                    handleSetCanView={() => {}}
-                    handleSetCanCreated={() => {}}
-                    handleSetCanEdit={() => {}}
-                    handleSetCanApprove={() => {}}
-                    canNotEdit={true}
-                  />
-                  <Form>
-                    <Form.Item
-                      name="canApproveAsHod"
-                      label="Can approve as a Head of department"
-                    >
-                      <Checkbox
-                        disabled
-                        defaultChecked={user?.permissions?.canApproveAsHod}
-                        onChange={(e) => setCanApproveAsHod(e.target.checked)}
-                      />
-                    </Form.Item>
-                    <Form.Item
-                      name="canApproveAsHof"
-                      label="Can approve as a Head of finance"
-                    >
-                      <Checkbox
-                        disabled
-                        defaultChecked={user?.permissions?.canApproveAsHof}
-                        onChange={(e) => setCanApproveAsHof(e.target.checked)}
-                      />
-                    </Form.Item>
-                    <Form.Item
-                      name="canApproveAsPM"
-                      label="Can approve as a Procurement manager"
-                    >
-                      <Checkbox
-                        disabled
-                        defaultChecked={user?.permissions?.canApproveAsPM}
-                        onChange={(e) => setCanApproveAsPM(e.target.checked)}
-                      />
-                    </Form.Item>
-                  </Form>
-                </div>
-              )}
-              {segment === "Requests History" && (
-                <div className="p-3">
-                  {usersRequests?.map((request) => {
-                    return (
-                      <div
-                        key={request?._id}
-                        className="grid grid-cols-4 ring-1 ring-gray-200 rounded my-3 p-3 text-gray-700"
+            {user?.userType !== "VENDOR" && (
+              <div className="col-span-2 flex flex-col space-y-5 bg-white ring-1 ring-gray-100 rounded shadow p-10">
+                <Segmented
+                  block
+                  size="large"
+                  options={[
+                    {
+                      label: "Permissions",
+                      value: "Permissions",
+                      icon: <BarsOutlined />,
+                    },
+                    {
+                      label: "Requests History",
+                      value: "Requests History",
+                      icon: <FieldTimeOutlined />,
+                    },
+                  ]}
+                  onChange={setSegment}
+                />
+                {segment === "Permissions" && (
+                  <div>
+                    <PermissionsTable
+                      canApproveRequests={user?.permissions?.canApproveRequests}
+                      canCreateRequests={user?.permissions?.canCreateRequests}
+                      canEditRequests={user?.permissions?.canEditRequests}
+                      canViewRequests={user?.permissions?.canViewRequests}
+                      canApproveTenders={user?.permissions?.canApproveTenders}
+                      canCreateTenders={user?.permissions?.canCreateTenders}
+                      canEditTenders={user?.permissions?.canEditTenders}
+                      canViewTenders={user?.permissions?.canViewTenders}
+                      canApproveBids={user?.permissions?.canApproveBids}
+                      canCreateBids={user?.permissions?.canCreateBids}
+                      canEditBids={user?.permissions?.canEditBids}
+                      canViewBids={user?.permissions?.canViewBids}
+                      canApproveContracts={
+                        user?.permissions?.canApproveContracts
+                      }
+                      canCreateContracts={user?.permissions?.canCreateContracts}
+                      canEditContracts={user?.permissions?.canEditContracts}
+                      canViewContracts={user?.permissions?.canViewContracts}
+                      canApprovePurchaseOrders={
+                        user?.permissions?.canApprovePurchaseOrders
+                      }
+                      canCreatePurchaseOrders={
+                        user?.permissions?.canCreatePurchaseOrders
+                      }
+                      canEditPurchaseOrders={
+                        user?.permissions?.canEditPurchaseOrders
+                      }
+                      canViewPurchaseOrders={
+                        user?.permissions?.canViewPurchaseOrders
+                      }
+                      canApproveVendors={user?.permissions?.canApproveVendors}
+                      canCreateVendors={user?.permissions?.canCreateVendors}
+                      canEditVendors={user?.permissions?.canEditVendors}
+                      canViewVendors={user?.permissions?.canViewVendors}
+                      canApproveUsers={user?.permissions?.canApproveUsers}
+                      canCreateUsers={user?.permissions?.canCreateUsers}
+                      canEditUsers={user?.permissions?.canEditUsers}
+                      canViewUsers={user?.permissions?.canViewUsers}
+                      canApproveDashboard={
+                        user?.permissions?.canApproveDashboard
+                      }
+                      canCreateDashboard={user?.permissions?.canCreateDashboard}
+                      canEditDashboard={user?.permissions?.canEditDashboard}
+                      canViewDashboard={user?.permissions?.canViewDashboard}
+                      handleSetCanView={() => {}}
+                      handleSetCanCreated={() => {}}
+                      handleSetCanEdit={() => {}}
+                      handleSetCanApprove={() => {}}
+                      canNotEdit={true}
+                    />
+                    <Form>
+                      <Form.Item
+                        name="canApproveAsHod"
+                        label="Can approve as a Head of department"
                       >
-                        <div>
-                          <div className="flex-row  flex items-center">
-                            <div>
-                              <FileTextOutlined className="h-4 w-4" />
-                            </div>{" "}
-                            <div>{request?.number}</div>
-                          </div>
-                          <div>{request?.title}</div>
-                          <div>{request?.description}</div>
-                        </div>
-                        <div>
-                          <div className="text-gray-500">Status</div>
+                        <Checkbox
+                          disabled
+                          defaultChecked={user?.permissions?.canApproveAsHod}
+                          onChange={(e) => setCanApproveAsHod(e.target.checked)}
+                        />
+                      </Form.Item>
+                      <Form.Item
+                        name="canApproveAsHof"
+                        label="Can approve as a Head of finance"
+                      >
+                        <Checkbox
+                          disabled
+                          defaultChecked={user?.permissions?.canApproveAsHof}
+                          onChange={(e) => setCanApproveAsHof(e.target.checked)}
+                        />
+                      </Form.Item>
+                      <Form.Item
+                        name="canApproveAsPM"
+                        label="Can approve as a Procurement manager"
+                      >
+                        <Checkbox
+                          disabled
+                          defaultChecked={user?.permissions?.canApproveAsPM}
+                          onChange={(e) => setCanApproveAsPM(e.target.checked)}
+                        />
+                      </Form.Item>
+                    </Form>
+                  </div>
+                )}
+                {segment === "Requests History" && (
+                  <div className="p-3">
+                    {usersRequests?.map((request) => {
+                      return (
+                        <div
+                          key={request?._id}
+                          className="grid grid-cols-4 ring-1 ring-gray-200 rounded my-3 p-3 text-gray-700"
+                        >
                           <div>
-                            <Tag color="gold">{request.status}</Tag>
+                            <div className="flex-row  flex items-center">
+                              <div>
+                                <FileTextOutlined className="h-4 w-4" />
+                              </div>{" "}
+                              <div>{request?.number}</div>
+                            </div>
+                            <div>{request?.title}</div>
+                            <div>{request?.description}</div>
                           </div>
-                        </div>
-                        <div>{`Due ${moment(request?.dueDate).fromNow()}`}</div>
-                        <div>
-                          {request?.budgeted ? (
+                          <div>
+                            <div className="text-gray-500">Status</div>
                             <div>
-                              <Tag color="green">BUDGETED</Tag>
+                              <Tag color="gold">{request.status}</Tag>
                             </div>
-                          ) : (
-                            <div>
-                              <Tag color="magenta">NOT BUDGETED</Tag>
-                            </div>
-                          )}
+                          </div>
+                          <div>{`Due ${moment(
+                            request?.dueDate
+                          ).fromNow()}`}</div>
+                          <div>
+                            {request?.budgeted ? (
+                              <div>
+                                <Tag color="green">BUDGETED</Tag>
+                              </div>
+                            ) : (
+                              <div>
+                                <Tag color="magenta">NOT BUDGETED</Tag>
+                              </div>
+                            )}
+                          </div>
+                          <div></div>
                         </div>
-                        <div></div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>}
-            
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -314,12 +465,13 @@ export default function Profile({ user }) {
             {/* Data */}
             <div className="flex flex-col space-y-5">
               <div className="bg-white ring-1 ring-gray-100 rounded shadow p-5">
+                
                 <div className="text-xl font-semibold mb-5 flex flex-row justify-between items-center">
                   <div>General Information</div>
 
-                  {updatingId !== rowData?._id && (
+                  {updatingId !== user?._id && (
                     <div>
-                      {rowData.status === "created" && (
+                      {user?.status === "created" && (
                         <span>
                           <Popconfirm
                             title="Approve vendor"
@@ -335,7 +487,7 @@ export default function Profile({ user }) {
                         </span>
                       )}
 
-                      {rowData.status === "declined" && (
+                      {user?.status === "declined" && (
                         <span>
                           <Popconfirm
                             title="Activate vendor"
@@ -351,7 +503,7 @@ export default function Profile({ user }) {
                         </span>
                       )}
 
-                      {rowData.status === "approved" && (
+                      {user?.status === "approved" && (
                         <span>
                           <Popconfirm
                             title="Deactive vendor"
@@ -366,7 +518,7 @@ export default function Profile({ user }) {
                           </Popconfirm>
                         </span>
                       )}
-                      {rowData.status === "banned" && (
+                      {user?.status === "banned" && (
                         <span>
                           <Popconfirm
                             title="Acivate vendor"
@@ -383,7 +535,7 @@ export default function Profile({ user }) {
                       )}
                     </div>
                   )}
-                  {updatingId === rowData?._id && (
+                  {updatingId === user?._id && (
                     <Spin
                       size="small"
                       indicator={
@@ -405,15 +557,15 @@ export default function Profile({ user }) {
                               r.contactPersonNames = e;
                               setRowData(r);
                             },
-                            text: rowData?.contactPersonNames,
+                            text: user?.contactPersonNames,
                           }
                         }
                       >
-                        {rowData?.contactPersonNames}
+                        {user?.contactPersonNames}
                       </Typography.Text>{" "}
                       {!editVendor && (
                         <div>
-                          <Tag color="cyan">{rowData?.title}</Tag>
+                          <Tag color="cyan">{user?.title}</Tag>
                         </div>
                       )}
                       {editVendor && (
@@ -425,11 +577,11 @@ export default function Profile({ user }) {
                                 r.title = e;
                                 setRowData(r);
                               },
-                              text: rowData?.title,
+                              text: user?.title,
                             }
                           }
                         >
-                          {rowData?.title}
+                          {user?.title}
                         </Typography.Text>
                       )}
                     </div>
@@ -444,12 +596,12 @@ export default function Profile({ user }) {
                             r.email = e;
                             setRowData(r);
                           },
-                          text: rowData?.email,
+                          text: user?.email,
                         }
                       }
                       className="text-sm"
                     >
-                      {rowData?.email}{" "}
+                      {user?.email}{" "}
                     </Typography.Text>
                   </div>
 
@@ -463,12 +615,12 @@ export default function Profile({ user }) {
                             r.tin = e;
                             setRowData(r);
                           },
-                          text: rowData?.tin,
+                          text: user?.tin,
                         }
                       }
                       className="text-sm "
                     >
-                      {rowData?.tin}{" "}
+                      {user?.tin}{" "}
                     </Typography.Text>
                   </div>
 
@@ -482,12 +634,12 @@ export default function Profile({ user }) {
                             r.telephone = e;
                             setRowData(r);
                           },
-                          text: rowData?.telephone,
+                          text: user?.telephone,
                         }
                       }
                       className="text-sm "
                     >
-                      {rowData?.telephone}{" "}
+                      {user?.telephone}{" "}
                     </Typography.Text>
                   </div>
                   <div className="flex flex-row items-center space-x-10">
@@ -501,11 +653,11 @@ export default function Profile({ user }) {
                               r.website = e;
                               setRowData(r);
                             },
-                            text: rowData?.webSite,
+                            text: user?.webSite,
                           }
                         }
                       >
-                        {rowData?.webSite}{" "}
+                        {user?.webSite}{" "}
                       </Typography.Link>
                     </div>
                   </div>
@@ -520,12 +672,12 @@ export default function Profile({ user }) {
                             r.passportNid = e;
                             setRowData(r);
                           },
-                          text: rowData?.passportNid,
+                          text: user?.passportNid,
                         }
                       }
                       className="text-sm "
                     >
-                      {rowData?.passportNid}
+                      {user?.passportNid}
                     </Typography.Text>
                   </div>
 
@@ -533,7 +685,7 @@ export default function Profile({ user }) {
                     <GiftOutlined className="text-gray-400" />
                     {!editVendor && (
                       <div className="grid grid-cols-1 gap-2">
-                        {rowData?.services?.map((s) => {
+                        {user?.services?.map((s) => {
                           return (
                             <div key={s}>
                               <Tag>{s}</Tag>
@@ -546,7 +698,7 @@ export default function Profile({ user }) {
                       <Select
                         mode="multiple"
                         allowClear
-                        defaultValue={rowData?.services?.map((s) => {
+                        defaultValue={user?.services?.map((s) => {
                           return s;
                         })}
                         style={{ width: "100%" }}
@@ -588,11 +740,11 @@ export default function Profile({ user }) {
                                 setRowData(r);
                               },
                               tooltip: "Edit Hq Address",
-                              text: rowData?.hqAddress,
+                              text: user?.hqAddress,
                             }
                           }
                         >
-                          {rowData?.hqAddress}{" "}
+                          {user?.hqAddress}{" "}
                         </Typography.Text>
                       </div>
                       <div>
@@ -604,12 +756,12 @@ export default function Profile({ user }) {
                                 r.country = e;
                                 setRowData(r);
                               },
-                              text: rowData?.country,
+                              text: user?.country,
                               tooltip: "Edit Country",
                             }
                           }
                         >
-                          {rowData?.country}
+                          {user?.country}
                         </Typography.Text>
                       </div>
                     </div>
@@ -627,15 +779,15 @@ export default function Profile({ user }) {
                     <div
                       className="text-sm "
                       onClick={() => {
-                        if (rowData?.rdbCertId) {
-                          setAttachmentId(`rdbCerts/${rowData?.rdbCertId}.pdf`);
+                        if (user?.rdbCertId) {
+                          setAttachmentId(`rdbCerts/${user?.rdbCertId}.pdf`);
                           setPreviewAttachment(!previewAttachment);
                         }
                       }}
                     >
                       <Typography.Link>
                         Full RDB registration{" "}
-                        {!rowData?.rdbCertId && "-not available"}
+                        {!user?.rdbCertId && "-not available"}
                       </Typography.Link>
                     </div>
                   </div>
@@ -645,19 +797,115 @@ export default function Profile({ user }) {
                     <div
                       className="text-sm "
                       onClick={() => {
-                        if (rowData?.vatCertId) {
-                          setAttachmentId(`vatCerts/${rowData?.vatCertId}.pdf`);
+                        if (user?.vatCertId) {
+                          setAttachmentId(`vatCerts/${user?.vatCertId}.pdf`);
                           setPreviewAttachment(!previewAttachment);
                         }
                       }}
                     >
                       <Typography.Link>
                         VAT certificate{" "}
-                        {!rowData?.vatCertId && "-not available"}
+                        {!user?.vatCertId && "-not available"}
                       </Typography.Link>
                     </div>
                   </div>
                 </div>
+              </div>
+
+              {/* Reset password */}
+              <div className="bg-white ring-1 ring-gray-100 rounded shadow p-5">
+                <div className="text-xl font-semibold mb-5 flex flex-row justify-between items-center">
+                  <div>Reset password</div>
+                </div>
+                <Form
+                  // {...formItemLayout}
+                  form={form}
+                  name="register"
+                  onFinish={onFinish}
+                 
+                  scrollToFirstError
+                  style={{ width: "100%" }}
+                >
+                  <div>
+                    <div>Current password</div>
+                    <Form.Item
+                      name="currentPassword"
+                      // label="Password"
+                      rules={[
+                        {
+                          required: true,
+                          message: "Please input your current password!",
+                        },
+                      ]}
+                      hasFeedback
+                    >
+                      <Input.Password />
+                    </Form.Item>
+                  </div>
+
+                  <div>
+                    <div>New password</div>
+                    <Form.Item
+                      name="newPassword"
+                      // label="Password"
+                      rules={[
+                        {
+                          required: true,
+                          message: "Please input your new password!",
+                        },
+                      ]}
+                      hasFeedback
+                    >
+                      <Input.Password />
+                    </Form.Item>
+                  </div>
+
+                  <div>
+                    <div>Confirm new password</div>
+                    <Form.Item
+                      name="confirmPassword"
+                      // label="Password"
+                      rules={[
+                        {
+                          required: true,
+                          message: "Please confirm your password!",
+                        },
+                        ({ getFieldValue }) => ({
+                          validator(_, value) {
+                            if (
+                              !value ||
+                              getFieldValue("newPassword") === value
+                            ) {
+                              return Promise.resolve();
+                            }
+                            return Promise.reject(
+                              new Error(
+                                "The two passwords that you entered do not match!"
+                              )
+                            );
+                          },
+                        }),
+                      ]}
+                      hasFeedback
+                    >
+                      <Input.Password />
+                    </Form.Item>
+                  </div>
+
+                  <Form.Item>
+                    {submitting ? (
+                      <Spin indicator={antIcon} />
+                    ) : (
+                      <div className="flex flex-row items-center justify-between">
+                        <Button type="primary" danger htmlType="submit">
+                          Update my password
+                        </Button>
+
+                        
+                      </div>
+                    )}
+                  </Form.Item>
+                </Form>
               </div>
             </div>
 

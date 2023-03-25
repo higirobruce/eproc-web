@@ -64,6 +64,7 @@ const LoginForm = () => {
   const [messageApi, contextHolder] = message.useMessage();
   let [loaded, setLoaded] = useState(false);
   let [submitting, setSubmitting] = useState(false);
+  const [forgotPassword, setForgotPassword] = useState(false);
 
   const [form] = Form.useForm();
 
@@ -111,6 +112,47 @@ const LoginForm = () => {
         }
       })
       .catch((err) => {
+        console.log(err);
+        setSubmitting(false);
+        messageApi.open({
+          type: "error",
+          content: "Something happened! Please try again.",
+        });
+      });
+
+    // setTimeout(()=>{
+    //   Router.push('/mainPage').then(()=>{
+    //     setSubmitting(false)
+    //   })
+    // },3000)
+  };
+
+  const resetPassword = (values) => {
+    setSubmitting(true);
+
+    fetch(`${url}/users/reset/${values.email}`, {
+      method: "PUT",
+      headers: {
+        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+        "Content-Type": "application/json",
+      },
+      // body: JSON.stringify({
+      //   email: values.email,
+      //   password: values.password,
+      // }),
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        messageApi.open({
+          type: "success",
+          content: "Success!!",
+        });
+        localStorage.setItem("user", JSON.stringify(res));
+        setSubmitting(false);
+        setForgotPassword(false)
+      })
+      .catch((err) => {
+        alert(JSON.stringify(values))
         console.log(err);
         setSubmitting(false);
         messageApi.open({
@@ -177,24 +219,24 @@ const LoginForm = () => {
       {contextHolder}
       {loaded ? (
         <div className="flex flex-col bg-gray-50 items-center justify-center rounded shadow-md h-screen md:px-20">
-          <Form
-            {...formItemLayout}
-            form={form}
-            name="register"
-            onFinish={onFinish}
-            initialValues={{
-              residence: ["zhejiang", "hangzhou", "xihu"],
-              firstName: "",
-              prefix: "+250",
-              email: "",
-            }}
-            scrollToFirstError
-            style={{ width: "100%" }}
-          >
-            <Row className="flex flex-col items-center justify-between pb-5">
-              <div className="flex flex-row items-center">
-                
-                {/* <div>
+          {!forgotPassword && <>
+            <Form
+              {...formItemLayout}
+              form={form}
+              name="register"
+              onFinish={onFinish}
+              initialValues={{
+                residence: ["zhejiang", "hangzhou", "xihu"],
+                firstName: "",
+                prefix: "+250",
+                email: "",
+              }}
+              scrollToFirstError
+              style={{ width: "100%" }}
+            >
+              <Row className="flex flex-col items-center justify-between pb-5">
+                <div className="flex flex-row items-center">
+                  {/* <div>
                   <Image
                     alt=""
                     className="pt-3"
@@ -204,68 +246,136 @@ const LoginForm = () => {
                   />{" "}
                 </div>
                 <div className="font-bold text-lg">Irembo Procure</div> */}
-              </div>
-              <Typography.Title className="" level={3}>
-                Login
-              </Typography.Title>
-            </Row>
-
-            <div>
-              <div>Email</div>
-              <Form.Item
-                name="email"
-                // label="E-mail"
-                rules={[
-                  {
-                    type: "email",
-                    message: "The input is not valid E-mail!",
-                  },
-                  {
-                    required: true,
-                    message: "Please input your E-mail!",
-                  },
-                ]}
-              >
-                <Input />
-              </Form.Item>
-            </div>
-
-            <div>
-              <div>Password</div>
-              <Form.Item
-                name="password"
-                // label="Password"
-                rules={[
-                  {
-                    required: true,
-                    message: "Please input your password!",
-                  },
-                ]}
-                hasFeedback
-              >
-                <Input.Password />
-              </Form.Item>
-            </div>
-
-            <Form.Item {...tailFormItemLayout}>
-              {submitting ? (
-                <Spin indicator={antIcon} />
-              ) : (
-                <div className="flex flex-row items-center justify-between">
-                  <Button type="default" htmlType="submit">
-                    Login
-                  </Button>
                 </div>
-              )}
-            </Form.Item>
-          </Form>
+                <Typography.Title className="" level={3}>
+                  Login
+                </Typography.Title>
+              </Row>
 
-          <div className="flex flex-row space-x-2 self-start">
-            <Typography.Text level={5}>New User? </Typography.Text>
-            <Typography.Link onClick={() => Router.push("/signup")}>
-              Sign up
-            </Typography.Link>
-          </div>
+              <div>
+                <div>Email</div>
+                <Form.Item
+                  name="email"
+                  // label="E-mail"
+                  rules={[
+                    {
+                      type: "email",
+                      message: "The input is not valid E-mail!",
+                    },
+                    {
+                      required: true,
+                      message: "Please input your E-mail!",
+                    },
+                  ]}
+                >
+                  <Input />
+                </Form.Item>
+              </div>
+
+              <div>
+                <div>Password</div>
+                <Form.Item
+                  name="password"
+                  // label="Password"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Please input your password!",
+                    },
+                  ]}
+                  hasFeedback
+                >
+                  <Input.Password />
+                </Form.Item>
+              </div>
+
+              <Form.Item {...tailFormItemLayout}>
+                {submitting ? (
+                  <Spin indicator={antIcon} />
+                ) : (
+                  <div className="flex flex-row items-center justify-between">
+                    <Button type="default" htmlType="submit">
+                      Login
+                    </Button>
+
+                    <Button type="link" onClick={()=>setForgotPassword(true)}>Forgot password?</Button>
+                  </div>
+                )}
+              </Form.Item>
+            </Form>
+
+            <div className="flex flex-row space-x-2 self-start">
+              <Typography.Text level={5}>New User? </Typography.Text>
+              <Typography.Link onClick={() => Router.push("/signup")}>
+                Sign up
+              </Typography.Link>
+            </div>
+          </>}
+
+          {forgotPassword && <>
+            <Form
+              {...formItemLayout}
+              form={form}
+              name="reset"
+              onFinish={resetPassword}
+              
+              scrollToFirstError
+              style={{ width: "100%" }}
+            >
+              <Row className="flex flex-col items-center justify-between pb-5">
+                <div className="flex flex-row items-center">
+                  {/* <div>
+                  <Image
+                    alt=""
+                    className="pt-3"
+                    src="/icons/blue icon.png"
+                    width={43}
+                    height={40}
+                  />{" "}
+                </div>
+                <div className="font-bold text-lg">Irembo Procure</div> */}
+                </div>
+                <Typography.Title className="" level={3}>
+                  Reset Password
+                </Typography.Title>
+              </Row>
+
+              <div>
+                <div>Email</div>
+                <Form.Item
+                  name="email"
+                  // label="E-mail"
+                  rules={[
+                    {
+                      type: "email",
+                      message: "The input is not valid E-mail!",
+                    },
+                    {
+                      required: true,
+                      message: "Please input your E-mail!",
+                    },
+                  ]}
+                >
+                  <Input />
+                </Form.Item>
+              </div>
+
+
+              <Form.Item {...tailFormItemLayout}>
+                {submitting ? (
+                  <Spin indicator={antIcon} />
+                ) : (
+                  <div className="flex flex-row items-center justify-between">
+                    <Button type="default" htmlType="submit">
+                      Send me reset token
+                    </Button>
+
+                    <Button type="link" onClick={()=>setForgotPassword(false)}>Back to Login</Button>
+                  </div>
+                )}
+              </Form.Item>
+            </Form>
+          </>}
         </div>
       ) : (
         <Skeleton />

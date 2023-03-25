@@ -97,16 +97,15 @@ export default function PurchaseOrders({ user }) {
   const [signing, setSigning] = useState(false);
 
   const [searchStatus, setSearchStatus] = useState("all");
-  const [searchText, setSearchText] = useState('')
+  const [searchText, setSearchText] = useState("");
 
   useEffect(() => {
-    refresh()
+    refresh();
   }, []);
 
   useEffect(() => {
     refresh();
   }, [searchStatus]);
-
 
   useEffect(() => {
     if (searchText === "") {
@@ -116,7 +115,10 @@ export default function PurchaseOrders({ user }) {
       let filtered = _dataSet.filter((d) => {
         return (
           d?.number?.toString().indexOf(searchText.toLowerCase()) > -1 ||
-          d?.vendor?.companyName?.toString().toLowerCase().indexOf(searchText.toLowerCase()) > -1
+          d?.vendor?.companyName
+            ?.toString()
+            .toLowerCase()
+            .indexOf(searchText.toLowerCase()) > -1
         );
       });
       setTempPOs(filtered);
@@ -124,8 +126,8 @@ export default function PurchaseOrders({ user }) {
     }
   }, [searchText]);
 
-  function refresh(){
-    setDataLoaded(false)
+  function refresh() {
+    setDataLoaded(false);
     if (user?.userType === "VENDOR") {
       fetch(`${url}/purchaseOrders/byVendorId/${user?._id}`, {
         method: "GET",
@@ -710,43 +712,49 @@ export default function PurchaseOrders({ user }) {
                       </div>
                     </div>
 
-                    <div className="flex flex-col space-y-3 text-gray-600">
-                      {po?.signatories?.map((s) => {
-                        return (
-                          <div
-                            key={s?.email}
-                            className="flex flex-row items-center space-x-2"
-                          >
-                            <div>
-                              {s?.signed ? (
-                                <Tooltip
-                                  placement="top"
-                                  title={`signed: ${moment(s?.signedAt).format(
-                                    "DD MMM YYYY"
-                                  )} at ${moment(s?.signedAt)
-                                    .tz("Africa/Kigali")
-                                    .format("h:mm a z")}`}
-                                >
-                                  <span>
-                                    <LockClosedIcon className="h-5 text-green-500" />
-                                  </span>
-                                </Tooltip>
-                              ) : (
-                                <Tooltip title="Signature still pending">
-                                  <span>
-                                    <LockOpenIcon className="h-5 text-yellow-500" />
-                                  </span>
-                                </Tooltip>
-                              )}
+                    {(user?.userType !== "VENDOR" ||
+                      (user?.userType == "VENDOR" &&
+                        documentFullySignedInternally(po))) && (
+                      <div className="flex flex-col space-y-3 text-gray-600">
+                        {po?.signatories?.map((s) => {
+                          return (
+                            <div
+                              key={s?.email}
+                              className="flex flex-row items-center space-x-2"
+                            >
+                              <div>
+                                {s?.signed ? (
+                                  <Tooltip
+                                    placement="top"
+                                    title={`signed: ${moment(
+                                      s?.signedAt
+                                    ).format("DD MMM YYYY")} at ${moment(
+                                      s?.signedAt
+                                    )
+                                      .tz("Africa/Kigali")
+                                      .format("h:mm a z")}`}
+                                  >
+                                    <span>
+                                      <LockClosedIcon className="h-5 text-green-500" />
+                                    </span>
+                                  </Tooltip>
+                                ) : (
+                                  <Tooltip title="Signature still pending">
+                                    <span>
+                                      <LockOpenIcon className="h-5 text-yellow-500" />
+                                    </span>
+                                  </Tooltip>
+                                )}
+                              </div>
+                              <div className="flex flex-col text-gray-600">
+                                <div>{s?.onBehalfOf}</div>
+                                <div>{s?.names}</div>
+                              </div>
                             </div>
-                            <div className="flex flex-col text-gray-600">
-                              <div>{s?.onBehalfOf}</div>
-                              <div>{s?.names}</div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
+                          );
+                        })}
+                      </div>
+                    )}
 
                     <div className="flex flex-col space-y-1 items-center justify-center">
                       {/* <Dropdown.Button

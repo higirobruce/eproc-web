@@ -501,7 +501,7 @@ export default function UserRequests({ user }) {
   function updateProgress(po, progress, qty, index) {
     let _po = { ...po };
     _po.items[index].deliveredQty = qty;
-    _po.deliveryProgress = progress;
+    _po.deliveryProgress = Math.round(progress);
     fetch(`${url}/purchaseOrders/progress/${po?._id}`, {
       method: "PUT",
       body: JSON.stringify({
