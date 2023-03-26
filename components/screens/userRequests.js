@@ -247,6 +247,7 @@ export default function UserRequests({ user }) {
       },
     });
   }
+  
   useEffect(() => {
     setUpdatingId("");
   }, [dataset]);
@@ -537,9 +538,11 @@ export default function UserRequests({ user }) {
       });
   }
 
-  function rateDelivery(po, rate) {
+  function rateDelivery(po, rate, comment) {
     let _po = { ...po };
     _po.rate = rate;
+    _po.rateComment = comment
+    setLoadingRowData(true)
     fetch(`${url}/purchaseOrders/progress/${po?._id}`, {
       method: "PUT",
       body: JSON.stringify({
@@ -561,18 +564,19 @@ export default function UserRequests({ user }) {
             let r = res.filter((d) => {
               return d._id === id;
             });
-            console.log(r);
+
             setRowData(r[0]);
             setLoadingRowData(false);
           })
           .catch((err) => {
+            
             setLoadingRowData(false);
             messageApi.open({
               type: "error",
               content: "Something happened! Please try again.",
             });
           });
-      });
+      })
   }
 
   function createPO(
@@ -608,7 +612,6 @@ export default function UserRequests({ user }) {
       .then((res) => res.json())
       .then((res1) => {
         if (res1.error) {
-          alert(JSON.stringify(res1))
           messageApi.open({
             type: "error",
             content: res1.message,

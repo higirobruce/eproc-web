@@ -155,6 +155,8 @@ const RequestDetails = ({
   let [contractEndDate, setContractEndDate] = useState(moment());
   let [reqAttachId, setReqAttachId] = useState(v4());
   const [creatingPO, setCreatingPO] = useState(false);
+  const [comment, setComment] = useState('')
+  const [rate, setRate] = useState(0)
 
   const [assetOptions, setAssetOptions] = useState([]);
 
@@ -769,9 +771,9 @@ const RequestDetails = ({
                     </div>
 
                     {
-                    // data.status !== "approved" &&
-                    //   data.status !== "po created" &&
-                    //   data.status !== "declined" &&
+                      // data.status !== "approved" &&
+                      //   data.status !== "po created" &&
+                      //   data.status !== "declined" &&
                       buildApprovalFlow(
                         currentCode,
                         changeStatus,
@@ -791,7 +793,8 @@ const RequestDetails = ({
                         setSelectedContract,
                         data,
                         submitContractData
-                      )}
+                      )
+                    }
 
                     {po?.status === "started" && (
                       <div className="ml-5 w-1/3">
@@ -805,7 +808,8 @@ const RequestDetails = ({
                     )}
 
                     {po?.status === "started" &&
-                      po?.deliveryProgress < 100 && user?._id===data?.createdBy?._id &&
+                      po?.deliveryProgress < 100 &&
+                      user?._id === data?.createdBy?._id &&
                       po?.items.map((i, index) => {
                         return (
                           <div key={i.key} className="m-5">
@@ -829,26 +833,37 @@ const RequestDetails = ({
                       (tender || po) &&
                       buildWorkflow(currentStep, tender, po)} */}
 
-                    {po && po.deliveryProgress >= 100 && (
-                      <>
+                    {po && po.deliveryProgress >= 100 && !po.rate && (
+                      <div className="justify-center items-center w-full flex flex-col space-y-3">
                         <Divider></Divider>
                         <Typography.Title level={5}>
                           Supplier & Delivery Rate
                         </Typography.Title>
                         <Rate
-                          allowHalf
+                          // allowHalf
                           disabled={user?._id !== data?.createdBy?._id}
-                          defaultValue={po?.rate || 2.5}
+                          defaultValue={po?.rate || rate}
                           tooltips={[
-                            "Mediocre",
-                            "Moderately good",
+                            "Very bad",
+                            "Bad",
                             "Good",
                             "Very good",
                             "Excellent",
                           ]}
-                          onChange={(value) => handleRateDelivery(po, value)}
+                          onChange={(value) => setRate(value)}
+                          // onChange={(value) => handleRateDelivery(po, value)}
                         />
-                      </>
+
+                        <Typography.Title level={5}>
+                          Give a comment on your rating
+                        </Typography.Title>
+                        <Input.TextArea className="w-1/3" value={comment} onChange={(v)=>setComment(v.target.value)} />
+                        
+                        <div>
+                        <Button type="primary" onClick={()=>handleRateDelivery(po, rate, comment)}>Submit my rate and review</Button>
+                        </div>
+
+                      </div>
                     )}
 
                     {data.status === "declined" && (
@@ -920,7 +935,9 @@ const RequestDetails = ({
             {
               children: "Delivered",
               color: progress >= 100 ? "blue" : "gray",
-              dot: po && progress >= 100 && <CheckCircleOutlined className=" text-green-500" />,
+              dot: po && progress >= 100 && (
+                <CheckCircleOutlined className=" text-green-500" />
+              ),
             },
           ]}
         />
@@ -1527,7 +1544,6 @@ const RequestDetails = ({
                   <InputNumber
                     style={{ width: "100%" }}
                     placeholder="qty approved"
-                    
                     onChange={(value) => {
                       handleGetProgress(value);
                       setDeliveredQty(po?.items[index].deliveredQty + value);
@@ -1538,20 +1554,19 @@ const RequestDetails = ({
                 <Form.Item>
                   {/* <Popover content="Confirm Quantity approved"> */}
                   <Popconfirm
-                  title='Confirm Delivered Quantity'
-                  open={open}
-                  onCancel={()=>setOpen(false)}
-                  onConfirm={() => {
-                   handleUpdateProgress(
-                      po,
-                      parseFloat(progress) +
-                        parseFloat(po?.deliveryProgress),
-                      deliveredQty,
-                      index
-                    );
-                    
-                    setOpen(false)
-                  }}
+                    title="Confirm Delivered Quantity"
+                    open={open}
+                    onCancel={() => setOpen(false)}
+                    onConfirm={() => {
+                      handleUpdateProgress(
+                        po,
+                        parseFloat(progress) + parseFloat(po?.deliveryProgress),
+                        deliveredQty,
+                        index
+                      );
+
+                      setOpen(false);
+                    }}
                   >
                     <Button
                       type="primary"
@@ -1579,7 +1594,7 @@ const RequestDetails = ({
         open={openCreatePO}
         confirmLoading={creatingPO}
         onOk={async () => {
-          // setCreatingPo(trOe);
+          setCreatingPO(true);
           let assetItems = [];
           let nonAssetItems = [];
 
@@ -1600,7 +1615,7 @@ const RequestDetails = ({
             .filter((i) => i.itemType === "non-asset" || !i.itemType)
             .map((i, index) => {
               nonAssetItems.push({
-                // ItemCode: a,
+                ItemDescription: i.title,
                 Quantity: i.quantity,
                 UnitPrice: i.estimatedUnitCost,
                 VatGroup: i.taxGroup ? i.taxGroup : "X1",
@@ -1970,7 +1985,7 @@ const RequestDetails = ({
                 onClick={() => {
                   let signs = [...signatories];
                   let newSignatory =
-                    signs?.length <=1
+                    signs?.length <= 1
                       ? { onBehalfOf: "Irembo Ltd" }
                       : {
                           onBehalfOf: vendor?.companyName,

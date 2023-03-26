@@ -152,7 +152,6 @@ const LoginForm = () => {
         setForgotPassword(false)
       })
       .catch((err) => {
-        alert(JSON.stringify(values))
         console.log(err);
         setSubmitting(false);
         messageApi.open({

@@ -1504,7 +1504,7 @@ const TenderDetails = ({
         open={openCreatePO}
         confirmLoading={creatingPo}
         onOk={async () => {
-          // setCreatingPo(true);
+          setCreatingPo(true);
           let assetItems = [];
           let nonAssetItems = [];
 
@@ -2271,7 +2271,6 @@ const TenderDetails = ({
             <Button icon={<PrinterOutlined />}>Print</Button>
           </div>
           <div className="grid grid-cols-2 gap-5 ">
-            
             <div className="flex flex-col ring-1 ring-gray-300 rounded p-5 space-y-3">
               <div className="flex flex-col">
                 <Typography.Text type="secondary">
@@ -2368,6 +2367,10 @@ const TenderDetails = ({
           {/* Signatories */}
           <div className="grid grid-cols-3 gap-5">
             {po?.signatories?.map((s, index) => {
+              let yetToSign = po?.signatories?.filter((notS) => {
+                return !notS.signed;
+              });
+
               return (
                 <div
                   key={s?.email}
@@ -2437,7 +2440,8 @@ const TenderDetails = ({
                   )}
 
                   {(user?.email === s?.email || user?.tempEmail === s?.email) &&
-                    !s?.signed && (
+                    !s?.signed &&
+                    previousSignatorySigned(po?.signatories, index) && (
                       <Popconfirm
                         title="Confirm Contract Signature"
                         onConfirm={() => handleSignPo(s, index)}
@@ -2450,25 +2454,29 @@ const TenderDetails = ({
                           />
 
                           <div className="text-blue-400 text-lg">
-                            Sign with one click
+                            It is your turn, sign with one click
                           </div>
                         </div>
                       </Popconfirm>
                     )}
-                  {user?.email !== s?.email &&
+
+                  {((user?.email !== s?.email &&
                     user?.tempEmail !== s?.email &&
-                    !s.signed && (
-                      <div className="flex flex-row justify-center space-x-5 items-center border-t-2 bg-gray-50 p-5">
-                        <Image
-                          width={40}
-                          height={40}
-                          src="/icons/icons8-signature-80-2.png"
-                        />
-                        <div className="text-gray-400 text-lg">
-                          {s.signed ? "Signed" : "Waiting for signature"}
-                        </div>
+                    !s.signed) ||
+                    !previousSignatorySigned(po?.signatories, index)) && (
+                    <div className="flex flex-row justify-center space-x-5 items-center border-t-2 bg-gray-50 p-5">
+                      <Image
+                        width={40}
+                        height={40}
+                        src="/icons/icons8-signature-80-2.png"
+                      />
+                      <div className="text-gray-400 text-lg">
+                        {s.signed
+                          ? "Signed"
+                          : `Waiting for ${yetToSign[0]?.names}'s signature`}
                       </div>
-                    )}
+                    </div>
+                  )}
                 </div>
               );
             })}
