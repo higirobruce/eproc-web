@@ -2693,6 +2693,9 @@ const TenderDetails = ({
           {/* Signatories */}
           <div className="grid grid-cols-3 gap-5">
             {signatories?.map((s, index) => {
+              let yetToSign = signatories?.filter((notS) => {
+                return !notS.signed;
+              });
               return (
                 <div
                   key={s?.email}
@@ -2839,7 +2842,7 @@ const TenderDetails = ({
                             src="/icons/icons8-signature-80.png"
                           />
                           <div className="text-blue-400 text-lg">
-                            Sign with one click
+                            It is your turn, sign with one click
                           </div>
                         </div>
                       </Popconfirm>
@@ -2856,7 +2859,7 @@ const TenderDetails = ({
                         src="/icons/icons8-signature-80-2.png"
                       />
                       <div className="text-gray-400 text-lg">
-                        {s.signed ? "Signed" : "Waiting for signature"}
+                        {s.signed ? "Signed" : `Waiting for ${yetToSign[0]?.names}'s signature`}
                       </div>
                     </div>
                   )}
