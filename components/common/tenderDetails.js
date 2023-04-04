@@ -681,6 +681,9 @@ const TenderDetails = ({
             <DatePicker
               className="w-full"
               onChange={(value) => setDeliveryDate(value)}
+              disabledDate={(current) =>
+                current.isBefore(moment().subtract(1, "d"))
+              }
             />
           </Form.Item>
         </div>
@@ -933,7 +936,7 @@ const TenderDetails = ({
             </Tabs.TabPane>
             {user?.userType !== "VENDOR" && (
               <>
-                <Tabs.TabPane tab="Bidding" key="2">
+                <Tabs.TabPane tab="Bids list" key="2">
                   <div className="flex flex-col space-y-2 p-3">
                     {buildTabHeader()}
                     {/* Evaluators section */}
@@ -1102,7 +1105,7 @@ const TenderDetails = ({
                     </div>
                   </div>
                 </Tabs.TabPane>
-                <Tabs.TabPane tab="Agreement" key="3">
+                <Tabs.TabPane tab="Tender award" key="3">
                   <div className="flex flex-col space-y-5 p-3">
                     {buildTabHeader()}
                     <Divider></Divider>
@@ -1340,7 +1343,7 @@ const TenderDetails = ({
             )}
             {user?.userType === "VENDOR" &&
               contract?.vendor?._id === user?._id && (
-                <Tabs.TabPane tab="Agreement" key="3">
+                <Tabs.TabPane tab="Tender award" key="3">
                   <div className="flex flex-col space-y-5 p-3">
                     {buildTabHeader()}
                     {bidList?.filter((d) => d.status === "awarded").length >=
@@ -1564,20 +1567,46 @@ const TenderDetails = ({
               })
             : (B1Data_NonAssets = null);
 
-          await handleCreatePO(
-            vendor?._id,
-            tendor?._id,
-            user?._id,
-            sections,
-            items,
-            {
-              B1Data_Assets,
-              B1Data_NonAssets,
-            },
-            signatories
-          );
-          setCreatingPo(false);
-          setOpenCreatePO(false);
+          if (!signatories || signatories?.length < 3) {
+            messageApi.open({
+              type: "error",
+              content: "PO can not be submitted. Please specify at least 3 signatories!",
+            });
+            setCreatingPO(false);
+          } else if(items?.filter(i=>i.quantity<=0 || i.estimatedUnitCost<=0 || !i.quantity || !i.estimatedUnitCost)?.length>=1){
+            messageApi.open({
+              type: "error",
+              content:
+                "PO can not be created. Please specify Quantity/Price!",
+            });
+            setCreatingPO(false);
+          }else if (
+            signatories?.filter((s) => {
+              return !s?.onBehalfOf || !s?.title || !s?.names || !s?.email;
+            })?.length >= 1
+          ) {
+            messageApi.open({
+              type: "error",
+              content:
+              "PO can not be submitted. Please fill in the relevant signatories' details!"
+            });
+            setCreatingPO(false);
+          } else {
+            await handleCreatePO(
+              vendor?._id,
+              tendor?._id,
+              user?._id,
+              sections,
+              items,
+              {
+                B1Data_Assets,
+                B1Data_NonAssets,
+              },
+              signatories
+            );
+            setCreatingPo(false);
+            setOpenCreatePO(false);
+          }
         }}
         okText="Save and Submit"
         onCancel={() => setOpenCreatePO(false)}
@@ -1928,17 +1957,34 @@ const TenderDetails = ({
         centered
         open={openCreateContract}
         onOk={() => {
-          handleCreateContract(
-            vendor?._id,
-            tendor?._id,
-            user?._id,
-            sections,
-            contractStartDate,
-            contractEndDate,
-            signatories,
-            tendor?.purchaseRequest?._id
-          );
-          setOpenCreateContract(false);
+          if (!signatories || signatories?.length < 2) {
+            messageApi.open({
+              type: "error",
+              content: "PO can not be submitted. Please specify at least 2 signatories!",
+            });
+          } else if (
+            signatories?.filter((s) => {
+              return !s?.onBehalfOf || !s?.title || !s?.names || !s?.email;
+            })?.length >= 1
+          ) {
+            messageApi.open({
+              type: "error",
+              content:
+              "PO can not be submitted. Please fill in the relevant signatories' details!"
+            });
+          } else {
+            handleCreateContract(
+              vendor?._id,
+              tendor?._id,
+              user?._id,
+              sections,
+              contractStartDate,
+              contractEndDate,
+              signatories,
+              tendor?.purchaseRequest?._id
+            );
+            setOpenCreateContract(false);
+          }
         }}
         okText="Submit for review"
         onCancel={() => setOpenCreateContract(false)}
@@ -1946,6 +1992,7 @@ const TenderDetails = ({
         bodyStyle={{ maxHeight: "700px", overflow: "scroll" }}
       >
         <div className="space-y-10 px-20 py-5">
+          {contextHolder}
           <Typography.Title level={4}>
             CONTRACTOR: {vendor?.companyName}
           </Typography.Title>
@@ -2859,7 +2906,9 @@ const TenderDetails = ({
                         src="/icons/icons8-signature-80-2.png"
                       />
                       <div className="text-gray-400 text-lg">
-                        {s.signed ? "Signed" : `Waiting for ${yetToSign[0]?.names}'s signature`}
+                        {s.signed
+                          ? "Signed"
+                          : `Waiting for ${yetToSign[0]?.names}'s signature`}
                       </div>
                     </div>
                   )}

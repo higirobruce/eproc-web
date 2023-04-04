@@ -101,7 +101,7 @@ const SignupForm = () => {
         experienceDurationInYears: values.experience,
         experienceDurationInMonths: values.experience * 12,
         webSite: values.website,
-        status: "created",
+        status: "pending-approval",
         password: values.password,
         tin: values.tin,
         number: values.number,
@@ -317,7 +317,7 @@ const SignupForm = () => {
                             rules={[
                               {
                                 required: true,
-                                message: "Please input your Company Name!",
+                                message: "Input required",
                               },
                             ]}
                           >
@@ -336,9 +336,9 @@ const SignupForm = () => {
                               // { len: 10, message: "TIN should be 10 charachers" },
                               {
                                 type: "integer",
-                                message: "TIN provided is not a number",
+                                message: "Input required",
                               },
-                              { required: true, message: "Please input TIN!" },
+                              { required: true, message: " TIN!" },
                             ]}
                           >
                             <InputNumber style={{ width: "100%" }} />
@@ -358,7 +358,7 @@ const SignupForm = () => {
                             rules={[
                               {
                                 required: true,
-                                message: "Please input contact person's names!",
+                                message: "Input required",
                               },
                             ]}
                           >
@@ -375,7 +375,7 @@ const SignupForm = () => {
                             rules={[
                               {
                                 required: true,
-                                message: "Please input contact person's title!",
+                                message: "Input required",
                               },
                             ]}
                           >
@@ -397,7 +397,7 @@ const SignupForm = () => {
                               },
                               {
                                 required: true,
-                                message: "Please input your E-mail!",
+                                message: "Input required",
                               },
                             ]}
                           >
@@ -429,7 +429,7 @@ const SignupForm = () => {
                             rules={[
                               {
                                 required: true,
-                                message: "Please input your password!",
+                                message: "Input required",
                               },
                             ]}
                             hasFeedback
@@ -450,7 +450,7 @@ const SignupForm = () => {
                             rules={[
                               {
                                 required: true,
-                                message: "Please confirm your password!",
+                                message: "Input required",
                               },
                               ({ getFieldValue }) => ({
                                 validator(_, value) {
@@ -484,7 +484,7 @@ const SignupForm = () => {
                             rules={[
                               {
                                 required: true,
-                                message: "Please input your phone number!",
+                                message: "Input required",
                               },
                             ]}
                           >
@@ -501,7 +501,7 @@ const SignupForm = () => {
                             rules={[
                               {
                                 required: true,
-                                message: "Areas of expertise are required",
+                                message: "Input required",
                               },
                             ]}
                           >
@@ -594,7 +594,7 @@ const SignupForm = () => {
                                   ? Promise.resolve()
                                   : Promise.reject(
                                       new Error(
-                                        "Should attach the incorporation document"
+                                        "Please attach your incorporation document"
                                       )
                                     ),
                             },

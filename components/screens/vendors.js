@@ -33,6 +33,7 @@ import {
   FileTextOutlined,
   GiftOutlined,
   GlobalOutlined,
+  HomeFilled,
   IdcardOutlined,
   LoadingOutlined,
   MailOutlined,
@@ -42,6 +43,7 @@ import {
   ReloadOutlined,
   SaveOutlined,
   SettingOutlined,
+  UploadOutlined,
   UserOutlined,
 } from "@ant-design/icons";
 import moment from "moment";
@@ -95,7 +97,10 @@ export default function Vendors({ user }) {
       let _dataSet = [...dataset];
       let filtered = _dataSet.filter((d) => {
         return (
-          d?.companyName?.toString().toLowerCase().indexOf(searchText.toLowerCase()) > -1 ||
+          d?.companyName
+            ?.toString()
+            .toLowerCase()
+            .indexOf(searchText.toLowerCase()) > -1 ||
           d?.tin?.toString().indexOf(searchText.toLowerCase()) > -1
         );
       });
@@ -126,6 +131,30 @@ export default function Vendors({ user }) {
         });
     }
   }, [rowData]);
+
+  useEffect(() => {
+    setDataLoaded(false);
+    let requestUrl =  `${url}/users/vendors/byStatus/${searchStatus}/`;
+    fetch(requestUrl, {
+      method: "GET",
+      headers: {
+        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+        "Content-Type": "application/json",
+      },
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        setDataLoaded(true);
+        setDataset(res);
+        setTempDataset(res);
+      })
+      .catch((err) => {
+        messageApi.open({
+          type: "error",
+          content: "Something happened! Please try again.",
+        });
+      });
+  }, [searchStatus]);
 
   function refresh() {
     loadVendors();
@@ -348,15 +377,15 @@ export default function Vendors({ user }) {
                   options={[
                     { value: "all", label: "All" },
                     {
-                      value: "pending",
-                      label: "Pending for approval",
+                      value: "pending-approval",
+                      label: "Pending approval",
                     },
                     {
                       value: "approved",
                       label: "Approved",
                     },
                     {
-                      value: "declined",
+                      value: "rejected",
                       label: "Rejected",
                     },
                   ]}
@@ -364,7 +393,7 @@ export default function Vendors({ user }) {
               </div>
               <div className="">
                 <Input.Search
-                autoFocus
+                  autoFocus
                   style={{ width: "300px" }}
                   onChange={(e) => {
                     setSearchText(e?.target?.value);
@@ -379,7 +408,7 @@ export default function Vendors({ user }) {
               ></Button>
             </Row>
           </Row>
-          
+
           {/* <Row className="flex flex-row justify-between items-center">
             <div className="flex flex-row items-start space-x-5 w-1/4">
               <div className="text-xl font-semibold">Vendors List</div>
@@ -491,11 +520,11 @@ export default function Vendors({ user }) {
 
                   {updatingId !== rowData?._id && (
                     <div>
-                      {rowData.status === "created" && (
+                      {rowData.status === "pending-approval" && (
                         <span>
                           <Popconfirm
                             title="Approve vendor"
-                            description="Are you sure to approve this vendor?"
+                            description="Are you sure?"
                             okText="Yes"
                             cancelText="No"
                             onConfirm={() => approveUser(rowData._id)}
@@ -507,17 +536,17 @@ export default function Vendors({ user }) {
                         </span>
                       )}
 
-                      {rowData.status === "declined" && (
+                      {rowData.status === "rejected" && (
                         <span>
                           <Popconfirm
-                            title="Activate vendor"
+                            title="Approve vendor"
                             description="Are you sure to activate this vendor?"
                             okText="Yes"
                             cancelText="No"
                             onConfirm={() => activateVendor(rowData._id)}
                           >
                             <div className="flex flex-row items-center justify-center text-sm ring-1 ring-green-400 rounded px-2 py-1 cursor-pointer bg-green-200">
-                              Activate
+                              Approve
                             </div>
                           </Popconfirm>
                         </span>
@@ -526,14 +555,14 @@ export default function Vendors({ user }) {
                       {rowData.status === "approved" && (
                         <span>
                           <Popconfirm
-                            title="Deactive vendor"
-                            description="Are you sure to deactivate this vendor?"
+                            title="Reject vendor"
+                            description="Are you sure?"
                             okText="Yes"
                             cancelText="No"
-                            onConfirm={() => banVendor(rowData._id)}
+                            onConfirm={() => declineUser(rowData._id)}
                           >
                             <div className="flex flex-row items-center justify-center text-sm ring-1 ring-red-400 rounded px-2 py-1 cursor-pointer bg-red-200">
-                              Deactivate
+                              Reject
                             </div>
                           </Popconfirm>
                         </span>
@@ -542,7 +571,7 @@ export default function Vendors({ user }) {
                         <span>
                           <Popconfirm
                             title="Acivate vendor"
-                            description="Are you sure to activate this vendor?"
+                            description="Are you sure?"
                             okText="Yes"
                             cancelText="No"
                             onConfirm={() => activateVendor(rowData._id)}
@@ -567,6 +596,42 @@ export default function Vendors({ user }) {
 
                 <div className="flex flex-col space-y-2">
                   <div className="flex flex-row items-center space-x-10">
+                    <HomeFilled className="text-gray-400" />
+                    <div className="text-sm flex flex-row items-center space-x-2">
+                      <Typography.Text
+                        editable={
+                          editVendor && {
+                            onChange: (e) => {
+                              let r = { ...rowData };
+                              r.companyName = e;
+                              setRowData(r);
+                            },
+                            text: rowData?.companyName,
+                          }
+                        }
+                      >
+                        {rowData?.companyName}
+                      </Typography.Text>{" "}
+                      {editVendor && (
+                        <Typography.Text
+                          editable={
+                            editVendor && {
+                              onChange: (e) => {
+                                let r = { ...rowData };
+                                r.title = e;
+                                setRowData(r);
+                              },
+                              text: rowData?.title,
+                            }
+                          }
+                        >
+                          {rowData?.title}
+                        </Typography.Text>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-row items-center space-x-10">
                     <UserOutlined className="text-gray-400" />
                     <div className="text-sm flex flex-row items-center space-x-2">
                       <Typography.Text
@@ -585,7 +650,7 @@ export default function Vendors({ user }) {
                       </Typography.Text>{" "}
                       {!editVendor && (
                         <div>
-                          <Tag color="cyan">{rowData?.title}</Tag>
+                          <Tag color="cyan">Position: {rowData?.title}</Tag>
                         </div>
                       )}
                       {editVendor && (
@@ -606,6 +671,7 @@ export default function Vendors({ user }) {
                       )}
                     </div>
                   </div>
+
                   <div className="flex flex-row items-center space-x-10">
                     <MailOutlined className="text-gray-400" />
                     <Typography.Text
@@ -626,7 +692,7 @@ export default function Vendors({ user }) {
                   </div>
 
                   <div className="flex flex-row items-center space-x-10">
-                    <BankOutlined className="text-gray-400" />
+                    <IdcardOutlined className="text-gray-400" />
                     <Typography.Text
                       editable={
                         editVendor && {
@@ -640,7 +706,7 @@ export default function Vendors({ user }) {
                       }
                       className="text-sm "
                     >
-                      {rowData?.tin}{" "}
+                      TIN: {rowData?.tin}{" "}
                     </Typography.Text>
                   </div>
 
@@ -680,25 +746,6 @@ export default function Vendors({ user }) {
                         {rowData?.webSite}{" "}
                       </Typography.Link>
                     </div>
-                  </div>
-
-                  <div className="flex flex-row items-center space-x-10">
-                    <IdcardOutlined className="text-gray-400" />
-                    <Typography.Text
-                      editable={
-                        editVendor && {
-                          onChange: (e) => {
-                            let r = { ...rowData };
-                            r.passportNid = e;
-                            setRowData(r);
-                          },
-                          text: rowData?.passportNid,
-                        }
-                      }
-                      className="text-sm "
-                    >
-                      {rowData?.passportNid}
-                    </Typography.Text>
                   </div>
 
                   <div className="flex flex-row items-center space-x-10">
@@ -764,7 +811,7 @@ export default function Vendors({ user }) {
                             }
                           }
                         >
-                          {rowData?.hqAddress}{" "}
+                          {rowData?.hqAddress} ,
                         </Typography.Text>
                       </div>
                       <div>
@@ -805,11 +852,22 @@ export default function Vendors({ user }) {
                         }
                       }}
                     >
-                      <Typography.Link>
-                        Full RDB registration{" "}
-                        {!rowData?.rdbCertId && "-not available"}
-                      </Typography.Link>
+                      {rowData?.rdbCertId && (
+                        <Typography.Link>
+                          Incorporation Certificate{" "}
+                        </Typography.Link>
+                      )}
+                      {!rowData?.rdbCertId && (
+                        <Typography.Text>
+                          Incorporation Certificate{" "}
+                        </Typography.Text>
+                      )}
                     </div>
+                    {!rowData?.rdbCertId && (
+                      <div>
+                        <UploadOutlined className="text-blue-500 hover:cursor-pointer" />
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex flex-row items-center space-x-10">
@@ -823,11 +881,18 @@ export default function Vendors({ user }) {
                         }
                       }}
                     >
-                      <Typography.Link>
-                        VAT certificate{" "}
-                        {!rowData?.vatCertId && "-not available"}
-                      </Typography.Link>
+                      {rowData?.vatCertId && (
+                        <Typography.Link>VAT Certificate </Typography.Link>
+                      )}
+                      {!rowData?.vatCertId && (
+                        <Typography.Text>VAT Certificate </Typography.Text>
+                      )}
                     </div>
+                    {!rowData?.vatCertId && (
+                      <div>
+                        <UploadOutlined className="text-blue-500 hover:cursor-pointer" />
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

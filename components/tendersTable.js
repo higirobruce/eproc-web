@@ -105,6 +105,7 @@ const TendersTable = ({
     {
       title: "Closing date",
       key: "submissionDeadLine",
+      sorter: (a, b) => moment(a.submissionDeadLine).isAfter(moment(b.submissionDeadLine)),
       render: (_, record) => (
         <>
           <Row className="felx flex-row items-center justify-between">

@@ -611,12 +611,14 @@ export default function UserRequests({ user }) {
     })
       .then((res) => res.json())
       .then((res1) => {
-        if (res1.error) {
+        if (res1.error || res1.code) {
+          alert(JSON.stringify(res1))
           messageApi.open({
             type: "error",
-            content: res1.message,
+            content: res1.message?.value ,
           });
         } else {
+          
           updateStatus(rowData._id, "approved");
           messageApi.open({
             type: "success",
@@ -719,7 +721,7 @@ export default function UserRequests({ user }) {
     <>
       {contextHolder}
       {dataLoaded ? (
-        <div className="flex flex-col transition-opacity ease-in-out duration-1000 flex-1 space-y-10 h-full">
+        <div className="flex flex-col transition-opacity ease-in-out duration-1000 flex-1 space-y-10 h-full pb-10">
           <Row className="flex flex-col bg-white px-10 py-3 shadow space-y-2">
             <div className="flex flex-row items-center justify-between">
               <div className="text-xl font-semibold">Purchase Requests</div>
@@ -745,7 +747,7 @@ export default function UserRequests({ user }) {
                   options={[
                     // { value: "mine", label: "My requests" },
                     { value: "all", label: "All requests" },
-                    { value: "pending", label: "Pending for approval" },
+                    { value: "pending", label: "Pending approval" },
                     {
                       value: "approved",
                       label: "Approved",
@@ -805,18 +807,27 @@ export default function UserRequests({ user }) {
             title="Create a User Purchase request"
             centered
             open={open}
-            onOk={() => {
-              form.validateFields();
-              save();
+            onOk={async () => {
+              await form.validateFields();
+              if (values && values[0]) {
+                let invalidValues = values?.filter(v=>
+                    v?.title=='' ||
+                    v?.quantity==''||
+                    v?.estimatedUnitCost===''
+                  )
+                if(invalidValues?.length==0){
+                  save()
+                }
+              }
             }}
             onCancel={() => {
               setOpen(false);
               setValues([]);
             }}
             okText="Submit for approval"
-            okButtonProps={{ size: "small" }}
+            okButtonProps={{ size: "small"}}
             cancelButtonProps={{ size: "small" }}
-            width={1000}
+            width={1200}
             confirmLoading={confirmLoading}
           >
             <Form
@@ -850,6 +861,7 @@ export default function UserRequests({ user }) {
                           style={{ width: "100%" }}
                           defaultValue={null}
                           value={dueDate}
+                          disabledDate={(current)=> current.isBefore(moment().subtract(1,'d')) }
                           onChange={(v, dstr) => setDueDate(dstr)}
                         />
                       </Form.Item>

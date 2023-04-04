@@ -19,6 +19,7 @@ import {
   Row,
   Tooltip,
   Col,
+  Switch,
 } from "antd";
 import UsersTable from "../usersTable";
 import {
@@ -27,6 +28,7 @@ import {
   BankOutlined,
   BarsOutlined,
   EditOutlined,
+  EyeOutlined,
   FieldTimeOutlined,
   FileTextOutlined,
   GiftOutlined,
@@ -36,7 +38,10 @@ import {
   MailOutlined,
   PhoneOutlined,
   PlusOutlined,
+  QuestionCircleFilled,
+  QuestionCircleOutlined,
   ReloadOutlined,
+  SaveOutlined,
   SettingOutlined,
   UserOutlined,
 } from "@ant-design/icons";
@@ -74,6 +79,8 @@ export default function Users({ user }) {
   let [searchStatus, setSearchStatus] = useState("all");
   let [searchText, setSearchText] = useState("");
   const [openCreateUser, setOpenCreateUser] = useState(false);
+  const [editUser, setEditUser] = useState(false);
+  const[basicPermissions, setBasicPermissions] = useState(["canViewRequests", "canCreateRequests"])
 
   const antIcon = <LoadingOutlined style={{ fontSize: 24 }} spin />;
 
@@ -140,15 +147,46 @@ export default function Users({ user }) {
       let _dataSet = [...dataset];
       let filtered = _dataSet.filter((d) => {
         return (
-          d?.email?.toString().toLowerCase().indexOf(searchText.toLowerCase()) > -1 ||
-          d?.firstName?.toString().toLowerCase().indexOf(searchText.toLowerCase()) > -1 ||
-          d?.lastName?.toString().toLowerCase().indexOf(searchText.toLowerCase()) > -1
+          d?.email?.toString().toLowerCase().indexOf(searchText.toLowerCase()) >
+            -1 ||
+          d?.firstName
+            ?.toString()
+            .toLowerCase()
+            .indexOf(searchText.toLowerCase()) > -1 ||
+          d?.lastName
+            ?.toString()
+            .toLowerCase()
+            .indexOf(searchText.toLowerCase()) > -1
         );
       });
       setTempDataset(filtered);
       // else setTempDataset(dataset)
     }
   }, [searchText]);
+
+  useEffect(() => {
+    setDataLoaded(false);
+    let requestUrl = `${url}/users/internal/byStatus/${searchStatus}/`;
+    fetch(requestUrl, {
+      method: "GET",
+      headers: {
+        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+        "Content-Type": "application/json",
+      },
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        setDataLoaded(true);
+        setDataset(res);
+        setTempDataset(res);
+      })
+      .catch((err) => {
+        messageApi.open({
+          type: "error",
+          content: "Something happened! Please try again.",
+        });
+      });
+  }, [searchStatus]);
 
   useEffect(() => {
     setUpdatingId("");
@@ -255,7 +293,7 @@ export default function Users({ user }) {
         // Find item index using _.findIndex (thanks @AJ Richardson for comment)
         var index = _.findIndex(_data, { _id: id });
         let elindex = _data[index];
-        elindex.status = "declined";
+        elindex.status = "rejected";
 
         console.log(_data[index]);
         // Replace item at index using native splice
@@ -476,6 +514,7 @@ export default function Users({ user }) {
     newUser.tempPassword = "p";
     newUser.createdBy = user?._id;
     newUser.userType = "DPT-USER";
+    newUser.status = "approved";
     newUser.companyName = newUser?.firstName + " " + newUser?.lastName;
     fetch(`${url}/users`, {
       method: "POST",
@@ -489,6 +528,35 @@ export default function Users({ user }) {
       .then((res) => {
         loadUsers();
         form.resetFields();
+      })
+      .catch((err) => {
+        messageApi.open({
+          type: "error",
+          content: "Something happened! Please try again.",
+        });
+      });
+  }
+
+  function updateUser() {
+    fetch(`${url}/users/${row?._id}`, {
+      method: "PUT",
+      headers: {
+        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        newUser: {
+          firstName: row?.firstName,
+          lastName: row?.lastName,
+          email: row?.email,
+          telephone: row?.telephone,
+          department: row?.department?._id,
+        },
+      }),
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        refresh();
       })
       .catch((err) => {
         messageApi.open({
@@ -531,7 +599,7 @@ export default function Users({ user }) {
           </Row> */}
           <Row className="flex flex-col space-y-2 bg-white px-10 py-3 shadow">
             <div className="flex flex-row justify-between items-center">
-              <div className="text-xl font-semibold">Users List</div>
+              <div className="text-xl font-semibold">Internal Users List</div>
             </div>
 
             <Row className="flex flex-row space-x-5 items-center justify-between">
@@ -544,16 +612,16 @@ export default function Users({ user }) {
                   value={searchStatus}
                   options={[
                     { value: "all", label: "All" },
-                    {
-                      value: "pending",
-                      label: "Pending for approval",
-                    },
+                    // {
+                    //   value: "pending-approval",
+                    //   label: "Pending approval",
+                    // },
                     {
                       value: "approved",
                       label: "Approved",
                     },
                     {
-                      value: "declined",
+                      value: "rejected",
                       label: "Rejected",
                     },
                   ]}
@@ -561,7 +629,7 @@ export default function Users({ user }) {
               </div>
               <div className="">
                 <Input.Search
-                autoFocus
+                  autoFocus
                   style={{ width: "300px" }}
                   onChange={(e) => {
                     setSearchText(e?.target?.value);
@@ -621,17 +689,47 @@ export default function Users({ user }) {
     return (
       <div className="flex flex-col  transition-opacity ease-in-out duration-1000 px-10 py-5 flex-1 space-y-3 overflow-x-scroll">
         <div className="flex flex-col space-y-5">
-          <div>
-            <Button
-              icon={<ArrowLeftOutlined />}
-              type="primary"
-              onClick={() => {
-                setRow(null);
-                setSegment("Permissions");
-              }}
-            >
-              Back to users
-            </Button>
+          <div className="flex flex-row justify-between">
+            <div className="flex flex-row items-center space-x-2">
+              <div>
+                <Button
+                  icon={<ArrowLeftOutlined />}
+                  type="primary"
+                  onClick={() => {
+                    setRow(null);
+                    setSegment("Permissions");
+                  }}
+                >
+                  Back to users
+                </Button>
+              </div>
+              {editUser && (
+                <div>
+                  <Button
+                    icon={<SaveOutlined />}
+                    type="primary"
+                    onClick={() => {
+                      setEditUser(false);
+                      updateUser();
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+
+            {user?.permissions?.canEditUsers && (
+              <div>
+                <Switch
+                  checkedChildren={<EditOutlined />}
+                  unCheckedChildren={<EyeOutlined />}
+                  defaultChecked={editUser}
+                  checked={editUser}
+                  onChange={(checked) => {
+                    setEditUser(checked);
+                  }}
+                />
+              </div>
+            )}
           </div>
 
           <div className="grid md:grid-cols-3 gap-5">
@@ -640,40 +738,135 @@ export default function Users({ user }) {
               <div className="bg-white ring-1 ring-gray-100 rounded shadow p-5">
                 <div className="text-xl font-semibold mb-5 flex flex-row justify-between items-center">
                   <div>General Information</div>
-                  <div>
-                    <EditOutlined />
-                  </div>
                 </div>
                 <div className="flex flex-col space-y-2">
                   <div className="flex flex-row items-center space-x-10">
                     <UserIcon className="text-gray-400 h-4 w-4" />
                     <div className="text-sm flex flex-row items-center space-x-2">
-                      <div>
-                        {row?.firstName} {row?.lastName}
-                      </div>{" "}
-                      <div>
+                      {!editUser && (
+                        <div>
+                          {row?.firstName} {row?.lastName}
+                        </div>
+                      )}
+
+                      {editUser && (
+                        <div className="flex flex-row items-center">
+                          <Typography.Text
+                            editable={
+                              editUser && {
+                                onChange: (e) => {
+                                  let r = { ...row };
+                                  r.firstName = e;
+                                  setRow(r);
+                                },
+                                text: row?.firstName,
+                              }
+                            }
+                          >
+                            {row?.firstName}
+                          </Typography.Text>
+
+                          <Typography.Text
+                            editable={
+                              editUser && {
+                                onChange: (e) => {
+                                  let r = { ...row };
+                                  r.lastName = e;
+                                  setRow(r);
+                                },
+                                text: row?.lastName,
+                              }
+                            }
+                          >
+                            {row?.lastName}
+                          </Typography.Text>
+                        </div>
+                      )}
+
+                      {/* {!editUser &&  <div>
                         <Tag color="cyan">
-                          {row?.title ? row?.title : row?.number}
+                          Position: {row?.title ? row?.title : row?.number}
                         </Tag>
-                      </div>
+                      </div>} */}
                     </div>
                   </div>
                   <div className="flex flex-row items-center space-x-10">
                     <EnvelopeIcon className="h-4 w-4 text-gray-400" />
-                    <div className="text-sm ">{row?.email} </div>
+                    {!editUser && <div className="text-sm ">{row?.email} </div>}
+                    {editUser && (
+                      <Typography.Text
+                        editable={
+                          editUser && {
+                            onChange: (e) => {
+                              let r = { ...row };
+                              r.email = e;
+                              setRow(r);
+                            },
+                            text: row?.email,
+                          }
+                        }
+                      >
+                        {row?.email}
+                      </Typography.Text>
+                    )}
                   </div>
 
                   <div className="flex flex-row items-center space-x-10">
                     <PhoneOutlined className="text-gray-400" />
-                    <div className="text-sm ">{row?.telephone} </div>
+                    {!editUser && (
+                      <div className="text-sm ">{row?.telephone} </div>
+                    )}
+                    {editUser && (
+                      <Typography.Text
+                        editable={
+                          editUser && {
+                            onChange: (e) => {
+                              let r = { ...row };
+                              r.telephone = e;
+                              setRow(r);
+                            },
+                            text: row?.telephone,
+                          }
+                        }
+                      >
+                        {row?.telephone}
+                      </Typography.Text>
+                    )}
                   </div>
                   <div className="flex flex-row items-center space-x-10">
                     <UsersIcon className="h-4 w-4 text-gray-400" />
-                    <div className="text-sm ">
-                      <Typography.Link>
-                        {row?.department?.description}{" "}
-                      </Typography.Link>
-                    </div>
+                    {!editUser && (
+                      <div className="text-sm ">
+                        <Typography.Link>
+                          {row?.department?.description}{" "}
+                        </Typography.Link>
+                      </div>
+                    )}
+
+                    {editUser && (
+                      <Select
+                        // mode="multiple"
+                        // allowClear
+                        style={{ width: "100%" }}
+                        defaultValue={row?.department?._id}
+                        placeholder="Please select"
+                        onChange={(value) => {
+                          let newDep = dpts?.filter((d) => d?._id === value);
+
+                          let r = { ...row };
+                          r.department = newDep[0];
+                          setRow(r);
+                        }}
+                      >
+                        {dpts?.map((dpt) => {
+                          return (
+                            <Select.Option key={dpt._id} value={dpt._id}>
+                              {dpt.description}
+                            </Select.Option>
+                          );
+                        })}
+                      </Select>
+                    )}
                   </div>
                 </div>
               </div>
@@ -699,7 +892,10 @@ export default function Users({ user }) {
                 onChange={setSegment}
               />
               {segment === "Permissions" && (
-                <div>
+                <div className="p-3 overflow-y-scroll h-[560px]">
+                  <div className="text-lg font-semibold mb-5 flex flex-row justify-between items-center">
+                    <div>Module access permissions</div>
+                  </div>
                   <PermissionsTable
                     canApproveRequests={row?.permissions?.canApproveRequests}
                     canCreateRequests={row?.permissions?.canCreateRequests}
@@ -746,13 +942,17 @@ export default function Users({ user }) {
                     handleSetCanEdit={setCanEdit}
                     handleSetCanApprove={setCanApprove}
                   />
+
+                  <div className="text-lg font-semibold my-5 flex flex-row justify-between items-center">
+                    <div>Approval permissions</div>
+                  </div>
                   <Form>
                     <Form.Item
                       name="canApproveAsHod"
                       label="Can approve as a Head of department"
                     >
                       <Checkbox
-                        defaultChecked={row?.permissions.canApproveAsHod}
+                        defaultChecked={row?.permissions?.canApproveAsHod}
                         onChange={(e) => setCanApproveAsHod(e.target.checked)}
                       />
                     </Form.Item>
@@ -761,7 +961,7 @@ export default function Users({ user }) {
                       label="Can approve as a Head of finance"
                     >
                       <Checkbox
-                        defaultChecked={row?.permissions.canApproveAsHof}
+                        defaultChecked={row?.permissions?.canApproveAsHof}
                         onChange={(e) => setCanApproveAsHof(e.target.checked)}
                       />
                     </Form.Item>
@@ -770,7 +970,7 @@ export default function Users({ user }) {
                       label="Can approve as a Procurement manager"
                     >
                       <Checkbox
-                        defaultChecked={row?.permissions.canApproveAsPM}
+                        defaultChecked={row?.permissions?.canApproveAsPM}
                         onChange={(e) => setCanApproveAsPM(e.target.checked)}
                       />
                     </Form.Item>
@@ -778,42 +978,34 @@ export default function Users({ user }) {
                 </div>
               )}
               {segment === "Requests History" && (
-                <div className="p-3 overflow-y-scroll">
+                <div className="p-3 overflow-y-scroll h-[560px]">
                   {usersRequests?.map((request) => {
                     return (
                       <div
                         key={request?._id}
-                        className="grid grid-cols-4 ring-1 ring-gray-200 rounded my-3 p-3 text-gray-700"
+                        className="grid grid-cols-3 ring-1 ring-gray-200 rounded my-3 p-3 text-gray-700"
                       >
                         <div>
+                        <div className="text-gray-500 font-semibold mb-2">Request #</div>
                           <div className="flex-row  flex items-center">
                             <div>
                               <FileTextOutlined className="h-4 w-4" />
                             </div>{" "}
                             <div>{request?.number}</div>
                           </div>
-                          <div>{request?.title}</div>
-                          <div>{request?.description}</div>
+                          
                         </div>
                         <div>
-                          <div className="text-gray-500">Status</div>
+                        <div className="text-gray-500 font-semibold mb-2">Title</div>
+                          <div>{request?.title}</div>
+                        </div>
+                        <div>
+                          <div className="text-gray-500 font-semibold mb-2">Status</div>
                           <div>
                             <Tag color="gold">{request.status}</Tag>
                           </div>
                         </div>
-                        <div>{`Due ${moment(request?.dueDate).fromNow()}`}</div>
-                        <div>
-                          {request?.budgeted ? (
-                            <div>
-                              <Tag color="green">BUDGETED</Tag>
-                            </div>
-                          ) : (
-                            <div>
-                              <Tag color="magenta">NOT BUDGETED</Tag>
-                            </div>
-                          )}
-                        </div>
-                        <div></div>
+                       
                       </div>
                     );
                   })}
@@ -829,12 +1021,13 @@ export default function Users({ user }) {
   function buildCreateUserScreen() {
     return (
       <Modal
-        title="New User"
+        title="Create new user"
         centered
         open={openCreateUser}
         onOk={() => {
           form.validateFields().then(
             (value) => {
+              
               createUser(value);
               setOpenCreateUser(false);
             },
@@ -843,7 +1036,7 @@ export default function Users({ user }) {
 
           // setOpenCreateUser(false);
         }}
-        okText={"Ok"}
+        okText={"Save"}
         onCancel={() => setOpenCreateUser(false)}
         width={"80%"}
         bodyStyle={{ maxHeight: "700px", overflow: "scroll" }}
@@ -881,7 +1074,7 @@ export default function Users({ user }) {
                       rules={[
                         {
                           required: true,
-                          message: "Please input user's firstName!",
+                          message: "Input required",
                         },
                       ]}
                     >
@@ -898,7 +1091,7 @@ export default function Users({ user }) {
                       rules={[
                         {
                           required: true,
-                          message: "Please input user's lastName!",
+                          message: "Input required",
                         },
                       ]}
                     >
@@ -917,7 +1110,7 @@ export default function Users({ user }) {
                       rules={[
                         {
                           required: true,
-                          message: "Please input your phone number!",
+                          message: "Input required",
                         },
                       ]}
                     >
@@ -929,7 +1122,11 @@ export default function Users({ user }) {
                       Department
                       <div className="text-red-500">*</div>
                     </div>
-                    <Form.Item name="department">
+                    <Form.Item
+                      name="department"
+                      required
+                      rules={[{ required: true, message: "Input required" }]}
+                    >
                       <Select
                         // mode="multiple"
                         // allowClear
@@ -962,7 +1159,7 @@ export default function Users({ user }) {
                         },
                         {
                           required: true,
-                          message: "Please input user's e-mail!",
+                          message: "Input required",
                         },
                       ]}
                     >
@@ -971,61 +1168,37 @@ export default function Users({ user }) {
                   </div>
 
                   <div>
-                    <div className="flex flex-row spacex-3">
-                      Permissions
-                      <div className="text-red-500">*</div>
+                    <div className="flex flex-row space-x-1">
+                      <div className="flex flex-row">
+                        Basic Permissions <div className="text-red-500">*</div>
+                      </div>
+
+                      <div>
+                        <Tooltip title="For more advanced module access permissions, please refer to the user details page after creating this user account.">
+                          <div>
+                            <QuestionCircleOutlined />
+                          </div>
+                        </Tooltip>
+                      </div>
                     </div>
                     <Form.Item name="permissions">
                       <Select
                         mode="multiple"
                         allowClear
                         // style={{width:'100%'}}
-
                         placeholder="Please select"
                         options={[
-                          {
-                            value: "canApproveAsHod",
-                            label: "Approve as Head of Department",
-                          },
-                          {
-                            value: "canApproveAsHof",
-                            label: "Approve as Head of Finance",
-                          },
-                          {
-                            value: "canApproveAsPM",
-                            label: "Approve as Procurement Manager",
-                          },
                           {
                             value: "canViewRequests",
                             label: "View Purchase requests",
                           },
                           {
-                            value: "canViewTenders",
-                            label: "View Tenders",
+                            value: "canCreateRequests",
+                            label: "Create Purchase requests",
                           },
                           {
                             value: "canViewPurchaseOrders",
                             label: "View Purchase Orders",
-                          },
-                          {
-                            value: "canViewVendors",
-                            label: "View Vendors",
-                          },
-                          {
-                            value: "canViewUsers",
-                            label: "View Users",
-                          },
-                          {
-                            value: "canViewDashboard",
-                            label: "View Dashboards",
-                          },
-                          {
-                            value: "canViewBids",
-                            label: "View Bids",
-                          },
-                          {
-                            value: "canViewContracts",
-                            label: "View Contracts",
                           },
                         ]}
                       />

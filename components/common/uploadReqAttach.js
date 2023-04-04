@@ -2,7 +2,7 @@ import React from "react";
 import { UploadOutlined } from "@ant-design/icons";
 import { Button, Upload, message, UploadFile } from "antd";
 
-function UploadReqAttach({ label, uuid, fileList, setFileList }) {
+function UploadReqAttach({ label, uuid, fileList, setFileList, setAttachSelected }) {
   const [messageApi, contextHolder] = message.useMessage();
   let url = process.env.NEXT_PUBLIC_BKEND_URL;
   let apiUsername = process.env.NEXT_PUBLIC_API_USERNAME;
@@ -18,6 +18,9 @@ function UploadReqAttach({ label, uuid, fileList, setFileList }) {
       let isPDF = file.type == "application/pdf";
       if (!isPDF) {
         messageApi.error(`${file.name} is not a PDF file`);
+        setAttachSelected(false)
+      } else {
+        setAttachSelected(true)
       }
 
       return isPDF || Upload.LIST_IGNORE;

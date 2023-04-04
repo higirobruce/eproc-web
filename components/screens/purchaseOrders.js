@@ -189,11 +189,6 @@ export default function PurchaseOrders({ user }) {
           <div className="flex flex-row justify-between items-center">
             <Typography.Title level={4} className="flex flex-row items-center">
               PURCHASE ORDER: {po?.vendor?.companyName}{" "}
-              <Image
-                src="/icons/icons8-approval-90.png"
-                width={20}
-                height={20}
-              />
             </Typography.Title>
             <Button icon={<PrinterOutlined />}>Print</Button>
           </div>
@@ -655,7 +650,11 @@ export default function PurchaseOrders({ user }) {
                 return (
                   <div
                     key={po?.number}
-                    className="grid md:grid-cols-7 gap-3 ring-1 ring-gray-200 bg-white rounded px-5 py-3 shadow hover:shadow-md m-3"
+                    className={`grid ${
+                      user?.userType !== "VENDOR"
+                        ? `md:grid-cols-7`
+                        : `md:grid-cols-4`
+                    }  gap-3 ring-1 ring-gray-200 bg-white rounded px-5 py-3 shadow hover:shadow-md m-3`}
                   >
                     <div className="flex flex-col space-y-2">
                       <div className="text-xs text-gray-600">
@@ -683,28 +682,33 @@ export default function PurchaseOrders({ user }) {
                         </Typography.Link>
                       )}
                     </div>
-                    <div className="flex flex-col space-y-2">
-                      <div className="text-xs text-gray-600">
-                        SAP B1 reference(s)
-                      </div>
-                      <div className="text-gray-600">
-                        {po?.referenceDocs?.map((ref, i) => {
-                          return <Tag key={i}>{ref}</Tag>;
-                        })}
-                      </div>
-                    </div>
-                    <div className="flex flex-col space-y-1">
-                      <div className="text-xs text-gray-600">Vendor</div>
-                      <div className="font-semibold">
-                        {po?.vendor?.companyName}
-                      </div>
-                      <div className=" text-gray-500">
-                        TIN: {po?.vendor?.tin}
-                      </div>
-                      <div className=" text-gray-500">
-                        email: {po?.vendor?.companyEmail}
-                      </div>
-                    </div>
+
+                    {user?.userType !== "VENDOR" && (
+                      <>
+                        <div className="flex flex-col space-y-2">
+                          <div className="text-xs text-gray-600">
+                            SAP B1 reference(s)
+                          </div>
+                          <div className="text-gray-600">
+                            {po?.referenceDocs?.map((ref, i) => {
+                              return <Tag key={i}>{ref}</Tag>;
+                            })}
+                          </div>
+                        </div>
+                        <div className="flex flex-col space-y-1">
+                          <div className="text-xs text-gray-600">Vendor</div>
+                          <div className="font-semibold">
+                            {po?.vendor?.companyName}
+                          </div>
+                          <div className=" text-gray-500">
+                            TIN: {po?.vendor?.tin}
+                          </div>
+                          <div className=" text-gray-500">
+                            email: {po?.vendor?.companyEmail}
+                          </div>
+                        </div>
+                      </>
+                    )}
 
                     <div className="flex flex-col space-y-1">
                       <div className="text-xs text-gray-600">Total value</div>
@@ -717,9 +721,7 @@ export default function PurchaseOrders({ user }) {
                       </div>
                     </div>
 
-                    {(user?.userType !== "VENDOR" ||
-                      (user?.userType == "VENDOR" &&
-                        documentFullySignedInternally(po))) && (
+                    {user?.userType !== "VENDOR" && (
                       <div className="flex flex-col space-y-3 text-gray-600">
                         {po?.signatories?.map((s) => {
                           return (
@@ -761,7 +763,7 @@ export default function PurchaseOrders({ user }) {
                       </div>
                     )}
 
-                    <div className="flex flex-col space-y-1 items-center justify-center">
+                    <div className="flex flex-col space-y-1 items-start justify-center">
                       {/* <Dropdown.Button
                         disabled={
                           user?.userType === "VENDOR" &&
@@ -787,15 +789,17 @@ export default function PurchaseOrders({ user }) {
                       >
                         View Document
                       </Button>
-                    </div>
 
-                    <div className="flex flex-col space-y-1 justify-center">
-                      {/* <div className="text-xs text-gray-400">Delivery</div> */}
                       {documentFullySigned(po) && (
                         <div>
                           <Tag color="green">Signed</Tag>
                         </div>
                       )}
+                    </div>
+
+                    <div className="flex flex-col space-y-1 justify-center">
+                      {/* <div className="text-xs text-gray-400">Delivery</div> */}
+                      
                       {po?.status !== "started" &&
                         po?.status !== "stopped" &&
                         user?.userType === "VENDOR" && (
@@ -810,6 +814,10 @@ export default function PurchaseOrders({ user }) {
                             Start delivering
                           </Button>
                         )}
+
+                      <div className="text-xs text-gray-600">
+                        Delivery progress
+                      </div>
                       <Progress
                         percent={_.round(po?.deliveryProgress, 1)}
                         size="small"

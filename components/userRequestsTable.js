@@ -156,10 +156,10 @@ const UsersRequestsTable = ({
   });
 
   function getHighLevelStatus(status) {
-    if(status==='Approved' || status==='Declined'){
-      return status
-    } else{
-      return 'Pending'
+    if (status === "Approved" || status === "Declined") {
+      return status;
+    } else {
+      return "Pending";
     }
   }
 
@@ -205,7 +205,13 @@ const UsersRequestsTable = ({
       render: (_, record) => (
         <>
           <div className={record?.number === selectedRow ? "font-bold" : ""}>
-            {record?.title}
+            <Typography.Text
+              style={{ width: 150 }}
+              ellipsis={true}
+            >
+              {record?.title}
+            </Typography.Text>
+            
           </div>
         </>
       ),
@@ -235,9 +241,7 @@ const UsersRequestsTable = ({
       key: "serviceCategory",
       render: (_, record) => (
         <>
-          <Typography.Text>
-            {record?.serviceCategory}
-          </Typography.Text>
+          <Typography.Text>{record?.serviceCategory}</Typography.Text>
         </>
       ),
     },
@@ -255,6 +259,7 @@ const UsersRequestsTable = ({
     {
       title: "Due date",
       key: "dueDate",
+      sorter: (a,b)=>moment(a.dueDate).isAfter(moment(b.dueDate)),
       render: (_, record) => (
         <>
           <Row className="felx flex-row items-center justify-between">
@@ -272,10 +277,14 @@ const UsersRequestsTable = ({
       render: (_, record) => (
         <>
           <Badge
-            color={getTagColor(getHighLevelStatus(record?.status.charAt(0).toUpperCase() + record?.status.slice(1)))}
-            text={
-              getHighLevelStatus(record?.status.charAt(0).toUpperCase() + record?.status.slice(1))
-            }
+            color={getTagColor(
+              getHighLevelStatus(
+                record?.status.charAt(0).toUpperCase() + record?.status.slice(1)
+              )
+            )}
+            text={getHighLevelStatus(
+              record?.status.charAt(0).toUpperCase() + record?.status.slice(1)
+            )}
           />
         </>
       ),
@@ -321,9 +330,9 @@ const UsersRequestsTable = ({
         dataSource={data}
         columns={columns}
         className="shadow-lg rounded-md"
-        pagination={{
-          pageSize: 20,
-        }}
+        // pagination={{
+        //   pageSize: 20,
+        // }}
       />
     </Form>
   );

@@ -471,7 +471,7 @@ export default function Profile({ user }) {
 
                   {updatingId !== user?._id && (
                     <div>
-                      {user?.status === "created" && (
+                      {user?.status === "pending-approval" && (
                         <span>
                           <Popconfirm
                             title="Approve vendor"

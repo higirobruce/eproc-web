@@ -1,4 +1,4 @@
-import { Button, Form, Input, Popconfirm, Table } from "antd";
+import { Button, Form, Input, InputNumber, Popconfirm, Table } from "antd";
 import React, { useContext, useEffect, useRef, useState } from "react";
 import UploadFiles from "./uploadFiles";
 import {v4} from 'uuid'
@@ -6,7 +6,7 @@ import UploadTORs from "./uploadTORs";
 import { uniqueId } from "lodash";
 
 const EditableContext = React.createContext(null);
-const EditableRow = ({ index, ...props }) => {
+const EditableRow = ({ index,rowForm, ...props }) => {
   const [form] = Form.useForm();
   return (
     <Form form={form} component={false}>
@@ -26,12 +26,12 @@ const EditableCell = ({
   handleSave,
   ...restProps
 }) => {
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useState(true);
   const inputRef = useRef(null);
   const form = useContext(EditableContext);
   useEffect(() => {
     if (editing) {
-      inputRef.current.focus();
+      inputRef?.current?.focus();
     }
   }, [editing]);
   const toggleEdit = () => {
@@ -53,6 +53,7 @@ const EditableCell = ({
     }
   };
   let childNode = children;
+  
   if (editable) {
     childNode = editing ? (
       <Form.Item
@@ -63,11 +64,11 @@ const EditableCell = ({
         rules={[
           {
             required: true,
-            message: `${title} is required.`,
+            message: `Input required.`,
           },
         ]}
       >
-        <Input ref={inputRef} onPressEnter={save} onBlur={save} />
+        <Input ref={inputRef} onPressEnter={save} placeholder={dataIndex==='title'?'enter title':'eg. 1000000'} onBlur={save} />
       </Form.Item>
     ) : (
       <div
@@ -86,6 +87,7 @@ const EditableCell = ({
 
 const ItemsTable = ({ setDataSource, dataSource, setFileList, fileList }) => {
   const [count, setCount] = useState(1);
+  const [rowForm] = Form.useForm();
   const handleDelete = (key) => {
     const newData = dataSource.filter((item) => item.key !== key && item.key);
     setCount(count-1)
@@ -95,21 +97,23 @@ const ItemsTable = ({ setDataSource, dataSource, setFileList, fileList }) => {
     {
       title: "Item title",
       dataIndex: "title",
-      width: "30%",
+      width: "20%",
       editable: true,
     },
     {
       title: "Quantity",
       dataIndex: "quantity",
+      width: "15%",
       editable: true,
     },
     {
       title: "Estimated Unit cost (RWF)",
       dataIndex: "estimatedUnitCost",
+      width: "20%",
       editable: true,
     },
     {
-      title: "Attachments",
+      title: <div>Supporting Docs <i className="text-xs font-thin">(e.g specs, ToR,... expected in PDF format)</i></div>,
       dataIndex: "attachements",
       render: (_, record) => (dataSource.length >= 1 ? <UploadTORs uuid={record?.id} setFileList={setFileList} fileList={fileList} /> : null),
     },
@@ -119,7 +123,7 @@ const ItemsTable = ({ setDataSource, dataSource, setFileList, fileList }) => {
       render: (_, record) =>
         dataSource.length >= 1 ? (
           <Popconfirm
-            title="Sure to delete?"
+            title="Are you sure?"
             onConfirm={() => handleDelete(record.key)}
           >
             <a>Delete</a>
@@ -130,14 +134,16 @@ const ItemsTable = ({ setDataSource, dataSource, setFileList, fileList }) => {
   const handleAdd = () => {
     const newData = {
       key: count,
-      title: `Title`,
-      quantity: "0",
-      estimatedUnitCost: `0`,
+      title: ``,
+      quantity: '',
+      estimatedUnitCost: '',
       id: v4()
     };
+    
     setDataSource([...dataSource, newData]);
     setCount(count + 1);
   };
+  
   const handleSave = (row) => {
     const newData = [...dataSource];
     const index = newData.findIndex((item) => row.key === item.key);

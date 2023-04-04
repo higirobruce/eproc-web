@@ -42,6 +42,7 @@ const UsersTable = ({
     {
       title: "Email",
       dataIndex: "email",
+      sorter: (a, b) => a.email.localeCompare(b.email),
       render: (_, record) => (
         <>
           <div
@@ -76,7 +77,7 @@ const UsersTable = ({
       key: "action",
       render: (_, record) => (
         <>
-          {record.status === "created" && (
+          {record.status === "pending-approval" && (
             <Badge color="yellow" text={record.status} />
           )}
 
@@ -84,7 +85,7 @@ const UsersTable = ({
             <Badge color="green" text={record.status} />
           )}
 
-          {record.status === "declined" && (
+          {record.status === "rejected" && (
             <Badge color="red" text={record.status} />
           )}
         </>
@@ -107,7 +108,7 @@ const UsersTable = ({
                   </span>
                 </Tooltip>
               )}
-              {record.status !== "declined" && (
+              {record.status !== "rejected" && (
                 <Tooltip title="Reject">
                   <CloseOutlined
                     className="text-red-400 cursor-pointer"

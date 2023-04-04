@@ -50,6 +50,7 @@ const VendorsTable = ({
     {
       title: "Company Name",
       // dataIndex: "number",
+      sorter: (a, b) => a.companyName.localeCompare(b.companyName),
       render: (_, record) => (
         <>
           <div
@@ -69,7 +70,7 @@ const VendorsTable = ({
       dataIndex: "tin",
     },
     {
-      title: "Email",
+      title: "Contact person email",
       dataIndex: "email",
     },
     {
@@ -81,7 +82,7 @@ const VendorsTable = ({
       key: "action",
       render: (_, record) => (
         <>
-          {record.status === "created" && (
+          {record.status === "pending-approval" && (
             <Badge color="yellow" text={record.status} />
           )}
 
@@ -93,7 +94,7 @@ const VendorsTable = ({
             <Badge color="red" text={record.status} />
           )}
 
-          {record.status === "banned" && (
+          {record.status === "rejected" && (
             <Badge color="red" text={record.status} />
           )}
         </>
@@ -104,7 +105,7 @@ const VendorsTable = ({
       dataIndex: "telephone",
       render: (_, record) => (
         <>
-          <Rate count={5} value={random(1,5)}/>
+          <Rate count={5} disabled value={random(1,5)}/>
         </>
       ),
       

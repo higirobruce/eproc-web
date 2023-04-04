@@ -98,8 +98,10 @@ const LoginForm = () => {
             });
           } else {
             messageApi.open({
+              
+
               type: "error",
-              content: "You are not yet approved to access the system!",
+              content: "You do not have the required permissions to access this system. Please contact the system admin to request access.",
             });
             setSubmitting(false);
           }

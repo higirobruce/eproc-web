@@ -206,7 +206,7 @@ const BidList = ({
                         <>
                           <Button
                             size="small"
-                            disabled={!documentFullyApproved(data)}
+                            disabled={!documentFullyApproved(data) || !user?.permissions?.canCreateContracts}
                             type="primary"
                             onClick={() => handleAwardBid(item._id)}
                           >

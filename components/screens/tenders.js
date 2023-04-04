@@ -582,7 +582,7 @@ export default function Tenders({ user }) {
               onFinish={save}
             >
               <Form.Item label="Due date">
-                <DatePicker onChange={(v, dstr) => setDueDate(dstr)} />
+                <DatePicker onChange={(v, dstr) => setDueDate(dstr)} disabledDate={(current)=> current.isBefore(moment().subtract(1,'d')) } />
               </Form.Item>
               <Row className="flex flex-row justify-between">
                 <Col>

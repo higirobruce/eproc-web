@@ -47,6 +47,7 @@ import {
   ShoppingCartOutlined,
   EditOutlined,
   EyeOutlined,
+  UserOutlined,
 } from "@ant-design/icons";
 import moment from "moment";
 import dayjs from "dayjs";
@@ -115,6 +116,7 @@ const RequestDetails = ({
   handleUpdateRequest,
   handleRateDelivery,
 }) => {
+  const [form] = Form.useForm();
   const [size, setSize] = useState("small");
   const [currentCode, setCurrentCode] = useState(-1);
   let [deadLine, setDeadLine] = useState(null);
@@ -155,8 +157,8 @@ const RequestDetails = ({
   let [contractEndDate, setContractEndDate] = useState(moment());
   let [reqAttachId, setReqAttachId] = useState(v4());
   const [creatingPO, setCreatingPO] = useState(false);
-  const [comment, setComment] = useState('')
-  const [rate, setRate] = useState(0)
+  const [comment, setComment] = useState("");
+  const [rate, setRate] = useState(0);
 
   const [assetOptions, setAssetOptions] = useState([]);
 
@@ -164,6 +166,8 @@ const RequestDetails = ({
 
   let [tendor, setTendor] = useState("");
   const [deliveredQty, setDeliveredQty] = useState(0);
+  const [tenderDocSelected, setTendeDocSelected] = useState(false);
+  const [attachSelected, setAttachSelected] = useState(false);
 
   const showPopconfirm = () => {
     setOpen(true);
@@ -295,6 +299,8 @@ const RequestDetails = ({
 
   useEffect(() => {
     setDocId(v4());
+    setAttachSelected(false);
+    setTendeDocSelected(false);
   }, [refDoc]);
 
   function getFixedAssets() {
@@ -394,7 +400,12 @@ const RequestDetails = ({
   }
 
   function createTender(tenderData) {
-    handleCreateTender(tenderData);
+    form.validateFields().then(
+      (onfullfilled) => {
+        handleCreateTender(tenderData);
+      },
+      (onRejected) => {}
+    );
   }
 
   function submitTenderData(values) {
@@ -603,7 +614,7 @@ const RequestDetails = ({
                         {/* Department */}
                         <div className="flex flex-col space-y-1 items-start">
                           <div className="text-xs ml-3 text-gray-400">
-                            Dapartment:
+                            Department:
                           </div>
                           <div className="text-sm font-semibold ml-3 text-gray-600">
                             {data?.createdBy?.department?.description}
@@ -634,6 +645,9 @@ const RequestDetails = ({
                                 <DatePicker
                                   style={{ width: "100%" }}
                                   defaultValue={moment(data?.dueDate)}
+                                  disabledDate={(current) =>
+                                    current.isBefore(moment().subtract(1, "d"))
+                                  }
                                   value={data?.dueDate}
                                   onChange={(v, dstr) => {
                                     let _d = data;
@@ -720,7 +734,7 @@ const RequestDetails = ({
                         {/* Budgete Line */}
                         <div className="flex flex-col space-y-1 items-start">
                           <div className="text-xs ml-3 text-gray-400">
-                            Budgete Line:
+                            Budget Line:
                           </div>
                           <div className="text-sm font-semibold ml-3 text-gray-600">
                             {data?.budgetLine}
@@ -792,7 +806,9 @@ const RequestDetails = ({
                         submitPOData,
                         setSelectedContract,
                         data,
-                        submitContractData
+                        submitContractData,
+                        setTendeDocSelected,
+                        form
                       )
                     }
 
@@ -857,12 +873,22 @@ const RequestDetails = ({
                         <Typography.Title level={5}>
                           Give a comment on your rating
                         </Typography.Title>
-                        <Input.TextArea className="w-1/3" value={comment} onChange={(v)=>setComment(v.target.value)} />
-                        
-                        <div>
-                        <Button type="primary" onClick={()=>handleRateDelivery(po, rate, comment)}>Submit my rate and review</Button>
-                        </div>
+                        <Input.TextArea
+                          className="w-1/3"
+                          value={comment}
+                          onChange={(v) => setComment(v.target.value)}
+                        />
 
+                        <div>
+                          <Button
+                            type="primary"
+                            onClick={() =>
+                              handleRateDelivery(po, rate, comment)
+                            }
+                          >
+                            Submit my rate and review
+                          </Button>
+                        </div>
                       </div>
                     )}
 
@@ -963,7 +989,9 @@ const RequestDetails = ({
     submitPOData,
     setSelectedContract,
     data,
-    submitContractData
+    submitContractData,
+    setTendeDocSelected,
+    form
   ) {
     return (
       <>
@@ -1005,7 +1033,7 @@ const RequestDetails = ({
                         <div className="flex flex-row space-x-5">
                           <div>
                             <Popconfirm
-                              title="Approve request"
+                              title="Are you sure?"
                               open={openApprove}
                               icon={
                                 <QuestionCircleOutlined
@@ -1037,26 +1065,26 @@ const RequestDetails = ({
                           </div>
                           <div>
                             <Popconfirm
-                              title="Reject request"
+                              title="Are you sure?"
                               open={open}
                               icon={
                                 <QuestionCircleOutlined
                                   style={{ color: "red" }}
                                 />
                               }
-                              onConfirm={handleOk}
+                              onConfirm={() => {
+                                if (reason?.length >= 3) handleOk();
+                              }}
                               description={
                                 <>
-                                  <Typography.Text>
-                                    Are you sure?
-                                  </Typography.Text>
                                   <Input
                                     onChange={(v) => setReason(v.target.value)}
-                                    placeholder="Reason for rejection"
+                                    placeholder="Please insert a reason for the rejection"
                                   ></Input>
                                 </>
                               }
                               okButtonProps={{
+                                disabled: reason?.length < 3,
                                 loading: confirmRejectLoading,
                               }}
                               onCancel={handleCancel}
@@ -1105,7 +1133,7 @@ const RequestDetails = ({
                         <div className="flex flex-row space-x-5">
                           <div>
                             <Popconfirm
-                              title="Approve request"
+                              title="Are you sure?"
                               open={openApprove}
                               icon={
                                 <QuestionCircleOutlined
@@ -1137,23 +1165,23 @@ const RequestDetails = ({
                           </div>
                           <div>
                             <Popconfirm
-                              title="Reject request"
+                              title="Are you sure?"
                               open={open}
                               icon={
                                 <QuestionCircleOutlined
                                   style={{ color: "red" }}
                                 />
                               }
-                              onConfirm={handleOk}
+                              onConfirm={() => {
+                                if (reason?.length >= 3) handleOk();
+                              }}
                               okButtonProps={{
+                                disabled: reason?.length < 3,
                                 loading: confirmRejectLoading,
                               }}
                               onCancel={handleCancel}
                               description={
                                 <>
-                                  <Typography.Text>
-                                    Are you sure?
-                                  </Typography.Text>
                                   <Input
                                     onChange={(v) => setReason(v.target.value)}
                                     placeholder="Reason for rejection"
@@ -1207,7 +1235,7 @@ const RequestDetails = ({
                         <div className="flex flex-row space-x-5">
                           <div>
                             <Popconfirm
-                              title="Approve request"
+                              title="Are you sure?"
                               open={openApprove}
                               icon={
                                 <QuestionCircleOutlined
@@ -1239,19 +1267,18 @@ const RequestDetails = ({
                           </div>
                           <div>
                             <Popconfirm
-                              title="Reject request"
+                              title="Are you sure?"
                               open={open}
                               icon={
                                 <QuestionCircleOutlined
                                   style={{ color: "red" }}
                                 />
                               }
-                              onConfirm={handleOk}
+                              onConfirm={() => {
+                                if (reason?.length >= 3) handleOk();
+                              }}
                               description={
                                 <>
-                                  <Typography.Text>
-                                    Are you sure?
-                                  </Typography.Text>
                                   <Input
                                     onChange={(v) => setReason(v.target.value)}
                                     placeholder="Reason for rejection"
@@ -1259,6 +1286,7 @@ const RequestDetails = ({
                                 </>
                               }
                               okButtonProps={{
+                                disabled: reason?.length < 3,
                                 loading: confirmRejectLoading,
                               }}
                               onCancel={handleCancel}
@@ -1296,7 +1324,7 @@ const RequestDetails = ({
                 user?.permissions?.canCreatePurchaseOrders ||
                 user?.permissions?.canCreateContracts) && (
                 <>
-                  <Form>
+                  <Form form={form}>
                     <div className="text-lg font-semibold">
                       Sourcing Method Selection
                     </div>
@@ -1331,7 +1359,9 @@ const RequestDetails = ({
                         setDeadLine,
                         user,
                         docId,
-                        submitTenderData
+                        submitTenderData,
+                        setTendeDocSelected,
+                        tenderDocSelected
                       )}
 
                     {refDoc === "contract" &&
@@ -1351,7 +1381,7 @@ const RequestDetails = ({
                           <Form.Item name="vendor">
                             <Select
                               onChange={(value, option) => {
-                                setVendor(option.payload);
+                                setVendor(option?.payload);
                               }}
                               style={{ width: "50%" }}
                               showSearch
@@ -1363,11 +1393,11 @@ const RequestDetails = ({
                                   )
                               }
                               filterOption={(inputValue, option) =>
-                                option.label
+                                option?.label
                                   .toLowerCase()
                                   .includes(inputValue.toLowerCase())
                               }
-                              options={vendors?.map((v) => {
+                              options={vendors?.filter(v=>v?.status==='approved')?.map((v) => {
                                 return {
                                   value: v?._id,
                                   label: v?.companyName,
@@ -1378,9 +1408,15 @@ const RequestDetails = ({
                           </Form.Item>
                         </div>
                         <div className="items-center">
-                          <div>Upload reference document</div>
+                          <div>
+                            Upload reference document{" "}
+                            <i className="text-xs">(expected in PDF format)</i>
+                          </div>
                           <Form.Item name="vendor">
-                            <UploadReqAttach uuid={reqAttachId} />
+                            <UploadReqAttach
+                              uuid={reqAttachId}
+                              setAttachSelected={setAttachSelected}
+                            />
                           </Form.Item>
                         </div>
                         <div>
@@ -1394,7 +1430,8 @@ const RequestDetails = ({
                                   onClick={submitContractData}
                                   disabled={
                                     !user?.permissions?.canCreateContracts ||
-                                    !vendor
+                                    !vendor ||
+                                    !attachSelected
                                   }
                                 >
                                   Create Contract
@@ -1411,7 +1448,9 @@ const RequestDetails = ({
                                   onClick={submitPOData}
                                   disabled={
                                     !user?.permissions
-                                      ?.canCreatePurchaseOrders || !vendor
+                                      ?.canCreatePurchaseOrders ||
+                                    !vendor ||
+                                    !attachSelected
                                   }
                                 >
                                   Create PO
@@ -1654,22 +1693,48 @@ const RequestDetails = ({
               })
             : (B1Data_NonAssets = null);
 
-          await handleCreatePO(
-            vendor?._id,
-            tendor?._id,
-            user?._id,
-            sections,
-            items,
-            {
-              B1Data_Assets,
-              B1Data_NonAssets,
-            },
-            signatories,
-            data?._id,
-            refDoc === "external" ? reqAttachId : ""
-          );
-          setCreatingPO(false);
-          setOpenCreatePO(false);
+          if (!signatories || signatories?.length < 3) {
+            messageApi.open({
+              type: "error",
+              content: "PO can not be submitted. Please specify at least 3 signatories!",
+            });
+            setCreatingPO(false);
+          } else if(items?.filter(i=>i.quantity<=0 || i.estimatedUnitCost<=0 || !i.quantity || !i.estimatedUnitCost)?.length>=1){
+            messageApi.open({
+              type: "error",
+              content:
+                "PO can not be created. Please specify Quantity/Price!",
+            });
+            setCreatingPO(false);
+          }else if (
+            signatories?.filter((s) => {
+              return !s?.onBehalfOf || !s?.title || !s?.names || !s?.email;
+            })?.length >= 1
+          ) {
+            messageApi.open({
+              type: "error",
+              content:
+                "PO can not be submitted. Please fill in the relevant signatories' details!",
+            });
+            setCreatingPO(false);
+          } else {
+            await handleCreatePO(
+              vendor?._id,
+              tendor?._id,
+              user?._id,
+              sections,
+              items,
+              {
+                B1Data_Assets,
+                B1Data_NonAssets,
+              },
+              signatories,
+              data?._id,
+              refDoc === "external" ? reqAttachId : ""
+            );
+            setCreatingPO(false);
+            setOpenCreatePO(false);
+          }
         }}
         okText="Save and Submit"
         onCancel={() => setOpenCreatePO(false)}
@@ -2020,17 +2085,34 @@ const RequestDetails = ({
         centered
         open={openCreateContract}
         onOk={() => {
-          handleCreateContract(
-            vendor?._id,
-            null,
-            user?._id,
-            sections,
-            contractStartDate,
-            contractEndDate,
-            signatories,
-            refDoc === "external" ? reqAttachId : ""
-          );
-          setOpenCreateContract(false);
+          if (!signatories || signatories?.length < 2) {
+            messageApi.open({
+              type: "error",
+              content: "PO can not be submitted. Please specify at least 2 signatories!",
+            });
+          } else if (
+            signatories?.filter((s) => {
+              return !s?.onBehalfOf || !s?.title || !s?.names || !s?.email;
+            })?.length >= 1
+          ) {
+            messageApi.open({
+              type: "error",
+              content:
+              "PO can not be submitted. Please fill in the relevant signatories' details!"
+            });
+          } else {
+            handleCreateContract(
+              vendor?._id,
+              null,
+              user?._id,
+              sections,
+              contractStartDate,
+              contractEndDate,
+              signatories,
+              refDoc === "external" ? reqAttachId : ""
+            );
+            setOpenCreateContract(false);
+          }
         }}
         okText="Submit for review"
         onCancel={() => setOpenCreateContract(false)}
@@ -2038,6 +2120,7 @@ const RequestDetails = ({
         bodyStyle={{ maxHeight: "700px", overflow: "scroll" }}
       >
         <div className="space-y-10 px-20 py-5">
+          {contextHolder}
           <Typography.Title level={4}>
             CONTRACTOR: {vendor?.companyName}
           </Typography.Title>
@@ -2454,13 +2537,31 @@ function contractParty(companyName, companyAdress, companyTin, partyType) {
   );
 }
 
-function buildTenderForm(setDeadLine, user, docId, submitTenderData) {
+function buildTenderForm(
+  setDeadLine,
+  user,
+  docId,
+  submitTenderData,
+  setTendeDocSelected,
+  tenderDocSelected
+) {
   return (
     <>
       <div className="items-center">
         <Typography.Title level={5}>Create Tender</Typography.Title>
-        <Form.Item name="tenderDocUrl" label="Upload Tender Documents">
-          <UploadTenderDoc uuid={docId} />
+        <Form.Item
+          name="tenderDocUrl"
+          label={
+            <div>
+              Upload Tender Documents{" "}
+              <i className="text-xs">(expected in PDF format)</i>
+            </div>
+          }
+        >
+          <UploadTenderDoc
+            uuid={docId}
+            setTendeDocSelected={setTendeDocSelected}
+          />
         </Form.Item>
         <Form.Item
           name="deadLine"
@@ -2475,6 +2576,9 @@ function buildTenderForm(setDeadLine, user, docId, submitTenderData) {
           <DatePicker
             format="YYYY-MM-DD HH:mm"
             showTime
+            disabledDate={(current) =>
+              current.isBefore(moment().subtract(1, "d"))
+            }
             onChange={(v, str) => setDeadLine(str)}
           />
         </Form.Item>
@@ -2486,7 +2590,9 @@ function buildTenderForm(setDeadLine, user, docId, submitTenderData) {
             type="primary"
             htmlType="submit"
             onClick={submitTenderData}
-            disabled={!user?.permissions?.canCreateTenders}
+            disabled={
+              !user?.permissions?.canCreateTenders || !tenderDocSelected
+            }
           >
             Publish Tender
           </Button>
@@ -2513,12 +2619,13 @@ function buildPOForm(
           name="contract"
         >
           <Select
+            allowClear
             style={{ width: "300px" }}
-            placeholder="Select contract"
+            placeholder="search by vendor name, contract #"
             showSearch
             onChange={(value, option) => {
-              setSelectedContract(option.payload);
-              setVendor(option.payload.vendor);
+              setSelectedContract(option?.payload);
+              setVendor(option?.payload.vendor);
             }}
             filterSort={(optionA, optionB) =>
               (optionA?.name ?? "")
@@ -2526,7 +2633,7 @@ function buildPOForm(
                 .localeCompare((optionB?.name ?? "").toLowerCase())
             }
             filterOption={(inputValue, option) =>
-              option.name.toLowerCase().includes(inputValue.toLowerCase())
+              option?.name.toLowerCase().includes(inputValue.toLowerCase())
             }
             // defaultValue="RWF"
             options={contracts.map((c) => {
@@ -2535,13 +2642,14 @@ function buildPOForm(
                 label: (
                   <div className="flex flex-col">
                     <div>
-                      <FileProtectOutlined />{" "}
-                      {c.tender?.purchaseRequest?.title || c?.request?.title}
+                      <UserOutlined />{" "}
+                      {c.vendor?.companyName}
                     </div>
                     <div className="text-gray-300">{c?.number}</div>
                   </div>
                 ),
-                name: c.tender?.purchaseRequest?.title || c?.request?.title,
+                name: c.vendor?.companyName + c?.number,
+                
                 payload: c,
               };
             })}

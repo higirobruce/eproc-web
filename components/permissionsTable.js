@@ -154,6 +154,6 @@ function PermissionsTable({
       approve: canApproveDashboard,
     },
   ];
-  return <Table columns={columns} dataSource={data} size="small" />;
+  return <Table columns={columns} className='shadow-md rounded' dataSource={data} size="small" pagination={false} />;
 }
 export default PermissionsTable;
