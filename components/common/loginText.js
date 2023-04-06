@@ -8,11 +8,11 @@ export default function LoginText() {
       <Image alt="" src="/icons/white icon.png" width={236} height={220} />
       <div className="grid grid-cols-2 px-10 content-center">
         <div className="self-center flex flex-col">
-          <Typography.Title level={2}>
-            <div className="text-white">Welcome to</div>
-          </Typography.Title>
+          {/* <Typography.Title level={2}>
+            <p className="text-white">Welcome</p>
+          </Typography.Title> */}
           <Typography.Title level={1}>
-            <div className="text-white font-bold">Irembo Procure</div>
+            <p className="text-white font-bold">Irembo Procure</p>
           </Typography.Title>
           <div className="text-white font-mono text-sm">
             A tool that aims to simplify the procurement process for suppliers
