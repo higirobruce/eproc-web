@@ -21,7 +21,7 @@ export default function Home() {
       </Head>
 
       <main className="grid md:grid-cols-3 bg-blue-500 w-screen text-white">
-      <LoginText />
+        <LoginText />
         <div>
           {" "}
           <LoginForm />
@@ -29,4 +29,10 @@ export default function Home() {
       </main>
     </>
   );
+}
+
+export async function getServerSideProps(context) {
+  return {
+    props: {}, // will be passed to the page component as props
+  };
 }
