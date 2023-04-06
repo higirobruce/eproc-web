@@ -13,6 +13,8 @@ app.prepare().then(() => {
       app.render(req, res, "/mainPage", query);
     } else if (pathname === "/signup") {
       app.render(req, res, "/signup", query);
+    } else if (pathname === "/publicPortal") {
+      app.render(req, res, "/publicPortal", query);
     } else {
       handle(req, res, parsedUrl);
     }
