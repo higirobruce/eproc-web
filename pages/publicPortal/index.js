@@ -1,4 +1,4 @@
-import { Button, Collapse, Layout, Typography } from "antd";
+import { Button, Collapse, ConfigProvider, Layout, Typography } from "antd";
 import Head from "next/head";
 import Image from "next/image";
 import Router from "next/router";
@@ -6,7 +6,15 @@ import React from "react";
 
 export default function PublicPortal() {
   return (
-    <>
+    <ConfigProvider
+      theme={{
+        token: {
+          colorPrimary: "#0063CF",
+          fontFamily: 'Lota'
+        },
+      }}
+    >
+        <>
       <Head>
         <title>EPROC</title>
         <meta name="description" content="the #1 e-procurement tool" />
@@ -183,6 +191,8 @@ export default function PublicPortal() {
         </Layout>
       </main>
     </>
+    </ConfigProvider>
+    
   );
 
   function card(step, content) {
