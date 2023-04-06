@@ -1,9 +1,8 @@
-import { Button, Collapse, ConfigProvider, Layout, Typography } from "antd";
 import Head from "next/head";
 import Image from "next/image";
 import Router from "next/router";
 import React from "react";
-import '../../styles/global.css'
+import { Button, Collapse, ConfigProvider, Layout, Typography } from "antd";
 
 export default function PublicPortal() {
   return (
