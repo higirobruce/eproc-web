@@ -12,7 +12,7 @@ export default function LoginText() {
             <p className="text-white">Welcome</p>
           </Typography.Title> */}
           <Typography.Title level={1}>
-            <p className="text-white font-bold">Irembo Procure</p>
+            Irembo Procure
           </Typography.Title>
           <div className="text-white font-mono text-sm">
             A tool that aims to simplify the procurement process for suppliers
