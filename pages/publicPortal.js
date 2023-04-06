@@ -2,9 +2,10 @@ import { Button, Collapse, Layout, Typography } from "antd";
 import Head from "next/head";
 import Image from "next/image";
 import Router from "next/router";
-import React from "react";
+import React, { useEffect } from "react";
 
 export default function PublicPortal() {
+  useEffect(()=>{},[])
   return (
     <>
       <Head>
