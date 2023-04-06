@@ -1,4 +1,5 @@
 import { ConfigProvider } from "antd";
+import 'antd/dist/reset.css'
 import { useEffect } from "react";
 import "../styles/globals.css";
 import '@react-pdf-viewer/core/lib/styles/index.css';
