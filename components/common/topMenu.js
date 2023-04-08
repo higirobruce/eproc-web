@@ -30,7 +30,7 @@ const TopMenu = ({ setScreen, screen, handleLogout }) => {
         label: (
           <Image
             alt=""
-            className="pt-3"
+            
             src="/favicon.png"
             width={30}
             height={30}
