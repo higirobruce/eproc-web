@@ -812,18 +812,18 @@ const RequestDetails = ({
                       )
                     }
 
-                    {po?.status === "started" && (
+                    {/* {po?.status === "started" && (
                       <div className="ml-5 w-1/3">
                         <div>Delivery progress</div>
                         <Progress
-                          percent={_.round(po?.deliveryProgress, 1)}
+                          percent={_.round(po?.deliveryProgress, 1) || 0}
                           size="small"
                           status="active"
                         />
                       </div>
-                    )}
+                    )} */}
 
-                    {po?.status === "started" &&
+                    {/* {po?.status === "started" &&
                       po?.deliveryProgress < 100 &&
                       user?._id === data?.createdBy?._id &&
                       po?.items.map((i, index) => {
@@ -843,7 +843,41 @@ const RequestDetails = ({
                             )}
                           </div>
                         );
-                      })}
+                      })} */}
+
+                    <div className="ml-3 text-lg font-bold">
+                      Delivery progress
+                    </div>
+                    {data?.items.map((i, index) => {
+                      let deliveredQty = po?.items[index].deliveredQty || 0;
+                      return (
+                        <div key={i.key} className="m-5">
+                          <div>
+                            {i.title}: {deliveredQty || 0} delivered out of{" "}
+                            {i?.quantity}
+                          </div>
+
+                          {deliveredQty < parseInt(i?.quantity) &&
+                            buildConfirmDeliveryForm(
+                              po,
+                              handleGetProgress,
+                              handleUpdateProgress,
+                              progress,
+                              index,
+                              i?.quantity
+                            )}
+                        </div>
+                      );
+                    })}
+
+                    <div className="ml-3 w-1/3">
+                      {/* <div>Delivery progress</div> */}
+                      <Progress
+                        percent={_.round(po?.deliveryProgress, 1) || 0}
+                        size="small"
+                        status="active"
+                      />
+                    </div>
 
                     {/* {data.status === "approved" &&
                       (tender || po) &&
@@ -889,6 +923,36 @@ const RequestDetails = ({
                             Submit my rate and review
                           </Button>
                         </div>
+                      </div>
+                    )}
+
+                    {po && po.deliveryProgress >= 100 && po.rate && (
+                      <div className="justify-center items-center w-full flex flex-col space-y-3">
+                        <Divider></Divider>
+                        <Typography.Title level={5}>
+                          Supplier & Delivery Rate
+                        </Typography.Title>
+                        <Rate
+                          // allowHalf
+                          disabled
+                          defaultValue={po?.rate}
+                          tooltips={[
+                            "Very bad",
+                            "Bad",
+                            "Good",
+                            "Very good",
+                            "Excellent",
+                          ]}
+                          // onChange={(value) => setRate(value)}
+                          // onChange={(value) => handleRateDelivery(po, value)}
+                        />
+
+                        <Typography.Text level={5}>
+                          {po?.comment}
+                        </Typography.Text>
+                        
+
+                        
                       </div>
                     )}
 
@@ -1397,13 +1461,15 @@ const RequestDetails = ({
                                   .toLowerCase()
                                   .includes(inputValue.toLowerCase())
                               }
-                              options={vendors?.filter(v=>v?.status==='approved')?.map((v) => {
-                                return {
-                                  value: v?._id,
-                                  label: v?.companyName,
-                                  payload: v,
-                                };
-                              })}
+                              options={vendors
+                                ?.filter((v) => v?.status === "approved")
+                                ?.map((v) => {
+                                  return {
+                                    value: v?._id,
+                                    label: v?.companyName,
+                                    payload: v,
+                                  };
+                                })}
                             />
                           </Form.Item>
                         </div>
@@ -1543,11 +1609,15 @@ const RequestDetails = ({
     handleGetProgress,
     handleUpdateProgress,
     progress,
-    index
+    index,
+    qty
   ) {
+    // let [op, setOp] = useState(false);
+    let deliverdQty = po?.items[index].deliveredQty || 0;
     return (
       <div className="mt-2 ">
-        {po?.status === "started" && po?.deliveryProgress < 100 && (
+        {
+          // po?.status === "started" && po?.deliveryProgress < 100 && (
           <div className="grid grid-cols-2 gap-10">
             {/* <div>
               <Form layout="inline" size="small">
@@ -1581,11 +1651,12 @@ const RequestDetails = ({
               <Form layout="inline">
                 <Form.Item required>
                   <InputNumber
+                    disabled={po?.status !== "started"}
                     style={{ width: "100%" }}
-                    placeholder="qty approved"
+                    placeholder="qty delivered"
                     onChange={(value) => {
                       handleGetProgress(value);
-                      setDeliveredQty(po?.items[index].deliveredQty + value);
+                      setDeliveredQty(deliverdQty + value);
                     }}
                   />
                 </Form.Item>
@@ -1611,8 +1682,9 @@ const RequestDetails = ({
                       type="primary"
                       icon={<CheckOutlined />}
                       onClick={() => setOpen(true)}
+                      disabled={po?.status !== "started" || deliveredQty > qty}
                     >
-                      Confirm Quantity Received
+                      Confirm
                     </Button>
                   </Popconfirm>
                   {/* </Popover> */}
@@ -1620,7 +1692,8 @@ const RequestDetails = ({
               </Form>
             </div>
           </div>
-        )}
+          // )
+        }
       </div>
     );
   }
@@ -1696,17 +1769,25 @@ const RequestDetails = ({
           if (!signatories || signatories?.length < 3) {
             messageApi.open({
               type: "error",
-              content: "PO can not be submitted. Please specify at least 3 signatories!",
+              content:
+                "PO can not be submitted. Please specify at least 3 signatories!",
             });
             setCreatingPO(false);
-          } else if(items?.filter(i=>i.quantity<=0 || i.estimatedUnitCost<=0 || !i.quantity || !i.estimatedUnitCost)?.length>=1){
+          } else if (
+            items?.filter(
+              (i) =>
+                i.quantity <= 0 ||
+                i.estimatedUnitCost <= 0 ||
+                !i.quantity ||
+                !i.estimatedUnitCost
+            )?.length >= 1
+          ) {
             messageApi.open({
               type: "error",
-              content:
-                "PO can not be created. Please specify Quantity/Price!",
+              content: "PO can not be created. Please specify Quantity/Price!",
             });
             setCreatingPO(false);
-          }else if (
+          } else if (
             signatories?.filter((s) => {
               return !s?.onBehalfOf || !s?.title || !s?.names || !s?.email;
             })?.length >= 1
@@ -2088,7 +2169,8 @@ const RequestDetails = ({
           if (!signatories || signatories?.length < 2) {
             messageApi.open({
               type: "error",
-              content: "PO can not be submitted. Please specify at least 2 signatories!",
+              content:
+                "PO can not be submitted. Please specify at least 2 signatories!",
             });
           } else if (
             signatories?.filter((s) => {
@@ -2098,7 +2180,7 @@ const RequestDetails = ({
             messageApi.open({
               type: "error",
               content:
-              "PO can not be submitted. Please fill in the relevant signatories' details!"
+                "PO can not be submitted. Please fill in the relevant signatories' details!",
             });
           } else {
             handleCreateContract(
@@ -2642,14 +2724,13 @@ function buildPOForm(
                 label: (
                   <div className="flex flex-col">
                     <div>
-                      <UserOutlined />{" "}
-                      {c.vendor?.companyName}
+                      <UserOutlined /> {c.vendor?.companyName}
                     </div>
                     <div className="text-gray-300">{c?.number}</div>
                   </div>
                 ),
                 name: c.vendor?.companyName + c?.number,
-                
+
                 payload: c,
               };
             })}
