@@ -32,11 +32,13 @@ const VendorsTable = ({
   handleBanUser,
   handleSetRow,
   handleActivateUser,
-
 }) => {
   const [form] = Form.useForm();
   const [data, setData] = useState(dataSet);
   const antIcon = <LoadingOutlined style={{ fontSize: 9 }} spin />;
+  let url = process.env.NEXT_PUBLIC_BKEND_URL;
+  let apiUsername = process.env.NEXT_PUBLIC_API_USERNAME;
+  let apiPassword = process.env.NEXT_PUBLIC_API_PASSWORD;
 
   const cancel = () => {
     setEditingKey("");
@@ -46,11 +48,24 @@ const VendorsTable = ({
     setData(dataSet);
   }, [dataSet]);
 
+  async function getVendorRate(id) {
+    return fetch(`${url}/users/vendors/rate/${id}`, {
+      headers: {
+        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+        "Content-Type": "application/json",
+      },
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        return 2;
+      });
+  }
+
   const columns = [
     {
       title: "Company Name",
-      // dataIndex: "number",
-      sorter: (a, b) => a.companyName.localeCompare(b.companyName),
+      // dataIndex: "vendor.number",
+      sorter: (a, b) => a.vendor?.companyName.localeCompare(b.companyName),
       render: (_, record) => (
         <>
           <div
@@ -60,7 +75,7 @@ const VendorsTable = ({
             {/* <div>
               <UserOutlined className="text-xs" />
             </div> */}
-            <div>{record?.companyName}</div>
+            <div>{record?.vendor?.companyName}</div>
           </div>
         </>
       ),
@@ -68,102 +83,136 @@ const VendorsTable = ({
     {
       title: "TIN",
       dataIndex: "tin",
+      render: (_, record) => (
+        <>
+          <div className="cursor-pointer space-x-1 flex flex-row items-center">
+            {/* <div>
+              <UserOutlined className="text-xs" />
+            </div> */}
+            <div>{record?.vendor?.tin}</div>
+          </div>
+        </>
+      ),
     },
     {
       title: "Contact person email",
       dataIndex: "email",
+      render: (_, record) => (
+        <>
+          <div className="cursor-pointer space-x-1 flex flex-row items-center">
+            {/* <div>
+              <UserOutlined className="text-xs" />
+            </div> */}
+            <div>{record?.vendor?.email}</div>
+          </div>
+        </>
+      ),
     },
     {
       title: "Phone",
       dataIndex: "telephone",
+      render: (_, record) => (
+        <>
+          <div className="cursor-pointer space-x-1 flex flex-row items-center">
+            {/* <div>
+              <UserOutlined className="text-xs" />
+            </div> */}
+            <div>{record?.vendor?.telephone}</div>
+          </div>
+        </>
+      ),
     },
     {
       title: "Status",
       key: "action",
       render: (_, record) => (
         <>
-          {record.status === "pending-approval" && (
-            <Badge color="yellow" text={record.status} />
+          {record?.vendor?.status === "pending-approval" && (
+            <Badge color="yellow" text={record?.vendor?.status} />
           )}
 
-          {record.status === "approved" && (
-            <Badge color="green" text={record.status} />
+          {record?.vendor?.status === "approved" && (
+            <Badge color="green" text={record?.vendor?.status} />
           )}
 
-          {record.status === "declined" && (
-            <Badge color="red" text={record.status} />
+          {record?.vendor?.status === "declined" && (
+            <Badge color="red" text={record?.vendor?.status} />
           )}
 
-          {record.status === "rejected" && (
-            <Badge color="red" text={record.status} />
+          {record?.vendor?.status === "rejected" && (
+            <Badge color="red" text={record?.vendor?.status} />
           )}
         </>
       ),
     },
     {
       title: "Rank",
-      dataIndex: "telephone",
-      render: (_, record) => (
-        <>
-          <Rate count={5} disabled value={random(1,5)}/>
-        </>
-      ),
-      
+      // dataIndex: "vendor.telephone",
+      render: (_, record) => {
+        return (
+          <Rate
+            tooltips={["Very bad", "Bad", "Good", "Very good", "Excellent"]}
+            count={5}
+            disabled
+            value={record?.avgRate}
+          />
+        );
+      },
     },
     // {
     //   title: "Action",
     //   key: "action",
     //   render: (_, record) => (
     //     <Space size="middle">
-    //       {updatingId !== record._id && (
+    //       {updatingId !== record?.vendor?._id && (
     //         <>
-    //           {record.status === "created" && (
+    //           {record?.vendor?.status === "created" && (
     //             <Popover content="Approve">
     //               <span><Popconfirm
     //                 title="Approve vendor"
     //                 description="Are you sure to approve this vendor?"
     //                 okText="Yes"
     //                 cancelText="No"
-    //                 onConfirm={() => approve(record._id)}
+    //                 onConfirm={() => approve(record?.vendor?._id)}
     //               >
     //                 <CheckOutlined className="text-green-400 cursor-pointer" />
     //               </Popconfirm></span>
     //             </Popover>
     //           )}
-    //           {record.status === "declined" && (
+    //           {record?.vendor?.status === "declined" && (
     //             <Popover content="Activate">
     //              <span> <Popconfirm
     //                 title="Activate vendor"
     //                 description="Are you sure to activate this vendor?"
     //                 okText="Yes"
     //                 cancelText="No"
-    //                 onConfirm={() => activate(record._id)}
+    //                 onConfirm={() => activate(record?.vendor?._id)}
     //               >
     //                 <SafetyCertificateOutlined className="text-green-400 cursor-pointer" />
     //               </Popconfirm></span>
     //             </Popover>
     //           )}
-    //           {record.status === "approved" && (
+    //           {record?.vendor?.status === "approved" && (
     //             <Popover content="Ban">
     //               <span><Popconfirm
     //                 title="Ban vendor"
     //                 description="Are you sure to ban this vendor?"
     //                 okText="Yes"
     //                 cancelText="No"
-    //                 onConfirm={() => ban(record._id)}
+    //                 onConfirm={() => ban(record?.vendor?._id)}
     //               >
     //                 <StopOutlined className="text-red-400 cursor-pointer" />
     //               </Popconfirm></span>
     //             </Popover>
     //           )}
-    //           {record.status === "banned" && (
+    //           {record?.vendor?.status === "banned" && (
     //             <Popover content="Activate">
     //               <span><Popconfirm
     //                 title="Acivate vendor"
     //                 description="Are you sure to activate this vendor?"
     //                 okText="Yes"
     //                 cancelText="No"
-    //                 onConfirm={() => activate(record._id)}
+    //                 onConfirm={() => activate(record?.vendor?._id)}
     //               >
     //                 <SafetyCertificateOutlined className="text-green-400 cursor-pointer" />
     //               </Popconfirm></span>
@@ -172,7 +221,7 @@ const VendorsTable = ({
     //         </>
     //       )}
 
-    //       {updatingId === record._id && (
+    //       {updatingId === record?.vendor?._id && (
     //         <Spin size="small" indicator={antIcon} />
     //       )}
     //     </Space>
@@ -204,7 +253,7 @@ const VendorsTable = ({
         columns={columns}
         className="shadow-lg rounded-md"
         pagination={{
-          pageSize:10
+          pageSize: 10,
         }}
       />
     </Form>

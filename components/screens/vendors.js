@@ -17,6 +17,7 @@ import {
   Spin,
   Popover,
   Popconfirm,
+  Rate,
 } from "antd";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
@@ -97,7 +98,7 @@ export default function Vendors({ user }) {
       let _dataSet = [...dataset];
       let filtered = _dataSet.filter((d) => {
         return (
-          d?.companyName
+          d?.vendor?.companyName
             ?.toString()
             .toLowerCase()
             .indexOf(searchText.toLowerCase()) > -1 ||
@@ -111,7 +112,7 @@ export default function Vendors({ user }) {
 
   useEffect(() => {
     if (rowData) {
-      fetch(`${url}/submissions/byVendor/${rowData?._id}`, {
+      fetch(`${url}/submissions/byVendor/${rowData?.vendor?._id}`, {
         method: "GET",
         headers: {
           Authorization:
@@ -134,7 +135,7 @@ export default function Vendors({ user }) {
 
   useEffect(() => {
     setDataLoaded(false);
-    let requestUrl =  `${url}/users/vendors/byStatus/${searchStatus}/`;
+    let requestUrl = `${url}/users/vendors/byStatus/${searchStatus}/`;
     fetch(requestUrl, {
       method: "GET",
       headers: {
@@ -334,7 +335,7 @@ export default function Vendors({ user }) {
   }
 
   function updateVendor() {
-    fetch(`${url}/users/${rowData?._id}`, {
+    fetch(`${url}/users/${rowData?.vendor?._id}`, {
       method: "PUT",
       headers: {
         Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
@@ -518,16 +519,16 @@ export default function Vendors({ user }) {
                 <div className="text-xl font-semibold mb-5 flex flex-row justify-between items-center">
                   <div>General Information</div>
 
-                  {updatingId !== rowData?._id && (
+                  {updatingId !== rowData?.vendor?._id && (
                     <div>
-                      {rowData.status === "pending-approval" && (
+                      {rowData?.vendor?.status === "pending-approval" && (
                         <span>
                           <Popconfirm
                             title="Approve vendor"
                             description="Are you sure?"
                             okText="Yes"
                             cancelText="No"
-                            onConfirm={() => approveUser(rowData._id)}
+                            onConfirm={() => approveUser(rowData?.vendor?._id)}
                           >
                             <div className="flex flex-row items-center justify-center text-sm ring-1 ring-green-400 rounded px-2 py-1 cursor-pointer bg-green-200">
                               Approve
@@ -536,14 +537,16 @@ export default function Vendors({ user }) {
                         </span>
                       )}
 
-                      {rowData.status === "rejected" && (
+                      {rowData?.vendor?.status === "rejected" && (
                         <span>
                           <Popconfirm
                             title="Approve vendor"
                             description="Are you sure to activate this vendor?"
                             okText="Yes"
                             cancelText="No"
-                            onConfirm={() => activateVendor(rowData._id)}
+                            onConfirm={() =>
+                              activateVendor(rowData?.vendor?._id)
+                            }
                           >
                             <div className="flex flex-row items-center justify-center text-sm ring-1 ring-green-400 rounded px-2 py-1 cursor-pointer bg-green-200">
                               Approve
@@ -552,14 +555,14 @@ export default function Vendors({ user }) {
                         </span>
                       )}
 
-                      {rowData.status === "approved" && (
+                      {rowData?.vendor?.status === "approved" && (
                         <span>
                           <Popconfirm
                             title="Reject vendor"
                             description="Are you sure?"
                             okText="Yes"
                             cancelText="No"
-                            onConfirm={() => declineUser(rowData._id)}
+                            onConfirm={() => declineUser(rowData?.vendor?._id)}
                           >
                             <div className="flex flex-row items-center justify-center text-sm ring-1 ring-red-400 rounded px-2 py-1 cursor-pointer bg-red-200">
                               Reject
@@ -567,14 +570,16 @@ export default function Vendors({ user }) {
                           </Popconfirm>
                         </span>
                       )}
-                      {rowData.status === "banned" && (
+                      {rowData?.vendor?.status === "banned" && (
                         <span>
                           <Popconfirm
                             title="Acivate vendor"
                             description="Are you sure?"
                             okText="Yes"
                             cancelText="No"
-                            onConfirm={() => activateVendor(rowData._id)}
+                            onConfirm={() =>
+                              activateVendor(rowData?.vendor?._id)
+                            }
                           >
                             <div className="flex flex-row items-center justify-center text-sm ring-1 ring-green-400 rounded px-2 py-1 cursor-pointer bg-green-200">
                               Activate
@@ -584,7 +589,7 @@ export default function Vendors({ user }) {
                       )}
                     </div>
                   )}
-                  {updatingId === rowData?._id && (
+                  {updatingId === rowData?.vendor?._id && (
                     <Spin
                       size="small"
                       indicator={
@@ -606,11 +611,11 @@ export default function Vendors({ user }) {
                               r.companyName = e;
                               setRowData(r);
                             },
-                            text: rowData?.companyName,
+                            text: rowData?.vendor?.companyName,
                           }
                         }
                       >
-                        {rowData?.companyName}
+                        {rowData?.vendor?.companyName}
                       </Typography.Text>{" "}
                       {editVendor && (
                         <Typography.Text
@@ -621,13 +626,25 @@ export default function Vendors({ user }) {
                                 r.title = e;
                                 setRowData(r);
                               },
-                              text: rowData?.title,
+                              text: rowData?.vendor?.title,
                             }
                           }
                         >
-                          {rowData?.title}
+                          {rowData?.vendor?.title}
                         </Typography.Text>
                       )}
+                      <Rate
+                        tooltips={[
+                          "Very bad",
+                          "Bad",
+                          "Good",
+                          "Very good",
+                          "Excellent",
+                        ]}
+                        count={5}
+                        disabled
+                        value={rowData?.avgRate}
+                      />
                     </div>
                   </div>
 
@@ -642,15 +659,17 @@ export default function Vendors({ user }) {
                               r.contactPersonNames = e;
                               setRowData(r);
                             },
-                            text: rowData?.contactPersonNames,
+                            text: rowData?.vendor?.contactPersonNames,
                           }
                         }
                       >
-                        {rowData?.contactPersonNames}
+                        {rowData?.vendor?.contactPersonNames}
                       </Typography.Text>{" "}
                       {!editVendor && (
                         <div>
-                          <Tag color="cyan">Position: {rowData?.title}</Tag>
+                          <Tag color="cyan">
+                            Position: {rowData?.vendor?.title}
+                          </Tag>
                         </div>
                       )}
                       {editVendor && (
@@ -662,11 +681,11 @@ export default function Vendors({ user }) {
                                 r.title = e;
                                 setRowData(r);
                               },
-                              text: rowData?.title,
+                              text: rowData?.vendor?.title,
                             }
                           }
                         >
-                          {rowData?.title}
+                          {rowData?.vendor?.title}
                         </Typography.Text>
                       )}
                     </div>
@@ -682,12 +701,12 @@ export default function Vendors({ user }) {
                             r.email = e;
                             setRowData(r);
                           },
-                          text: rowData?.email,
+                          text: rowData?.vendor?.email,
                         }
                       }
                       className="text-sm"
                     >
-                      {rowData?.email}{" "}
+                      {rowData?.vendor?.email}{" "}
                     </Typography.Text>
                   </div>
 
@@ -701,12 +720,12 @@ export default function Vendors({ user }) {
                             r.tin = e;
                             setRowData(r);
                           },
-                          text: rowData?.tin,
+                          text: rowData?.vendor?.tin,
                         }
                       }
                       className="text-sm "
                     >
-                      TIN: {rowData?.tin}{" "}
+                      TIN: {rowData?.vendor?.tin}{" "}
                     </Typography.Text>
                   </div>
 
@@ -720,12 +739,12 @@ export default function Vendors({ user }) {
                             r.telephone = e;
                             setRowData(r);
                           },
-                          text: rowData?.telephone,
+                          text: rowData?.vendor?.telephone,
                         }
                       }
                       className="text-sm "
                     >
-                      {rowData?.telephone}{" "}
+                      {rowData?.vendor?.telephone}{" "}
                     </Typography.Text>
                   </div>
                   <div className="flex flex-row items-center space-x-10">
@@ -739,11 +758,11 @@ export default function Vendors({ user }) {
                               r.website = e;
                               setRowData(r);
                             },
-                            text: rowData?.webSite,
+                            text: rowData?.vendor?.webSite,
                           }
                         }
                       >
-                        {rowData?.webSite}{" "}
+                        {rowData?.vendor?.webSite}{" "}
                       </Typography.Link>
                     </div>
                   </div>
@@ -752,7 +771,7 @@ export default function Vendors({ user }) {
                     <GiftOutlined className="text-gray-400" />
                     {!editVendor && (
                       <div className="grid grid-cols-1 gap-2">
-                        {rowData?.services?.map((s) => {
+                        {rowData?.vendor?.services?.map((s) => {
                           return (
                             <div key={s}>
                               <Tag>{s}</Tag>
@@ -765,7 +784,7 @@ export default function Vendors({ user }) {
                       <Select
                         mode="multiple"
                         allowClear
-                        defaultValue={rowData?.services?.map((s) => {
+                        defaultValue={rowData?.vendor?.services?.map((s) => {
                           return s;
                         })}
                         style={{ width: "100%" }}
@@ -807,11 +826,11 @@ export default function Vendors({ user }) {
                                 setRowData(r);
                               },
                               tooltip: "Edit Hq Address",
-                              text: rowData?.hqAddress,
+                              text: rowData?.vendor?.hqAddress,
                             }
                           }
                         >
-                          {rowData?.hqAddress} ,
+                          {rowData?.vendor?.hqAddress} ,
                         </Typography.Text>
                       </div>
                       <div>
@@ -823,12 +842,12 @@ export default function Vendors({ user }) {
                                 r.country = e;
                                 setRowData(r);
                               },
-                              text: rowData?.country,
+                              text: rowData?.vendor?.country,
                               tooltip: "Edit Country",
                             }
                           }
                         >
-                          {rowData?.country}
+                          {rowData?.vendor?.country}
                         </Typography.Text>
                       </div>
                     </div>
@@ -846,24 +865,26 @@ export default function Vendors({ user }) {
                     <div
                       className="text-sm "
                       onClick={() => {
-                        if (rowData?.rdbCertId) {
-                          setAttachmentId(`rdbCerts/${rowData?.rdbCertId}.pdf`);
+                        if (rowData?.vendor?.rdbCertId) {
+                          setAttachmentId(
+                            `rdbCerts/${rowData?.vendor?.rdbCertId}.pdf`
+                          );
                           setPreviewAttachment(!previewAttachment);
                         }
                       }}
                     >
-                      {rowData?.rdbCertId && (
+                      {rowData?.vendor?.rdbCertId && (
                         <Typography.Link>
                           Incorporation Certificate{" "}
                         </Typography.Link>
                       )}
-                      {!rowData?.rdbCertId && (
+                      {!rowData?.vendor?.rdbCertId && (
                         <Typography.Text>
                           Incorporation Certificate{" "}
                         </Typography.Text>
                       )}
                     </div>
-                    {!rowData?.rdbCertId && (
+                    {!rowData?.vendor?.rdbCertId && (
                       <div>
                         <UploadOutlined className="text-blue-500 hover:cursor-pointer" />
                       </div>
@@ -875,20 +896,22 @@ export default function Vendors({ user }) {
                     <div
                       className="text-sm "
                       onClick={() => {
-                        if (rowData?.vatCertId) {
-                          setAttachmentId(`vatCerts/${rowData?.vatCertId}.pdf`);
+                        if (rowData?.vendor?.vatCertId) {
+                          setAttachmentId(
+                            `vatCerts/${rowData?.vendor?.vatCertId}.pdf`
+                          );
                           setPreviewAttachment(!previewAttachment);
                         }
                       }}
                     >
-                      {rowData?.vatCertId && (
+                      {rowData?.vendor?.vatCertId && (
                         <Typography.Link>VAT Certificate </Typography.Link>
                       )}
-                      {!rowData?.vatCertId && (
+                      {!rowData?.vendor?.vatCertId && (
                         <Typography.Text>VAT Certificate </Typography.Text>
                       )}
                     </div>
-                    {!rowData?.vatCertId && (
+                    {!rowData?.vendor?.vatCertId && (
                       <div>
                         <UploadOutlined className="text-blue-500 hover:cursor-pointer" />
                       </div>
