@@ -84,7 +84,6 @@ const LoginForm = () => {
     })
       .then((res) => res.json())
       .then((res) => {
-        console.log(res);
 
         if (res.allowed) {
           if (res.user.status === "approved") {

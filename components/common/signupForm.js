@@ -120,7 +120,6 @@ const SignupForm = () => {
     })
       .then((res) => res.json())
       .then((res) => {
-        console.log(res);
         setSubmitting(false);
         if (!res.error) {
           messageApi.open({
@@ -135,7 +134,6 @@ const SignupForm = () => {
         }
       })
       .catch((err) => {
-        console.log(err);
         setSubmitting(false);
         messageApi.open({
           type: "error",

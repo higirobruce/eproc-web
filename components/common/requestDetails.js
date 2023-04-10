@@ -182,7 +182,6 @@ const RequestDetails = ({
     }, 2000);
   };
   const handleCancel = () => {
-    console.log("Clicked cancel button");
     setOpen(false);
   };
 
@@ -192,20 +191,24 @@ const RequestDetails = ({
       dataIndex: "title",
       key: "title",
       render: (_, item) => (
-        <>
+        <div className="flex flex-col">
+         {item?.paths?.map((p,i)=>{
+          return  <div key={p}>
           <Typography.Link
             className="flex flex-row items-center space-x-2"
             onClick={() => {
               setPreviewAttachment(!previewAttachment);
-              setAttachmentId(`${item?.id}.pdf`);
+              setAttachmentId(p);
             }}
           >
-            <div>{item.title}</div>{" "}
+            <div>{item.title} supporting doc{i+1} </div>{" "}
             <div>
               <PaperClipIcon className="h-4 w-4" />
             </div>
           </Typography.Link>
-        </>
+        </div>
+         })}
+        </div>
       ),
     },
     {
@@ -337,7 +340,6 @@ const RequestDetails = ({
 
   function refresh() {
     let statusCode = getRequestStatusCode(data?.status);
-    console.log(statusCode);
     setCurrentCode(statusCode);
     getContracts();
     setPOItems(data?.items);
@@ -773,6 +775,7 @@ const RequestDetails = ({
                       </div>
                     </div>
 
+                    {/* Items table */}
                     <div className="p-5">
                       <Table
                         size="small"

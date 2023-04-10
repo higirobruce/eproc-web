@@ -40,7 +40,6 @@ export default function RequestStats() {
     })
       .then((res) => res.json())
       .then((res) => {
-        console.log(res);
         let values = res.map((r) => {
           return r.totalCount;
         });
@@ -93,7 +92,6 @@ export default function RequestStats() {
     })
       .then((res) => res.json())
       .then((res) => {
-        console.log(res);
         let values = res.map((r) => {
           return r.totalCount;
         });

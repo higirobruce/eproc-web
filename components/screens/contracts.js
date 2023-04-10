@@ -173,7 +173,7 @@ export default function Contracts({ user }) {
       })
         .then((res) => res.json())
         .then((res) => {
-          console.log(res);
+          ;
           setContracts(res);
           setTempContracts(res);
           setDataLoaded(true);
@@ -730,7 +730,7 @@ export default function Contracts({ user }) {
     })
       .then((res) => res.json())
       .then((res) => {
-        console.log(res);
+        ;
         if (res?.error) {
           let _pos = [...contracts];
           // Find item index using _.findIndex (thanks @AJ Richardson for comment)

@@ -19,7 +19,6 @@ const options = [
 ];
 
 const handleChange = (value) => {
-  console.log(`selected ${value}`);
 };
 const App = () => (
   <Select

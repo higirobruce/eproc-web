@@ -257,6 +257,11 @@ export default function UserRequests({ user }) {
       console.log("Received values of form:", values);
       setConfirmLoading(true);
       let user = JSON.parse(localStorage.getItem("user"));
+      let _values = [...values]
+      _values.map((v,index)=>{
+        v.paths = fileList[index]
+        return v
+      })
       fetch(`${url}/requests/`, {
         method: "POST",
         headers: {
@@ -268,7 +273,7 @@ export default function UserRequests({ user }) {
           dueDate,
           description,
           serviceCategory,
-          items: values,
+          items: _values,
           createdBy: user?._id,
           budgeted,
           budgetLine: budgetLine,
@@ -529,7 +534,6 @@ export default function UserRequests({ user }) {
           })
           .catch((err) => {
             setLoadingRowData(false);
-            alert(JSON.stringify(err))
             // messageApi.open({
             //   type: "error",
             //   content: "Something happened! Please try again.",
@@ -612,7 +616,6 @@ export default function UserRequests({ user }) {
       .then((res) => res.json())
       .then((res1) => {
         if (res1.error || res1.code) {
-          alert(JSON.stringify(res1))
           messageApi.open({
             type: "error",
             content: res1.message?.value ,
@@ -680,9 +683,11 @@ export default function UserRequests({ user }) {
       });
   }
 
-  function _setFileList(list, id) {
+  function _setFileList(list) {
     setFileList(list);
   }
+
+  
 
   // function createPO(vendor, tender, createdBy, sections, items) {
   //   fetch(`${url}/purchaseOrders/`, {

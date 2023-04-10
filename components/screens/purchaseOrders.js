@@ -139,7 +139,7 @@ export default function PurchaseOrders({ user }) {
       })
         .then((res) => res.json())
         .then((res) => {
-          console.log(res);
+          ;
           setPOs(res);
           setTempPOs(res);
           setDataLoaded(true);
@@ -490,7 +490,7 @@ export default function PurchaseOrders({ user }) {
     })
       .then((res) => res.json())
       .then((res) => {
-        console.log(res);
+        ;
         if (res?.error) {
           let _pos = [...pOs];
           // Find item index using _.findIndex (thanks @AJ Richardson for comment)
