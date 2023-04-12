@@ -1044,7 +1044,7 @@ export default function UserRequests({ user }) {
                           ]}
                         >
                           <Select
-                            defaultValue={budgetLine}
+                            // defaultValue={budgetLine}
                             placeholder="Select service category"
                             showSearch
                             onChange={(value, option) => {
