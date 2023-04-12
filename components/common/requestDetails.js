@@ -187,30 +187,13 @@ const RequestDetails = ({
 
   const columns = [
     {
-      title: "Description",
+      title: "Item title",
       dataIndex: "title",
       key: "title",
-      render: (_, item) => (
-        <div className="flex flex-col">
-         {item?.paths?.map((p,i)=>{
-          return  <div key={p}>
-          <Typography.Link
-            className="flex flex-row items-center space-x-2"
-            onClick={() => {
-              setPreviewAttachment(!previewAttachment);
-              setAttachmentId(p);
-            }}
-          >
-            <div>{item.title} supporting doc{i+1} </div>{" "}
-            <div>
-              <PaperClipIcon className="h-4 w-4" />
-            </div>
-          </Typography.Link>
-        </div>
-         })}
-        </div>
-      ),
+      editable: true,
+      render: (_, item) => <>{item?.title}</>,
     },
+
     {
       title: "Quantity",
       dataIndex: "quantity",
@@ -234,6 +217,36 @@ const RequestDetails = ({
       key: "totalAmount",
       render: (_, item) => (
         <>{(item?.quantity * item?.estimatedUnitCost).toLocaleString()}</>
+      ),
+    },
+
+    {
+      title: "Supporting docs",
+      dataIndex: "title",
+      key: "title",
+      render: (_, item) => (
+        <div className="flex flex-col">
+          {item?.paths?.map((p, i) => {
+            return (
+              <div key={p}>
+                <Typography.Link
+                  className="flex flex-row items-center space-x-2"
+                  onClick={() => {
+                    setPreviewAttachment(!previewAttachment);
+                    setAttachmentId(p);
+                  }}
+                >
+                  <div>
+                    supporting doc{i + 1}{" "}
+                  </div>{" "}
+                  <div>
+                    <PaperClipIcon className="h-4 w-4" />
+                  </div>
+                </Typography.Link>
+              </div>
+            );
+          })}
+        </div>
       ),
     },
   ];
@@ -953,9 +966,6 @@ const RequestDetails = ({
                         <Typography.Text level={5}>
                           {po?.comment}
                         </Typography.Text>
-                        
-
-                        
                       </div>
                     )}
 

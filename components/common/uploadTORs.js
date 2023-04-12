@@ -49,9 +49,9 @@ function UploadTORs({ label, uuid, fileList, setFileList }) {
 
   const props = {
     onRemove: (file) => {
-      const index = fileList[uuid].indexOf(file);
-      const newFileList = fileList[uuid].slice();
-      newFileList.splice(index, 1);
+      const index = fileList[uuid]?.indexOf(file);
+      const newFileList = fileList[uuid]?.slice();
+      newFileList?.splice(index, 1);
       setFileList(newFileList, uuid);
 
       const _index = files.indexOf(file);
@@ -103,7 +103,7 @@ function UploadTORs({ label, uuid, fileList, setFileList }) {
     <>
       {contextHolder}
       <Upload {...props} name='nemaeTEst' headers={{}}>
-        <Button icon={<UploadOutlined />}>{label ? label : "Upload"}</Button>
+        <Button >{label ? label : "Select file"}</Button>
       </Upload>
 
       <Button
@@ -111,6 +111,7 @@ function UploadTORs({ label, uuid, fileList, setFileList }) {
         onClick={handleUpload}
         disabled={files.length === 0}
         loading={uploading}
+        icon={<UploadOutlined />}
         style={{
           marginTop: 16,
         }}
