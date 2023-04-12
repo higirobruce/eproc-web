@@ -7,6 +7,7 @@ import {
   HandThumbUpIcon,
   PaperAirplaneIcon,
   PaperClipIcon,
+  RectangleStackIcon,
   UsersIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
@@ -167,23 +168,14 @@ const TenderDetails = ({
     user?.userType !== "VENDOR"
       ? [
           {
-            title: "Description",
+            title: "Item title",
             dataIndex: "title",
             key: "title",
             render: (_, item) => (
               <>
-                <Typography.Link
-                  className="flex flex-row items-center space-x-2"
-                  onClick={() => {
-                    setPreviewAttachment(true);
-                    setAttachmentId("termsOfReference/" + item?.id + ".pdf");
-                  }}
-                >
+                <Typography.Text className="flex flex-row items-center space-x-2">
                   <div>{item.title}</div>{" "}
-                  <div>
-                    <PaperClipIcon className="h-4 w-4" />
-                  </div>
-                </Typography.Link>
+                </Typography.Text>
               </>
             ),
           },
@@ -208,6 +200,41 @@ const TenderDetails = ({
             key: "totalAmount",
             render: (_, item) => (
               <>{(item?.quantity * item?.estimatedUnitCost).toLocaleString()}</>
+            ),
+          },
+          {
+            title: "Supporting docs",
+            dataIndex: "supportingDocs",
+            key: "supportingDocs",
+            render: (_, item) => (
+              <div className="flex flex-col">
+                {item?.paths?.map((p, i) => {
+                  return (
+                    <div key={p}>
+                      <Typography.Link
+                        className="flex flex-row items-center space-x-2"
+                        onClick={() => {
+                          setPreviewAttachment(!previewAttachment);
+                          setAttachmentId(p);
+                        }}
+                      >
+                        <div>supporting doc{i + 1} </div>{" "}
+                        <div>
+                          <PaperClipIcon className="h-4 w-4" />
+                        </div>
+                      </Typography.Link>
+                    </div>
+                  );
+                })}
+                {(item?.paths?.length < 1 || !item?.paths) && (
+                  <div className="items-center justify-center flex flex-col">
+                    <div>
+                      <RectangleStackIcon className="h-5 w-5 text-gray-200" />
+                    </div>
+                    <div className="text-xs text-gray-400">No docs found</div>
+                  </div>
+                )}
+              </div>
             ),
           },
         ]
@@ -2563,7 +2590,7 @@ const TenderDetails = ({
                         {
                           <>
                             <div className="text-lg flex flex-row items-center space-x-5">
-                              <div>Evaluators List{" "}</div>
+                              <div>Evaluators List </div>
                               {data?.evaluationReportId && (
                                 <a
                                   href="#"
@@ -2704,9 +2731,7 @@ const TenderDetails = ({
                       </div>
                     )}
                     <Divider></Divider>
-                    <div className="text-lg ml-3">
-                      Bids List
-                    </div>
+                    <div className="text-lg ml-3">Bids List</div>
                     <div>
                       <BidList
                         tenderId={data._id}
