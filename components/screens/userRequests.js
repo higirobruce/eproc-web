@@ -1064,12 +1064,12 @@ export default function UserRequests({ user }) {
                             }}
                             options={budgetLines.map((s) => {
                               return {
-                                label: s.title.toUpperCase(),
-                                options: s.subLines.map((sub) => {
+                                label: s.description.toUpperCase(),
+                                options: s.budgetlines.map((sub) => {
                                   return {
-                                    label: sub,
-                                    value: sub,
-                                    title: s.title,
+                                    label: sub.description,
+                                    value: sub.description,
+                                    title: sub.description,
                                   };
                                 }),
                               };
