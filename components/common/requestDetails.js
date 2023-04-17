@@ -118,7 +118,7 @@ const RequestDetails = ({
   handleUpdateRequest,
   handleRateDelivery,
   refDoc,
-  setRefDoc
+  setRefDoc,
 }) => {
   const [form] = Form.useForm();
   const [size, setSize] = useState("small");
@@ -230,29 +230,32 @@ const RequestDetails = ({
       key: "title",
       render: (_, item) => (
         <div className="flex flex-col">
-          {items?.paths && item?.paths?.map((p, i) => {
-            return (
-              <div key={p}>
-                <Typography.Link
-                  className="flex flex-row items-center space-x-2"
-                  onClick={() => {
-                    setPreviewAttachment(!previewAttachment);
-                    setAttachmentId(p);
-                  }}
-                >
-                  <div>supporting doc{i + 1} </div>{" "}
-                  <div>
-                    <PaperClipIcon className="h-4 w-4" />
-                  </div>
-                </Typography.Link>
-              </div>
-            );
-          })}
+          {items?.paths &&
+            item?.paths?.map((p, i) => {
+              return (
+                <div key={p}>
+                  <Typography.Link
+                    className="flex flex-row items-center space-x-2"
+                    onClick={() => {
+                      setPreviewAttachment(!previewAttachment);
+                      setAttachmentId(p);
+                    }}
+                  >
+                    <div>supporting doc{i + 1} </div>{" "}
+                    <div>
+                      <PaperClipIcon className="h-4 w-4" />
+                    </div>
+                  </Typography.Link>
+                </div>
+              );
+            })}
           {(item?.paths?.length < 1 || !item?.paths) && (
             <div className="items-center justify-center flex flex-col">
-              <div><RectangleStackIcon className="h-5 w-5 text-gray-200"/></div>
-              <div className="text-xs text-gray-400">No docs found</div>
+              <div>
+                <RectangleStackIcon className="h-5 w-5 text-gray-200" />
               </div>
+              <div className="text-xs text-gray-400">No docs found</div>
+            </div>
           )}
         </div>
       ),
@@ -346,10 +349,12 @@ const RequestDetails = ({
           let assetOptions = value?.map((v) => {
             return {
               value: v?.ItemCode,
-              label: <div className="flex flex-col">
-                <div>{v?.ItemCode}</div>
-                <div className="text-gray-400 text-sm">{v?.ItemName}</div>
-              </div>
+              label: (
+                <div className="flex flex-col">
+                  <div>{v?.ItemCode}</div>
+                  <div className="text-gray-400 text-sm">{v?.ItemName}</div>
+                </div>
+              ),
             };
           });
           setAssetOptions(assetOptions);
@@ -446,7 +451,7 @@ const RequestDetails = ({
       torsUrl: "url",
       purchaseRequest: data._id,
       docId,
-      reqAttachmentDocId: refDoc === "directContracting" ? reqAttachId : "",
+      reqAttachmentDocId: refDoc === "Direct Contracting" ? reqAttachId : "",
     };
     createTender(tData);
   }
@@ -872,6 +877,10 @@ const RequestDetails = ({
                         );
                       })} */}
 
+                    <div className="ml-3 text-lg font-bold">
+                      Sourcing Method
+                    </div>
+                    <div className="ml-5">{(data?.sourcingMethod && <Tag>{data?.sourcingMethod}</Tag>) || 'No sourcing method selected yet.'}</div>
                     <div className="ml-3 text-lg font-bold">
                       Delivery progress
                     </div>
@@ -1425,16 +1434,16 @@ const RequestDetails = ({
                           defaultValue={false}
                           options={[
                             {
-                              value: "existingContract",
+                              value: "From Existing Contract",
                               label: "Sourcing from Existing Contract",
                             },
 
                             {
-                              value: "directContracting",
+                              value: "Direct Contracting",
                               label: "Direct contracting",
                             },
                             {
-                              value: "tendering",
+                              value: "Tendering",
                               label: "Tendering",
                             },
                           ]}
@@ -1442,7 +1451,7 @@ const RequestDetails = ({
                       </Form.Item>
                     </div>
 
-                    {refDoc === "tendering" &&
+                    {refDoc === "Tendering" &&
                       buildTenderForm(
                         setDeadLine,
                         user,
@@ -1452,7 +1461,7 @@ const RequestDetails = ({
                         tenderDocSelected
                       )}
 
-                    {refDoc === "existingContract" &&
+                    {refDoc === "From Existing Contract" &&
                       buildPOForm(
                         setSelectedContract,
                         contracts,
@@ -1462,7 +1471,7 @@ const RequestDetails = ({
                         selectedContract
                       )}
 
-                    {refDoc === "directContracting" && (
+                    {refDoc === "Direct Contracting" && (
                       <div>
                         <div className="items-center">
                           <div>Select registered vendor</div>

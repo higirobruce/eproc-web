@@ -447,7 +447,7 @@ export default function UserRequests({ user }) {
   }
 
   function updateSourcingMethod(id, sourcingMethod) {
-    setLoadingRowData(true);
+   
     fetch(`${url}/requests/sourcingMethod/${id}`, {
       method: "PUT",
       headers: {
@@ -470,10 +470,10 @@ export default function UserRequests({ user }) {
             });
             console.log(r);
             setRowData(r[0]);
-            setLoadingRowData(false);
+           
           })
           .catch((err) => {
-            setLoadingRowData(false);
+            
             messageApi.open({
               type: "error",
               content: "Something happened! Please try again.",
@@ -481,7 +481,7 @@ export default function UserRequests({ user }) {
           });
       })
       .catch((err) => {
-        setLoadingRowData(false);
+       
         messageApi.open({
           type: "error",
           content: "Something happened! Please try again.",
