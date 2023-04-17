@@ -1068,7 +1068,7 @@ export default function UserRequests({ user }) {
                                 options: s.budgetlines.map((sub) => {
                                   return {
                                     label: sub.description,
-                                    value: sub.description,
+                                    value: sub._id,
                                     title: sub.description,
                                   };
                                 }),

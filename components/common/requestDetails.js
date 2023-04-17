@@ -344,7 +344,10 @@ const RequestDetails = ({
           let assetOptions = value?.map((v) => {
             return {
               value: v?.ItemCode,
-              label: v?.ItemName,
+              label: <div className="flex flex-col">
+                <div>{v?.ItemCode}</div>
+                <div className="text-gray-400 text-sm">{v?.ItemName}</div>
+              </div>
             };
           });
           setAssetOptions(assetOptions);
