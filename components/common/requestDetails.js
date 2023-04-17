@@ -117,6 +117,8 @@ const RequestDetails = ({
   edit,
   handleUpdateRequest,
   handleRateDelivery,
+  refDoc,
+  setRefDoc
 }) => {
   const [form] = Form.useForm();
   const [size, setSize] = useState("small");
@@ -135,7 +137,7 @@ const RequestDetails = ({
   let [contract, setContract] = useState(null);
   let [currentStep, setCurrentStep] = useState(-1);
   let [progress, setProgress] = useState(0);
-  let [refDoc, setRefDoc] = useState(false);
+  // let [refDoc, setRefDoc] = useState(false);
   let [contracts, setContracts] = useState([]);
   let [selectedContract, setSelectedContract] = useState(null);
   let [vendor, setVendor] = useState(null);
@@ -228,7 +230,7 @@ const RequestDetails = ({
       key: "title",
       render: (_, item) => (
         <div className="flex flex-col">
-          {item?.paths?.map((p, i) => {
+          {items?.paths && item?.paths?.map((p, i) => {
             return (
               <div key={p}>
                 <Typography.Link
@@ -444,7 +446,7 @@ const RequestDetails = ({
       torsUrl: "url",
       purchaseRequest: data._id,
       docId,
-      reqAttachmentDocId: refDoc === "external" ? reqAttachId : "",
+      reqAttachmentDocId: refDoc === "directContracting" ? reqAttachId : "",
     };
     createTender(tData);
   }
@@ -1423,16 +1425,16 @@ const RequestDetails = ({
                           defaultValue={false}
                           options={[
                             {
-                              value: "contract",
+                              value: "existingContract",
                               label: "Sourcing from Existing Contract",
                             },
 
                             {
-                              value: "external",
+                              value: "directContracting",
                               label: "Direct contracting",
                             },
                             {
-                              value: "none",
+                              value: "tendering",
                               label: "Tendering",
                             },
                           ]}
@@ -1440,7 +1442,7 @@ const RequestDetails = ({
                       </Form.Item>
                     </div>
 
-                    {refDoc === "none" &&
+                    {refDoc === "tendering" &&
                       buildTenderForm(
                         setDeadLine,
                         user,
@@ -1450,7 +1452,7 @@ const RequestDetails = ({
                         tenderDocSelected
                       )}
 
-                    {refDoc === "contract" &&
+                    {refDoc === "existingContract" &&
                       buildPOForm(
                         setSelectedContract,
                         contracts,
@@ -1460,7 +1462,7 @@ const RequestDetails = ({
                         selectedContract
                       )}
 
-                    {refDoc === "external" && (
+                    {refDoc === "directContracting" && (
                       <div>
                         <div className="items-center">
                           <div>Select registered vendor</div>

@@ -88,6 +88,7 @@ export default function UserRequests({ user }) {
   let [searchText, setSearchText] = useState("");
   const [form] = Form.useForm();
   const [onlyMine, setOnlyMine] = useState(true);
+  const [sourcingMethod, setSourcingMethod] = useState("");
 
   useEffect(() => {
     // loadRequests()
@@ -202,8 +203,12 @@ export default function UserRequests({ user }) {
       let filtered = _dataSet.filter((d) => {
         return (
           d?.number.toString().indexOf(searchText) > -1 ||
-          d?.createdBy?.firstName.toLowerCase().indexOf(searchText.toLowerCase()) > -1 ||
-          d?.createdBy?.lastName.toLowerCase().indexOf(searchText.toLowerCase()) > -1
+          d?.createdBy?.firstName
+            .toLowerCase()
+            .indexOf(searchText.toLowerCase()) > -1 ||
+          d?.createdBy?.lastName
+            .toLowerCase()
+            .indexOf(searchText.toLowerCase()) > -1
         );
       });
       setTempDataset(filtered);
@@ -247,7 +252,7 @@ export default function UserRequests({ user }) {
       },
     });
   }
-  
+
   useEffect(() => {
     setUpdatingId("");
   }, [dataset]);
@@ -257,11 +262,11 @@ export default function UserRequests({ user }) {
       console.log("Received values of form:", values);
       setConfirmLoading(true);
       let user = JSON.parse(localStorage.getItem("user"));
-      let _values = [...values]
-      _values.map((v,index)=>{
-        v.paths = fileList[index]
-        return v
-      })
+      let _values = [...values];
+      _values.map((v, index) => {
+        v.paths = fileList[index];
+        return v;
+      });
       fetch(`${url}/requests/`, {
         method: "POST",
         headers: {
@@ -441,6 +446,49 @@ export default function UserRequests({ user }) {
     }, 2000);
   }
 
+  function updateSourcingMethod(id, sourcingMethod) {
+    setLoadingRowData(true);
+    fetch(`${url}/requests/sourcingMethod/${id}`, {
+      method: "PUT",
+      headers: {
+        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        sourcingMethod,
+      }),
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        loadRequests()
+          .then((res) => res.json())
+          .then((res) => {
+            setDataset(res);
+            setTempDataset(res);
+            let r = res.filter((d) => {
+              return d._id === id;
+            });
+            console.log(r);
+            setRowData(r[0]);
+            setLoadingRowData(false);
+          })
+          .catch((err) => {
+            setLoadingRowData(false);
+            messageApi.open({
+              type: "error",
+              content: "Something happened! Please try again.",
+            });
+          });
+      })
+      .catch((err) => {
+        setLoadingRowData(false);
+        messageApi.open({
+          type: "error",
+          content: "Something happened! Please try again.",
+        });
+      });
+  }
+
   function updateRequest() {
     setLoadingRowData(true);
     fetch(`${url}/requests/${rowData?._id}`, {
@@ -494,6 +542,7 @@ export default function UserRequests({ user }) {
       .then((res) => res.json())
       .then((res) => {
         updateStatus(rowData._id, "approved");
+        updateSourcingMethod(rowData._id, sourcingMethod)
       })
       .catch((err) => {
         console.log(err);
@@ -545,8 +594,8 @@ export default function UserRequests({ user }) {
   function rateDelivery(po, rate, comment) {
     let _po = { ...po };
     _po.rate = rate;
-    _po.rateComment = comment
-    setLoadingRowData(true)
+    _po.rateComment = comment;
+    setLoadingRowData(true);
     fetch(`${url}/purchaseOrders/progress/${po?._id}`, {
       method: "PUT",
       body: JSON.stringify({
@@ -573,14 +622,13 @@ export default function UserRequests({ user }) {
             setLoadingRowData(false);
           })
           .catch((err) => {
-            
             setLoadingRowData(false);
             messageApi.open({
               type: "error",
               content: "Something happened! Please try again.",
             });
           });
-      })
+      });
   }
 
   function createPO(
@@ -618,11 +666,11 @@ export default function UserRequests({ user }) {
         if (res1.error || res1.code) {
           messageApi.open({
             type: "error",
-            content: res1.message?.value ,
+            content: res1.message?.value,
           });
         } else {
-          
           updateStatus(rowData._id, "approved");
+          updateSourcingMethod(rowData._id, sourcingMethod)
           messageApi.open({
             type: "success",
             content: "PO created!",
@@ -670,6 +718,7 @@ export default function UserRequests({ user }) {
       .then((res) => res.json())
       .then((res1) => {
         updateStatus(rowData._id, "approved");
+        updateSourcingMethod(rowData._id, sourcingMethod)
         messageApi.open({
           type: "success",
           content: "PO created!",
@@ -686,8 +735,6 @@ export default function UserRequests({ user }) {
   function _setFileList(list) {
     setFileList(list);
   }
-
-  
 
   // function createPO(vendor, tender, createdBy, sections, items) {
   //   fetch(`${url}/purchaseOrders/`, {
@@ -741,7 +788,6 @@ export default function UserRequests({ user }) {
               </div>
             </div>
             <Row className="flex flex-row justify-between items-center space-x-4">
-
               <div className="flex-1">
                 <Select
                   // mode="tags"
@@ -764,7 +810,7 @@ export default function UserRequests({ user }) {
                   ]}
                 />
               </div>
-              
+
               <Button
                 type="text"
                 icon={<ReloadOutlined />}
@@ -780,8 +826,6 @@ export default function UserRequests({ user }) {
                   placeholder="Search by request#, initiator"
                 />
               </div>
-
-             
 
               {user?.permissions?.canCreateRequests && (
                 <Button
@@ -815,13 +859,14 @@ export default function UserRequests({ user }) {
             onOk={async () => {
               await form.validateFields();
               if (values && values[0]) {
-                let invalidValues = values?.filter(v=>
-                    v?.title=='' ||
-                    v?.quantity==''||
-                    v?.estimatedUnitCost===''
-                  )
-                if(invalidValues?.length==0){
-                  save()
+                let invalidValues = values?.filter(
+                  (v) =>
+                    v?.title == "" ||
+                    v?.quantity == "" ||
+                    v?.estimatedUnitCost === ""
+                );
+                if (invalidValues?.length == 0) {
+                  save();
                 }
               }
             }}
@@ -830,7 +875,7 @@ export default function UserRequests({ user }) {
               setValues([]);
             }}
             okText="Submit for approval"
-            okButtonProps={{ size: "small"}}
+            okButtonProps={{ size: "small" }}
             cancelButtonProps={{ size: "small" }}
             width={1200}
             confirmLoading={confirmLoading}
@@ -866,7 +911,9 @@ export default function UserRequests({ user }) {
                           style={{ width: "100%" }}
                           defaultValue={null}
                           value={dueDate}
-                          disabledDate={(current)=> current.isBefore(moment().subtract(1,'d')) }
+                          disabledDate={(current) =>
+                            current.isBefore(moment().subtract(1, "d"))
+                          }
                           onChange={(v, dstr) => setDueDate(dstr)}
                         />
                       </Form.Item>
@@ -1227,6 +1274,8 @@ export default function UserRequests({ user }) {
           edit={editRequest}
           handleUpdateRequest={setSelectedReqId}
           handleRateDelivery={rateDelivery}
+          refDoc={sourcingMethod}
+          setRefDoc={setSourcingMethod}
         />
       </div>
     );
