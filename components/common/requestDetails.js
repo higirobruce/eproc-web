@@ -230,7 +230,7 @@ const RequestDetails = ({
       key: "title",
       render: (_, item) => (
         <div className="flex flex-col">
-          {items?.paths &&
+          {
             item?.paths?.map((p, i) => {
               return (
                 <div key={p}>
@@ -249,7 +249,7 @@ const RequestDetails = ({
                 </div>
               );
             })}
-          {(item?.paths?.length < 1 || !item?.paths) && (
+          {(!item?.paths || item?.paths?.length < 1 ) && (
             <div className="items-center justify-center flex flex-col">
               <div>
                 <RectangleStackIcon className="h-5 w-5 text-gray-200" />
