@@ -139,7 +139,6 @@ export default function PurchaseOrders({ user }) {
       })
         .then((res) => res.json())
         .then((res) => {
-          ;
           setPOs(res);
           setTempPOs(res);
           setDataLoaded(true);
@@ -327,12 +326,29 @@ export default function PurchaseOrders({ user }) {
                     </div>
 
                     {s.signed && (
-                      <div className="flex flex-col">
-                        <Typography.Text type="secondary">
-                          <div className="text-xs">IP address</div>
-                        </Typography.Text>
-                        <Typography.Text strong>{s?.ipAddress}</Typography.Text>
-                      </div>
+                      <>
+                        {!signing && (
+                          <div className="flex flex-col">
+                            <Typography.Text type="secondary">
+                              <div className="text-xs">IP address</div>
+                            </Typography.Text>
+                            <Typography.Text strong>
+                              {s?.ipAddress}
+                            </Typography.Text>
+                          </div>
+                        )}
+                        {signing && (
+                          <Spin
+                            indicator={
+                              <LoadingOutlined
+                                className="text-gray-500"
+                                style={{ fontSize: 20 }}
+                                spin
+                              />
+                            }
+                          />
+                        )}
+                      </>
                     )}
                   </div>
                   {s?.signed && (
@@ -343,15 +359,19 @@ export default function PurchaseOrders({ user }) {
                         src="/icons/icons8-signature-80.png"
                       />
 
-                      <div className="text-blue-500 flex flex-col">
-                        <div className="text-lg">Signed digitaly</div>
-                        <div>{moment(s.signedAt).format("DD MMM YYYY")} at</div>
-                        <div>
-                          {moment(s.signedAt)
-                            .tz("Africa/Kigali")
-                            .format("h:mm a z")}
+                      {!signing && (
+                        <div className="text-blue-500 flex flex-col">
+                          <div className="text-lg">Signed digitaly</div>
+                          <div>
+                            {moment(s.signedAt).format("DD MMM YYYY")} at
+                          </div>
+                          <div>
+                            {moment(s.signedAt)
+                              .tz("Africa/Kigali")
+                              .format("h:mm a z")}
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </div>
                   )}
 
@@ -438,15 +458,16 @@ export default function PurchaseOrders({ user }) {
         })
           .then((res) => res.json())
           .then((res) => {
+            setSigning(false);
             setSignatories([]);
             setSections([{ title: "Set section title", body: "" }]);
             setPO(res);
           });
       })
       .catch((err) => {
+        setSigning(false);
         console.log(err);
       });
-    setSigning(false);
 
     //call API to sign
   }
@@ -490,7 +511,6 @@ export default function PurchaseOrders({ user }) {
     })
       .then((res) => res.json())
       .then((res) => {
-        ;
         if (res?.error) {
           let _pos = [...pOs];
           // Find item index using _.findIndex (thanks @AJ Richardson for comment)
@@ -799,7 +819,7 @@ export default function PurchaseOrders({ user }) {
 
                     <div className="flex flex-col space-y-1 justify-center">
                       {/* <div className="text-xs text-gray-400">Delivery</div> */}
-                      
+
                       {po?.status !== "started" &&
                         po?.status !== "stopped" &&
                         user?.userType === "VENDOR" && (

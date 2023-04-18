@@ -1856,17 +1856,29 @@ const TenderDetails = ({
                     </div>
 
                     {s.signed && (
-                      <div className="flex flex-col">
-                        <Typography.Text type="secondary">
-                          <div className="text-xs">IP address</div>
-                        </Typography.Text>
+                      <>
                         {!signing && (
-                          <Typography.Text strong>
-                            {s?.ipAddress}
-                          </Typography.Text>
+                          <div className="flex flex-col">
+                            <Typography.Text type="secondary">
+                              <div className="text-xs">IP address</div>
+                            </Typography.Text>
+                            <Typography.Text strong>
+                              {s?.ipAddress}
+                            </Typography.Text>
+                          </div>
                         )}
-                        {signing && <Spin size="small" />}
-                      </div>
+                        {signing && (
+                          <Spin
+                            indicator={
+                              <LoadingOutlined
+                                className="text-gray-500"
+                                style={{ fontSize: 20 }}
+                                spin
+                              />
+                            }
+                          />
+                        )}
+                      </>
                     )}
                   </div>
                   {s?.signed && (
@@ -2481,15 +2493,17 @@ const TenderDetails = ({
         })
           .then((res) => res.json())
           .then((res) => {
+            setSigning(false);
             setSignatories([]);
             setSections([{ title: "Set section title", body: "" }]);
             setPO(res);
           });
       })
       .catch((err) => {
+        setSigning(false);
         console.log(err);
       });
-    setSigning(false);
+    
 
     //call API to sign
   }

@@ -1031,8 +1031,8 @@ const RequestDetails = ({
             {
               children: <div className="">PR-approved</div>,
               color:
-                data?.status === "approved (pm)" || tender ? "blue" : "gray",
-              dot: (data?.status === "approved (pm)" || tender) && (
+                (data?.status === "approved (pm)"||data?.status === "approved") || tender  ? "blue" : "gray",
+              dot: (data?.status === "approved (pm)" || tender || data?.status === "approved") && (
                 <CheckCircleOutlined className=" text-green-500" />
               ),
             },
