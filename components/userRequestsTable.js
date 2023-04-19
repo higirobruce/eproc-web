@@ -158,7 +158,7 @@ const UsersRequestsTable = ({
   function getHighLevelStatus(status) {
     if (status === "Approved" || status === "Declined") {
       return status;
-    } else if(status ==='approve (pm)'){
+    } else if(status ==='Approved (pm)'){
       return 'Approved'
     }
     else {

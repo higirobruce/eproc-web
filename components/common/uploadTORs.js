@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { UploadOutlined } from "@ant-design/icons";
-import { Button, Upload, message, UploadFile } from "antd";
+import { Button, Upload, message} from "antd";
 
 function UploadTORs({ label, uuid, fileList, setFileList }) {
   const [messageApi, contextHolder] = message.useMessage();
@@ -68,13 +68,15 @@ function UploadTORs({ label, uuid, fileList, setFileList }) {
       let isPDF = file.type == "application/pdf";
       if (!isPDF) {
         messageApi.error(`${file.name} is not a PDF file`);
+        return false || Upload.LIST_IGNORE;
       }
       // let _fileList = fileList[uuid] ? [...fileList[uuid]] : [];
       
       // _fileList.push(file);
       // setFileList(_fileList, uuid);
       setFiles([...files, file]);
-      return isPDF || Upload.LIST_IGNORE;
+      // return isPDF || Upload.LIST_IGNORE;
+      return false;
     },
     // action: `${url}/uploads/termsOfReference?id=23232`,
     // headers: {
@@ -99,10 +101,11 @@ function UploadTORs({ label, uuid, fileList, setFileList }) {
     //     .then(({ thumbnail }) => thumbnail);
     // },
   };
+  
   return (
     <>
       {contextHolder}
-      <Upload {...props} name='nemaeTEst' headers={{}}>
+      <Upload {...props}>
         <Button >{label ? label : "Select file"}</Button>
       </Upload>
 

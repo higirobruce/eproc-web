@@ -390,6 +390,7 @@ const RequestDetails = ({
     })
       .then((res) => res.json())
       .then((res) => {
+        console.log(res)
         setVendors(res);
       })
       .catch((err) => {});
@@ -1495,12 +1496,12 @@ const RequestDetails = ({
                                   .includes(inputValue.toLowerCase())
                               }
                               options={vendors
-                                ?.filter((v) => v?.status === "approved")
+                                ?.filter((v) => v?.vendor?.status === "approved")
                                 ?.map((v) => {
                                   return {
-                                    value: v?._id,
-                                    label: v?.companyName,
-                                    payload: v,
+                                    value: v?.vendor?._id,
+                                    label: v?.vendor?.companyName,
+                                    payload: v?.vendor,
                                   };
                                 })}
                             />
