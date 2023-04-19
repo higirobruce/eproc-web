@@ -36,7 +36,7 @@ const TopMenu = ({ setScreen, screen, handleLogout }) => {
             height={30}
           />
         ),
-        key: "logo",
+        key: "dashboard",
         // icon: <LogoutOutlined className="text-red-400" />,
         // style: { marginTop: "5px" },
         // onClick: logout,
