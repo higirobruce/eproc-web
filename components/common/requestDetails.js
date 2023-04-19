@@ -762,13 +762,13 @@ const RequestDetails = ({
                           )}
                         </div>
 
-                        {/* Budgete Line */}
+                        {/* Budget Line */}
                         <div className="flex flex-col space-y-1 items-start">
                           <div className="text-xs ml-3 text-gray-400">
                             Budget Line:
                           </div>
                           <div className="text-sm font-semibold ml-3 text-gray-600">
-                            {data?.budgetLine}
+                            {data?.budgetLine?.description}
                           </div>
                         </div>
 

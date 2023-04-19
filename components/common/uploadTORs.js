@@ -77,10 +77,10 @@ function UploadTORs({ label, uuid, fileList, setFileList }) {
       return isPDF || Upload.LIST_IGNORE;
     },
     // action: `${url}/uploads/termsOfReference?id=23232`,
-    headers: {
-      Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
-      "Content-Type": "application/json",
-    },
+    // headers: {
+    //   Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+    //   "Content-Type": "application/json",
+    // },
     // listType: "document",
     files,
     // previewFile(file) {

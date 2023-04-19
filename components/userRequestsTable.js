@@ -161,7 +161,6 @@ const UsersRequestsTable = ({
     } else if(status ==='approve (pm)'){
       return 'Approved'
     }
-    
     else {
       return "Pending";
     }
