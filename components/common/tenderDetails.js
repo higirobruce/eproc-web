@@ -2278,22 +2278,30 @@ const TenderDetails = ({
                       </Typography.Text>
                     </div>
 
-                    {signing && !s.signed && (
-                      <div className="flex flex-col">
-                        <Typography.Text type="secondary">
-                          <div className="text-xs">IP address</div>
-                        </Typography.Text>
-                        <Spin size="small" indicator={<LoadingOutlined />} />
-                      </div>
-                    )}
-
-                    {s.signed && !signing && (
-                      <div className="flex flex-col">
-                        <Typography.Text type="secondary">
-                          <div className="text-xs">IP address</div>
-                        </Typography.Text>
-                        <Typography.Text strong>{s?.ipAddress}</Typography.Text>
-                      </div>
+                    {s.signed && (
+                      <>
+                        {!signing && (
+                          <div className="flex flex-col">
+                            <Typography.Text type="secondary">
+                              <div className="text-xs">IP address</div>
+                            </Typography.Text>
+                            <Typography.Text strong>
+                              {s?.ipAddress}
+                            </Typography.Text>
+                          </div>
+                        )}
+                        {signing && (
+                          <Spin
+                            indicator={
+                              <LoadingOutlined
+                                className="text-gray-500"
+                                style={{ fontSize: 20 }}
+                                spin
+                              />
+                            }
+                          />
+                        )}
+                      </>
                     )}
                   </div>
                   {s?.signed && (
@@ -2487,11 +2495,11 @@ const TenderDetails = ({
     //call API to sign
   }
 
-  function handleSignPo(signatory, index) {
+  function handleSignContract(signatory, index) {
     setSigning(true);
     let myIpObj = "";
     signatory.signed = true;
-    let _po = { ...po };
+    let _contract = { ...contract };
 
     fetch("https://api.ipify.org?format=json")
       .then((res) => res.json())
@@ -2499,11 +2507,10 @@ const TenderDetails = ({
         myIpObj = res;
         signatory.ipAddress = res?.ip;
         signatory.signedAt = moment();
+        _contract.signatories[index] = signatory;
+        setContract(_contract);
 
-        _po.signatories[index] = signatory;
-        setPO(_po);
-
-        fetch(`${url}/purchaseOrders/${po?._id}`, {
+        fetch(`${url}/contracts/${contract?._id}`, {
           method: "PUT",
           headers: {
             Authorization:
@@ -2511,28 +2518,29 @@ const TenderDetails = ({
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            newPo: po,
-            pending: po?.status === "pending-signature" || !po?.status,
-            paritallySigned: documentFullySignedInternally(po),
-            signed: documentFullySigned(po),
+            newContract: contract,
+            pending: contract?.status === "pending-signature",
+            paritallySigned: documentFullySignedInternally(contract),
+            signed: documentFullySigned(contract),
           }),
         })
           .then((res) => res.json())
           .then((res) => {
+            // setSignatories([]);
+            // setSections([{ title: "Set section title", body: "" }]);
+            setContract(res);
+            setSignatories(res?.signatories);
             setSigning(false);
-            setSignatories([]);
-            setSections([{ title: "Set section title", body: "" }]);
-            setPO(res);
           });
       })
       .catch((err) => {
-        setSigning(false);
         console.log(err);
+        setSigning(false);
       });
-    
 
     //call API to sign
   }
+
 
   function previewAttachmentModal() {
     return (
