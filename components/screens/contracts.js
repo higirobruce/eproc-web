@@ -638,11 +638,11 @@ export default function Contracts({ user }) {
     fetch("https://api.ipify.org?format=json")
       .then((res) => res.json())
       .then((res) => {
-        // myIpObj = res;
-        // signatory.ipAddress = res?.ip;
-        // signatory.signedAt = moment();
-        // _contract.signatories[index] = signatory;
-        // setContract(_contract);
+        myIpObj = res;
+        signatory.ipAddress = res?.ip;
+        signatory.signedAt = moment();
+        _contract.signatories[index] = signatory;
+        setContract(_contract);
 
         fetch(`${url}/contracts/${contract?._id}`, {
           method: "PUT",
