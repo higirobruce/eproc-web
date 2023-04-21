@@ -102,6 +102,230 @@ let formats = [
   "link",
 ];
 
+
+
+function buildSingatory(onBehalfOf, repTitle, repNames, repEmail) {
+  return (
+    <div className="flex flex-col ring-1 ring-gray-300 rounded pt-5 space-y-3">
+      <div className="px-5">
+        <div className="flex flex-col">
+          <Typography.Text type="secondary">
+            <div className="text-xs">On Behalf of</div>
+          </Typography.Text>
+          <Typography.Text strong>Irembo ltd</Typography.Text>
+        </div>
+
+        <div className="flex flex-col">
+          <Typography.Text type="secondary">
+            <div className="text-xs">Representative Title</div>
+          </Typography.Text>
+          <Typography.Text strong>Procurement Manager</Typography.Text>
+        </div>
+
+        <div className="flex flex-col">
+          <Typography.Text type="secondary">
+            <div className="text-xs">Company Representative</div>
+          </Typography.Text>
+          <Typography.Text strong>Manirakiza Edouard</Typography.Text>
+        </div>
+
+        <div className="flex flex-col">
+          <Typography.Text type="secondary">
+            <div className="text-xs">Email</div>
+          </Typography.Text>
+          <Typography.Text strong>e.manirakiza@irembo.com</Typography.Text>
+        </div>
+      </div>
+
+      <Popconfirm title="Confirm PO Signature">
+        <div className="flex flex-row justify-center space-x-5 items-center border-t-2 bg-blue-50 p-5 cursor-pointer hover:opacity-75">
+          <Image width={40} height={40} src="/icons/icons8-signature-80.png" />
+
+          <div className="text-blue-400 text-lg">Sign with one click</div>
+        </div>
+      </Popconfirm>
+    </div>
+  );
+}
+
+function addSingatory() {
+  return (
+    <div className="flex flex-col ring-1 ring-gray-100  rounded pt-5 space-y-3 items-center justify-center p-2">
+      <Image width={60} height={60} src="/icons/icons8-add-file-64.png" />
+    </div>
+  );
+}
+
+function contractParty(companyName, companyAdress, companyTin, partyType) {
+  return (
+    <div className="flex flex-col ring-1 ring-gray-300 rounded p-5 space-y-3">
+      <div className="flex flex-col">
+        <Typography.Text type="secondary">
+          <div className="text-xs">Company Name</div>
+        </Typography.Text>
+        <Typography.Text strong>{companyName}</Typography.Text>
+      </div>
+
+      <div className="flex flex-col">
+        <Typography.Text type="secondary">
+          <div className="text-xs">Company Address</div>
+        </Typography.Text>
+        <Typography.Text strong>{companyAdress}</Typography.Text>
+      </div>
+
+      <div className="flex flex-col">
+        <Typography.Text type="secondary">
+          <div className="text-xs">Company TIN no.</div>
+        </Typography.Text>
+        <Typography.Text strong>{companyTin}</Typography.Text>
+      </div>
+
+      <div className="flex flex-col">
+        <Typography.Text type="secondary">
+          <div className="text-xs">Hereinafter refferd to as</div>
+        </Typography.Text>
+        <Typography.Text strong>{partyType}</Typography.Text>
+      </div>
+    </div>
+  );
+}
+
+function buildTenderForm(
+  setDeadLine,
+  user,
+  docId,
+  submitTenderData,
+  setTendeDocSelected,
+  tenderDocSelected
+) {
+  return (
+    <>
+      <div className="items-center">
+        <Typography.Title level={5}>Create Tender</Typography.Title>
+        <Form.Item
+          name="tenderDocUrl"
+          label={
+            <div>
+              Upload Tender Documents{" "}
+              <i className="text-xs">(expected in PDF format)</i>
+            </div>
+          }
+        >
+          <UploadTenderDoc
+            uuid={docId}
+            setTendeDocSelected={setTendeDocSelected}
+          />
+        </Form.Item>
+        <Form.Item
+          name="deadLine"
+          label="Indicate Bid Submission Deadline"
+          rules={[
+            {
+              required: true,
+              message: "Please enter the submission deadline!",
+            },
+          ]}
+        >
+          <DatePicker
+            format="YYYY-MM-DD HH:mm"
+            showTime
+            disabledDate={(current) =>
+              current.isBefore(moment().subtract(1, "d"))
+            }
+            onChange={(v, str) => setDeadLine(str)}
+          />
+        </Form.Item>
+      </div>
+      <div className="flex flex-row space-x-1 mt-5 items-center">
+        <Form.Item>
+          <Button
+            icon={<FileDoneOutlined />}
+            type="primary"
+            htmlType="submit"
+            onClick={submitTenderData}
+            disabled={
+              !user?.permissions?.canCreateTenders || !tenderDocSelected
+            }
+          >
+            Publish Tender
+          </Button>
+        </Form.Item>
+      </div>
+    </>
+  );
+}
+
+function buildPOForm(
+  setSelectedContract,
+  contracts,
+  user,
+  submitPOData,
+  setVendor,
+  selectedContract
+) {
+  return (
+    <div className="">
+      <Typography.Title level={5}>Select existing contract</Typography.Title>
+      <Form.Item>
+        <Form.Item
+          // label="Contract"
+          name="contract"
+        >
+          <Select
+            allowClear
+            style={{ width: "300px" }}
+            placeholder="search by vendor name, contract #"
+            showSearch
+            onChange={(value, option) => {
+              setSelectedContract(option?.payload);
+              setVendor(option?.payload.vendor);
+            }}
+            filterSort={(optionA, optionB) =>
+              (optionA?.name ?? "")
+                .toLowerCase()
+                .localeCompare((optionB?.name ?? "").toLowerCase())
+            }
+            filterOption={(inputValue, option) =>
+              option?.name.toLowerCase().includes(inputValue.toLowerCase())
+            }
+            // defaultValue="RWF"
+            options={contracts.map((c) => {
+              return {
+                value: c._id,
+                label: (
+                  <div className="flex flex-col">
+                    <div>
+                      <UserOutlined /> {c.vendor?.companyName}
+                    </div>
+                    <div className="text-gray-300">{c?.number}</div>
+                  </div>
+                ),
+                name: c.vendor?.companyName + c?.number,
+
+                payload: c,
+              };
+            })}
+          ></Select>
+        </Form.Item>
+
+        <Button
+          // size="small"
+          type="primary"
+          icon={<FileDoneOutlined />}
+          onClick={submitPOData}
+          disabled={
+            !user?.permissions?.canCreatePurchaseOrders || !selectedContract
+          }
+          htmlType="submit"
+        >
+          Create PO
+        </Button>
+      </Form.Item>
+    </div>
+  );
+}
+
+
 const RequestDetails = ({
   data,
   handleUpdateStatus,
@@ -179,11 +403,9 @@ const RequestDetails = ({
 
   const handleOk = () => {
     setConfirmRejectLoading(true);
-    setTimeout(() => {
-      handleReject(data._id, reason, `${user?.firstName} ${user?.lastName}`);
-      setOpen(false);
-      setConfirmRejectLoading(false);
-    }, 2000);
+    handleReject(data._id, reason, `${user?.firstName} ${user?.lastName}`);
+    setOpen(false);
+    setConfirmRejectLoading(false);
   };
   const handleCancel = () => {
     setOpen(false);
@@ -230,26 +452,25 @@ const RequestDetails = ({
       key: "title",
       render: (_, item) => (
         <div className="flex flex-col">
-          {
-            item?.paths?.map((p, i) => {
-              return (
-                <div key={p}>
-                  <Typography.Link
-                    className="flex flex-row items-center space-x-2"
-                    onClick={() => {
-                      setPreviewAttachment(!previewAttachment);
-                      setAttachmentId(p);
-                    }}
-                  >
-                    <div>supporting doc{i + 1} </div>{" "}
-                    <div>
-                      <PaperClipIcon className="h-4 w-4" />
-                    </div>
-                  </Typography.Link>
-                </div>
-              );
-            })}
-          {(!item?.paths || item?.paths?.length < 1 ) && (
+          {item?.paths?.map((p, i) => {
+            return (
+              <div key={p}>
+                <Typography.Link
+                  className="flex flex-row items-center space-x-2"
+                  onClick={() => {
+                    setPreviewAttachment(!previewAttachment);
+                    setAttachmentId(p);
+                  }}
+                >
+                  <div>supporting doc{i + 1} </div>{" "}
+                  <div>
+                    <PaperClipIcon className="h-4 w-4" />
+                  </div>
+                </Typography.Link>
+              </div>
+            );
+          })}
+          {(!item?.paths || item?.paths?.length < 1) && (
             <div className="items-center justify-center flex flex-col">
               <div>
                 <RectangleStackIcon className="h-5 w-5 text-gray-200" />
@@ -390,7 +611,7 @@ const RequestDetails = ({
     })
       .then((res) => res.json())
       .then((res) => {
-        console.log(res)
+        console.log(res);
         setVendors(res);
       })
       .catch((err) => {});
@@ -484,6 +705,21 @@ const RequestDetails = ({
   }
 
   function submitContractData() {
+    let _signatories = [
+      {
+        onBehalfOf: "Irembo Ltd",
+        title: "Procurement Manager",
+        names: "",
+        email: "",
+      },
+      {
+        onBehalfOf: vendor.companyName,
+        title: vendor.title,
+        names: vendor.contactPersonNames,
+        email: vendor.email,
+      },
+    ];
+    setSignatories(_signatories);
     setOpenCreateContract(true);
   }
 
@@ -580,495 +816,7 @@ const RequestDetails = ({
     setProgress((value / t) * 100);
   }
 
-  return (
-    <div className="grid md:grid-cols-5 gap-1">
-      {contextHolder}
-      <div className="md:col-span-4 flex flex-col ring-1 ring-gray-200 p-3 rounded shadow-md bg-white  overflow-y-scroll">
-        <div>
-          <Tabs defaultActiveKey="1" type="card" size={size}>
-            <Tabs.TabPane tab="Overview" key="1">
-              {data ? (
-                <Spin
-                  spinning={loading}
-                  indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />}
-                >
-                  <div className="flex flex-col space-y-5">
-                    {/* TItle */}
-                    <div className="flex flex-row justify-between items-center">
-                      <div className="ml-3 text-lg font-bold">
-                        Request Details
-                      </div>
-                      <Tag
-                        color={data.status === "declined" ? "red" : "geekblue"}
-                      >
-                        {data.status}
-                      </Tag>
-                      {/* <div className="">
-                        <Tag color={data?.budgeted ? "green" : "blue"}>
-                          <Tooltip title={data?.budgetLine} showArrow={false}>
-                            {data?.budgeted ? "budgeted" : "not budgeted"}
-                          </Tooltip>
-                        </Tag>
-                      </div>
-                      <div className="">
-                        <Tag>
-                          Requested by{" "}
-                          {data?.createdBy?.firstName +
-                            " " +
-                            data?.createdBy?.lastName}
-                        </Tag>
-                      </div> */}
-                    </div>
-                    <div className="flex flex-row justify-between items-start">
-                      <div className="grid md:grid-cols-4 gap-5 w-full">
-                        {/* Request number */}
-                        <div className="flex flex-col space-y-1 items-start">
-                          <div className="text-xs ml-3 text-gray-400">
-                            Request Number:
-                          </div>
-                          <div className="text-sm font-semibold ml-3 text-gray-600">
-                            {data?.number}
-                          </div>
-                        </div>
-
-                        {/* Initiator */}
-                        <div className="flex flex-col space-y-1 items-start">
-                          <div className="text-xs ml-3 text-gray-400">
-                            Initiator:
-                          </div>
-                          <div className="text-sm font-semibold ml-3 text-gray-600">
-                            {data?.createdBy?.firstName +
-                              " " +
-                              data?.createdBy?.lastName}
-                          </div>
-                        </div>
-
-                        {/* Department */}
-                        <div className="flex flex-col space-y-1 items-start">
-                          <div className="text-xs ml-3 text-gray-400">
-                            Department:
-                          </div>
-                          <div className="text-sm font-semibold ml-3 text-gray-600">
-                            {data?.createdBy?.department?.description}
-                          </div>
-                        </div>
-
-                        {/* Due date */}
-                        <div className="flex flex-col space-y-1 items-start">
-                          <div className="text-xs ml-3 text-gray-400">
-                            Due date:
-                          </div>
-                          {!edit && (
-                            <div className="text-sm font-semibold ml-3 text-gray-600">
-                              {moment(data?.dueDate).format("YYYY-MMM-DD")}
-                            </div>
-                          )}
-                          {edit && (
-                            <div className="text-sm font-semibold ml-3 text-gray-600">
-                              <Form.Item
-                                name="dueDate"
-                                rules={[
-                                  {
-                                    required: true,
-                                    message: "Due date is required",
-                                  },
-                                ]}
-                              >
-                                <DatePicker
-                                  style={{ width: "100%" }}
-                                  defaultValue={moment(data?.dueDate)}
-                                  disabledDate={(current) =>
-                                    current.isBefore(moment().subtract(1, "d"))
-                                  }
-                                  value={data?.dueDate}
-                                  onChange={(v, dstr) => {
-                                    let _d = data;
-                                    _d.dueDate = dstr;
-                                    handleUpdateRequest(_d);
-                                  }}
-                                />
-                              </Form.Item>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Service Category */}
-                        <div className="flex flex-col space-y-1 items-start">
-                          <div className="text-xs ml-3 text-gray-400">
-                            Service category:
-                          </div>
-                          {!edit && (
-                            <div className="text-sm font-semibold ml-3 text-gray-600">
-                              {data?.serviceCategory}
-                            </div>
-                          )}
-
-                          {edit && (
-                            <Select
-                              // mode="multiple"
-                              // allowClear
-                              className="ml-3"
-                              defaultValue={data?.serviceCategory}
-                              style={{ width: "100%" }}
-                              placeholder="Please select"
-                              onChange={(value) => {
-                                let r = { ...data };
-                                r.serviceCategory = value;
-                                handleUpdateRequest(r);
-                              }}
-                            >
-                              {servCategories?.map((s) => {
-                                return (
-                                  <Select.Option
-                                    key={s._id}
-                                    value={s.description}
-                                  >
-                                    {s.description}
-                                  </Select.Option>
-                                );
-                              })}
-                            </Select>
-                          )}
-                        </div>
-
-                        {/* Budgeted */}
-                        <div className="flex flex-col space-y-1 items-start">
-                          <div className="text-xs ml-3 text-gray-400">
-                            Budgeted:
-                          </div>
-                          {!edit && (
-                            <div className="text-sm font-semibold ml-3 text-gray-600">
-                              {data?.budgeted ? "Yes" : "No"}
-                            </div>
-                          )}
-                          {edit && (
-                            <div className="text-xs ml-3 text-gray-400">
-                              <Select
-                                // mode="multiple"
-                                // allowClear
-                                defaultValue={data?.budgeted ? "Yes" : "No"}
-                                // style={{ width: "100%" }}
-                                placeholder="Please select"
-                                onChange={(value) => {
-                                  let r = { ...data };
-                                  r.budgeted = value;
-                                  handleUpdateRequest(r);
-                                }}
-                                options={[
-                                  { value: true, label: "Yes" },
-                                  { value: false, label: "No" },
-                                ]}
-                              />
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Budget Line */}
-                        <div className="flex flex-col space-y-1 items-start">
-                          <div className="text-xs ml-3 text-gray-400">
-                            Budget Line:
-                          </div>
-                          <div className="text-sm font-semibold ml-3 text-gray-600">
-                            {data?.budgetLine?.description}
-                          </div>
-                        </div>
-
-                        {/* Description */}
-                        <div className="flex flex-col space-y-1 items-start">
-                          <div className="text-xs ml-3 text-gray-400">
-                            Description:
-                          </div>
-                          {!edit && (
-                            <div className="text-sm font-semibold ml-3 text-gray-600">
-                              {data?.description}
-                            </div>
-                          )}
-                          {edit && (
-                            <div className="text-xs ml-3 text-gray-400">
-                              <Typography.Text
-                                editable={
-                                  edit && {
-                                    text: data?.description,
-                                    onChange: (e) => {
-                                      let req = { ...data };
-                                      req.description = e;
-                                      handleUpdateRequest(req);
-                                    },
-                                  }
-                                }
-                              >
-                                {data?.description}
-                              </Typography.Text>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Items table */}
-                    <div className="p-5">
-                      <Table
-                        size="small"
-                        dataSource={data.items}
-                        columns={columns}
-                        rowClassName={() => "editable-row"}
-                        bordered
-                        pagination={false}
-                      />
-                    </div>
-
-                    {
-                      // data.status !== "approved" &&
-                      //   data.status !== "po created" &&
-                      //   data.status !== "declined" &&
-                      buildApprovalFlow(
-                        currentCode,
-                        changeStatus,
-                        submitTenderData,
-                        setDeadLine,
-                        open,
-                        handleOk,
-                        setReason,
-                        confirmRejectLoading,
-                        handleCancel,
-                        showPopconfirm,
-                        data?.approvalDate,
-                        refDoc,
-                        setRefDoc,
-                        contracts,
-                        submitPOData,
-                        setSelectedContract,
-                        data,
-                        submitContractData,
-                        setTendeDocSelected,
-                        form
-                      )
-                    }
-
-                    {/* {po?.status === "started" && (
-                      <div className="ml-5 w-1/3">
-                        <div>Delivery progress</div>
-                        <Progress
-                          percent={_.round(po?.deliveryProgress, 1) || 0}
-                          size="small"
-                          status="active"
-                        />
-                      </div>
-                    )} */}
-
-                    {/* {po?.status === "started" &&
-                      po?.deliveryProgress < 100 &&
-                      user?._id === data?.createdBy?._id &&
-                      po?.items.map((i, index) => {
-                        return (
-                          <div key={i.key} className="m-5">
-                            <div>
-                              Delivery for {i.title}{" "}
-                              <Tag>{i?.deliveredQty} delivered</Tag>
-                            </div>
-
-                            {buildConfirmDeliveryForm(
-                              po,
-                              handleGetProgress,
-                              handleUpdateProgress,
-                              progress,
-                              index
-                            )}
-                          </div>
-                        );
-                      })} */}
-
-                    <div className="ml-3 text-lg font-bold">
-                      Sourcing Method
-                    </div>
-                    <div className="ml-5">{(data?.sourcingMethod && <Tag>{data?.sourcingMethod}</Tag>) || 'No sourcing method selected yet.'}</div>
-                    <div className="ml-3 text-lg font-bold">
-                      Delivery progress
-                    </div>
-                    {data?.items.map((i, index) => {
-                      let deliveredQty = po?.items[index].deliveredQty || 0;
-                      return (
-                        <div key={i.key} className="m-5">
-                          <div>
-                            {i.title}: {deliveredQty || 0} delivered out of{" "}
-                            {i?.quantity}
-                          </div>
-
-                          {deliveredQty < parseInt(i?.quantity) &&
-                            buildConfirmDeliveryForm(
-                              po,
-                              handleGetProgress,
-                              handleUpdateProgress,
-                              progress,
-                              index,
-                              i?.quantity
-                            )}
-                        </div>
-                      );
-                    })}
-
-                    <div className="ml-3 w-1/3">
-                      {/* <div>Delivery progress</div> */}
-                      <Progress
-                        percent={_.round(po?.deliveryProgress, 1) || 0}
-                        size="small"
-                        status="active"
-                      />
-                    </div>
-
-                    {/* {data.status === "approved" &&
-                      (tender || po) &&
-                      buildWorkflow(currentStep, tender, po)} */}
-
-                    {po && po.deliveryProgress >= 100 && !po.rate && (
-                      <div className="justify-center items-center w-full flex flex-col space-y-3">
-                        <Divider></Divider>
-                        <Typography.Title level={5}>
-                          Supplier & Delivery Rate
-                        </Typography.Title>
-                        <Rate
-                          // allowHalf
-                          disabled={user?._id !== data?.createdBy?._id}
-                          defaultValue={po?.rate || rate}
-                          tooltips={[
-                            "Very bad",
-                            "Bad",
-                            "Good",
-                            "Very good",
-                            "Excellent",
-                          ]}
-                          onChange={(value) => setRate(value)}
-                          // onChange={(value) => handleRateDelivery(po, value)}
-                        />
-
-                        <Typography.Title level={5}>
-                          Give a comment on your rating
-                        </Typography.Title>
-                        <Input.TextArea
-                          className="w-1/3"
-                          value={comment}
-                          onChange={(v) => setComment(v.target.value)}
-                        />
-
-                        <div>
-                          <Button
-                            type="primary"
-                            onClick={() =>
-                              handleRateDelivery(po, rate, comment)
-                            }
-                          >
-                            Submit my rate and review
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-
-                    {po && po.deliveryProgress >= 100 && po.rate && (
-                      <div className="justify-center items-center w-full flex flex-col space-y-3">
-                        <Divider></Divider>
-                        <Typography.Title level={5}>
-                          Supplier & Delivery Rate
-                        </Typography.Title>
-                        <Rate
-                          // allowHalf
-                          disabled
-                          defaultValue={po?.rate}
-                          tooltips={[
-                            "Very bad",
-                            "Bad",
-                            "Good",
-                            "Very good",
-                            "Excellent",
-                          ]}
-                          // onChange={(value) => setRate(value)}
-                          // onChange={(value) => handleRateDelivery(po, value)}
-                        />
-
-                        <Typography.Text level={5}>
-                          {po?.comment}
-                        </Typography.Text>
-                      </div>
-                    )}
-
-                    {data.status === "declined" && (
-                      <div className="flex flex-col mt-5 space-y-1">
-                        <div className="text-xs font-semibold ml-3  text-gray-500">
-                          The request was declined by {data?.declinedBy}. Below
-                          is the reason/comment.
-                        </div>
-                        <div className="text-sm ml-3 text-gray-600">
-                          <Alert
-                            message={data?.reasonForRejection}
-                            type="error"
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </Spin>
-              ) : (
-                <Empty />
-              )}
-            </Tabs.TabPane>
-            {/* <Tabs.TabPane tab="New Task" key="2"></Tabs.TabPane> */}
-          </Tabs>
-        </div>
-        {createPOMOdal()}
-        {previewAttachmentModal()}
-        {createContractMOdal()}
-      </div>
-      <div className="flex flex-col rounded space-y-5 bg-white px-4 pt-2 shadow ">
-        <div className="text-lg">Workflow tracker </div>
-        <Timeline
-          // mode="alternate"
-          items={[
-            {
-              children: <div className="">PR-created</div>,
-              color: data?.status !== "declined" ? "blue" : "red",
-              dot: data?.status !== "declined" && (
-                <CheckCircleOutlined className=" text-green-500" />
-              ),
-            },
-            {
-              children: <div className="">PR-approved</div>,
-              color:
-                (data?.status === "approved (pm)"||data?.status === "approved") || tender  ? "blue" : "gray",
-              dot: (data?.status === "approved (pm)" || tender || data?.status === "approved") && (
-                <CheckCircleOutlined className=" text-green-500" />
-              ),
-            },
-            {
-              children: `Tender-created`,
-              color: tender ? "blue" : "gray",
-              dot: tender && (
-                <CheckCircleOutlined className=" text-green-500" />
-              ),
-            },
-            {
-              color: contract ? "blue" : "gray",
-              children: "Contract-created",
-              dot: contract && (
-                <CheckCircleOutlined className=" text-green-500" />
-              ),
-            },
-            {
-              children: "PO-created",
-              color: po ? "blue" : "gray",
-              dot: po && <CheckCircleOutlined className=" text-green-500" />,
-            },
-            {
-              children: "Delivered",
-              color: progress >= 100 ? "blue" : "gray",
-              dot: po && progress >= 100 && (
-                <CheckCircleOutlined className=" text-green-500" />
-              ),
-            },
-          ]}
-        />
-      </div>
-    </div>
-  );
-
+ 
   function buildApprovalFlow(
     currentCode,
     changeStatus,
@@ -1496,7 +1244,9 @@ const RequestDetails = ({
                                   .includes(inputValue.toLowerCase())
                               }
                               options={vendors
-                                ?.filter((v) => v?.vendor?.status === "approved")
+                                ?.filter(
+                                  (v) => v?.vendor?.status === "approved"
+                                )
                                 ?.map((v) => {
                                   return {
                                     value: v?.vendor?._id,
@@ -1845,7 +1595,7 @@ const RequestDetails = ({
               },
               signatories,
               data?._id,
-              refDoc === "external" ? reqAttachId : ""
+              refDoc === "Direct Contracting" ? reqAttachId : ""
             );
             setCreatingPO(false);
             setOpenCreatePO(false);
@@ -2204,7 +1954,7 @@ const RequestDetails = ({
             messageApi.open({
               type: "error",
               content:
-                "PO can not be submitted. Please specify at least 2 signatories!",
+                "Contract can not be submitted. Please specify at least 2 signatories!",
             });
           } else if (
             signatories?.filter((s) => {
@@ -2214,7 +1964,7 @@ const RequestDetails = ({
             messageApi.open({
               type: "error",
               content:
-                "PO can not be submitted. Please fill in the relevant signatories' details!",
+                "Contract can not be submitted. Please fill in the relevant signatories' details!",
             });
           } else {
             handleCreateContract(
@@ -2225,7 +1975,7 @@ const RequestDetails = ({
               contractStartDate,
               contractEndDate,
               signatories,
-              refDoc === "external" ? reqAttachId : ""
+              refDoc === "Direct Contracting" ? reqAttachId : ""
             );
             setOpenCreateContract(false);
           }
@@ -2563,227 +2313,508 @@ const RequestDetails = ({
       </Modal>
     );
   }
+
+
+  return (
+    <div className="grid md:grid-cols-5 gap-1">
+      {contextHolder}
+      <div className="md:col-span-4 flex flex-col ring-1 ring-gray-200 p-3 rounded shadow-md bg-white  overflow-y-scroll">
+        <div>
+          <Tabs defaultActiveKey="1" type="card" size={size}>
+            <Tabs.TabPane tab="Overview" key="1">
+              {data ? (
+                <Spin
+                  spinning={loading}
+                  indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />}
+                >
+                  <div className="flex flex-col space-y-5">
+                    {/* TItle */}
+                    <div className="flex flex-row justify-between items-center">
+                      <div className="ml-3 text-lg font-bold">
+                        Request Details
+                      </div>
+                      <Tag
+                        color={data.status === "declined" ? "red" : "geekblue"}
+                      >
+                        {data.status}
+                      </Tag>
+                      {/* <div className="">
+                        <Tag color={data?.budgeted ? "green" : "blue"}>
+                          <Tooltip title={data?.budgetLine} showArrow={false}>
+                            {data?.budgeted ? "budgeted" : "not budgeted"}
+                          </Tooltip>
+                        </Tag>
+                      </div>
+                      <div className="">
+                        <Tag>
+                          Requested by{" "}
+                          {data?.createdBy?.firstName +
+                            " " +
+                            data?.createdBy?.lastName}
+                        </Tag>
+                      </div> */}
+                    </div>
+                    <div className="flex flex-row justify-between items-start">
+                      <div className="grid md:grid-cols-4 gap-5 w-full">
+                        {/* Request number */}
+                        <div className="flex flex-col space-y-1 items-start">
+                          <div className="text-xs ml-3 text-gray-400">
+                            Request Number:
+                          </div>
+                          <div className="text-sm font-semibold ml-3 text-gray-600">
+                            {data?.number}
+                          </div>
+                        </div>
+
+                        {/* Initiator */}
+                        <div className="flex flex-col space-y-1 items-start">
+                          <div className="text-xs ml-3 text-gray-400">
+                            Initiator:
+                          </div>
+                          <div className="text-sm font-semibold ml-3 text-gray-600">
+                            {data?.createdBy?.firstName +
+                              " " +
+                              data?.createdBy?.lastName}
+                          </div>
+                        </div>
+
+                        {/* Department */}
+                        <div className="flex flex-col space-y-1 items-start">
+                          <div className="text-xs ml-3 text-gray-400">
+                            Department:
+                          </div>
+                          <div className="text-sm font-semibold ml-3 text-gray-600">
+                            {data?.createdBy?.department?.description}
+                          </div>
+                        </div>
+
+                        {/* Due date */}
+                        <div className="flex flex-col space-y-1 items-start">
+                          <div className="text-xs ml-3 text-gray-400">
+                            Due date:
+                          </div>
+                          {!edit && (
+                            <div className="text-sm font-semibold ml-3 text-gray-600">
+                              {moment(data?.dueDate).format("YYYY-MMM-DD")}
+                            </div>
+                          )}
+                          {edit && (
+                            <div className="text-sm font-semibold ml-3 text-gray-600">
+                              <Form.Item
+                                name="dueDate"
+                                rules={[
+                                  {
+                                    required: true,
+                                    message: "Due date is required",
+                                  },
+                                ]}
+                              >
+                                <DatePicker
+                                  style={{ width: "100%" }}
+                                  defaultValue={moment(data?.dueDate)}
+                                  disabledDate={(current) =>
+                                    current.isBefore(moment().subtract(1, "d"))
+                                  }
+                                  value={data?.dueDate}
+                                  onChange={(v, dstr) => {
+                                    let _d = data;
+                                    _d.dueDate = dstr;
+                                    handleUpdateRequest(_d);
+                                  }}
+                                />
+                              </Form.Item>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Service Category */}
+                        <div className="flex flex-col space-y-1 items-start">
+                          <div className="text-xs ml-3 text-gray-400">
+                            Service category:
+                          </div>
+                          {!edit && (
+                            <div className="text-sm font-semibold ml-3 text-gray-600">
+                              {data?.serviceCategory}
+                            </div>
+                          )}
+
+                          {edit && (
+                            <Select
+                              // mode="multiple"
+                              // allowClear
+                              className="ml-3"
+                              defaultValue={data?.serviceCategory}
+                              style={{ width: "100%" }}
+                              placeholder="Please select"
+                              onChange={(value) => {
+                                let r = { ...data };
+                                r.serviceCategory = value;
+                                handleUpdateRequest(r);
+                              }}
+                            >
+                              {servCategories?.map((s) => {
+                                return (
+                                  <Select.Option
+                                    key={s._id}
+                                    value={s.description}
+                                  >
+                                    {s.description}
+                                  </Select.Option>
+                                );
+                              })}
+                            </Select>
+                          )}
+                        </div>
+
+                        {/* Budgeted */}
+                        <div className="flex flex-col space-y-1 items-start">
+                          <div className="text-xs ml-3 text-gray-400">
+                            Budgeted:
+                          </div>
+                          {!edit && (
+                            <div className="text-sm font-semibold ml-3 text-gray-600">
+                              {data?.budgeted ? "Yes" : "No"}
+                            </div>
+                          )}
+                          {edit && (
+                            <div className="text-xs ml-3 text-gray-400">
+                              <Select
+                                // mode="multiple"
+                                // allowClear
+                                defaultValue={data?.budgeted ? "Yes" : "No"}
+                                // style={{ width: "100%" }}
+                                placeholder="Please select"
+                                onChange={(value) => {
+                                  let r = { ...data };
+                                  r.budgeted = value;
+                                  handleUpdateRequest(r);
+                                }}
+                                options={[
+                                  { value: true, label: "Yes" },
+                                  { value: false, label: "No" },
+                                ]}
+                              />
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Budget Line */}
+                        <div className="flex flex-col space-y-1 items-start">
+                          <div className="text-xs ml-3 text-gray-400">
+                            Budget Line:
+                          </div>
+                          <div className="text-sm font-semibold ml-3 text-gray-600">
+                            {data?.budgetLine?.description}
+                          </div>
+                        </div>
+
+                        {/* Description */}
+                        <div className="flex flex-col space-y-1 items-start">
+                          <div className="text-xs ml-3 text-gray-400">
+                            Description:
+                          </div>
+                          {!edit && (
+                            <div className="text-sm font-semibold ml-3 text-gray-600">
+                              {data?.description}
+                            </div>
+                          )}
+                          {edit && (
+                            <div className="text-xs ml-3 text-gray-400">
+                              <Typography.Text
+                                editable={
+                                  edit && {
+                                    text: data?.description,
+                                    onChange: (e) => {
+                                      let req = { ...data };
+                                      req.description = e;
+                                      handleUpdateRequest(req);
+                                    },
+                                  }
+                                }
+                              >
+                                {data?.description}
+                              </Typography.Text>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Items table */}
+                    <div className="p-5">
+                      <Table
+                        size="small"
+                        dataSource={data.items}
+                        columns={columns}
+                        rowClassName={() => "editable-row"}
+                        bordered
+                        pagination={false}
+                      />
+                    </div>
+
+                    {
+                      // data.status !== "approved" &&
+                      //   data.status !== "po created" &&
+                      //   data.status !== "declined" &&
+                      buildApprovalFlow(
+                        currentCode,
+                        changeStatus,
+                        submitTenderData,
+                        setDeadLine,
+                        open,
+                        handleOk,
+                        setReason,
+                        confirmRejectLoading,
+                        handleCancel,
+                        showPopconfirm,
+                        data?.approvalDate,
+                        refDoc,
+                        setRefDoc,
+                        contracts,
+                        submitPOData,
+                        setSelectedContract,
+                        data,
+                        submitContractData,
+                        setTendeDocSelected,
+                        form
+                      )
+                    }
+
+                    {/* {po?.status === "started" && (
+                      <div className="ml-5 w-1/3">
+                        <div>Delivery progress</div>
+                        <Progress
+                          percent={_.round(po?.deliveryProgress, 1) || 0}
+                          size="small"
+                          status="active"
+                        />
+                      </div>
+                    )} */}
+
+                    {/* {po?.status === "started" &&
+                      po?.deliveryProgress < 100 &&
+                      user?._id === data?.createdBy?._id &&
+                      po?.items.map((i, index) => {
+                        return (
+                          <div key={i.key} className="m-5">
+                            <div>
+                              Delivery for {i.title}{" "}
+                              <Tag>{i?.deliveredQty} delivered</Tag>
+                            </div>
+
+                            {buildConfirmDeliveryForm(
+                              po,
+                              handleGetProgress,
+                              handleUpdateProgress,
+                              progress,
+                              index
+                            )}
+                          </div>
+                        );
+                      })} */}
+
+                    <div className="ml-3 text-lg font-bold">
+                      Sourcing Method
+                    </div>
+                    <div className="ml-5">
+                      {(data?.sourcingMethod && (
+                        <Tag>{data?.sourcingMethod}</Tag>
+                      )) ||
+                        "No sourcing method selected yet."}
+                    </div>
+                    <div className="ml-3 text-lg font-bold">
+                      Delivery progress
+                    </div>
+                    {data?.items.map((i, index) => {
+                      let deliveredQty = po?.items[index].deliveredQty || 0;
+                      return (
+                        <div key={i.key} className="m-5">
+                          <div>
+                            {i.title}: {deliveredQty || 0} delivered out of{" "}
+                            {i?.quantity}
+                          </div>
+
+                          {deliveredQty < parseInt(i?.quantity) &&
+                            buildConfirmDeliveryForm(
+                              po,
+                              handleGetProgress,
+                              handleUpdateProgress,
+                              progress,
+                              index,
+                              i?.quantity
+                            )}
+                        </div>
+                      );
+                    })}
+
+                    <div className="ml-3 w-1/3">
+                      {/* <div>Delivery progress</div> */}
+                      <Progress
+                        percent={_.round(po?.deliveryProgress, 1) || 0}
+                        size="small"
+                        status="active"
+                      />
+                    </div>
+
+                    {/* {data.status === "approved" &&
+                      (tender || po) &&
+                      buildWorkflow(currentStep, tender, po)} */}
+
+                    {po && po.deliveryProgress >= 100 && !po.rate && (
+                      <div className="justify-center items-center w-full flex flex-col space-y-3">
+                        <Divider></Divider>
+                        <Typography.Title level={5}>
+                          Supplier & Delivery Rate
+                        </Typography.Title>
+                        <Rate
+                          // allowHalf
+                          disabled={user?._id !== data?.createdBy?._id}
+                          defaultValue={po?.rate || rate}
+                          tooltips={[
+                            "Very bad",
+                            "Bad",
+                            "Good",
+                            "Very good",
+                            "Excellent",
+                          ]}
+                          onChange={(value) => setRate(value)}
+                          // onChange={(value) => handleRateDelivery(po, value)}
+                        />
+
+                        <Typography.Title level={5}>
+                          Give a comment on your rating
+                        </Typography.Title>
+                        <Input.TextArea
+                          className="w-1/3"
+                          value={comment}
+                          onChange={(v) => setComment(v.target.value)}
+                        />
+
+                        <div>
+                          <Button
+                            type="primary"
+                            onClick={() =>
+                              handleRateDelivery(po, rate, comment)
+                            }
+                          >
+                            Submit my rate and review
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {po && po.deliveryProgress >= 100 && po.rate && (
+                      <div className="justify-center items-center w-full flex flex-col space-y-3">
+                        <Divider></Divider>
+                        <Typography.Title level={5}>
+                          Supplier & Delivery Rate
+                        </Typography.Title>
+                        <Rate
+                          // allowHalf
+                          disabled
+                          defaultValue={po?.rate}
+                          tooltips={[
+                            "Very bad",
+                            "Bad",
+                            "Good",
+                            "Very good",
+                            "Excellent",
+                          ]}
+                          // onChange={(value) => setRate(value)}
+                          // onChange={(value) => handleRateDelivery(po, value)}
+                        />
+
+                        <Typography.Text level={5}>
+                          {po?.comment}
+                        </Typography.Text>
+                      </div>
+                    )}
+
+                    {data.status === "declined" && (
+                      <div className="flex flex-col mt-5 space-y-1">
+                        <div className="text-xs font-semibold ml-3  text-gray-500">
+                          The request was declined by {data?.declinedBy}. Below
+                          is the reason/comment.
+                        </div>
+                        <div className="text-sm ml-3 text-gray-600">
+                          <Alert
+                            message={data?.reasonForRejection}
+                            type="error"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </Spin>
+              ) : (
+                <Empty />
+              )}
+            </Tabs.TabPane>
+            {/* <Tabs.TabPane tab="New Task" key="2"></Tabs.TabPane> */}
+          </Tabs>
+        </div>
+        {createPOMOdal()}
+        {previewAttachmentModal()}
+        {createContractMOdal()}
+      </div>
+      <div className="flex flex-col rounded space-y-5 bg-white px-4 pt-2 shadow ">
+        <div className="text-lg">Workflow tracker </div>
+        <Timeline
+          // mode="alternate"
+          items={[
+            {
+              children: <div className="">PR-created</div>,
+              color: data?.status !== "declined" ? "blue" : "red",
+              dot: data?.status !== "declined" && (
+                <CheckCircleOutlined className=" text-green-500" />
+              ),
+            },
+            {
+              children: <div className="">PR-approved</div>,
+              color:
+                data?.status === "approved (pm)" ||
+                data?.status === "approved" ||
+                tender
+                  ? "blue"
+                  : "gray",
+              dot: (data?.status === "approved (pm)" ||
+                tender ||
+                data?.status === "approved") && (
+                <CheckCircleOutlined className=" text-green-500" />
+              ),
+            },
+            {
+              children: `Tender-created`,
+              color: tender ? "blue" : "gray",
+              dot: tender && (
+                <CheckCircleOutlined className=" text-green-500" />
+              ),
+            },
+            {
+              color: contract ? "blue" : "gray",
+              children: "Contract-created",
+              dot: contract && (
+                <CheckCircleOutlined className=" text-green-500" />
+              ),
+            },
+            {
+              children: "PO-created",
+              color: po ? "blue" : "gray",
+              dot: po && <CheckCircleOutlined className=" text-green-500" />,
+            },
+            {
+              children: "Delivered",
+              color: progress >= 100 ? "blue" : "gray",
+              dot: po && progress >= 100 && (
+                <CheckCircleOutlined className=" text-green-500" />
+              ),
+            },
+          ]}
+        />
+      </div>
+    </div>
+  );
+
 };
 
 export default RequestDetails;
-
-function buildSingatory(onBehalfOf, repTitle, repNames, repEmail) {
-  return (
-    <div className="flex flex-col ring-1 ring-gray-300 rounded pt-5 space-y-3">
-      <div className="px-5">
-        <div className="flex flex-col">
-          <Typography.Text type="secondary">
-            <div className="text-xs">On Behalf of</div>
-          </Typography.Text>
-          <Typography.Text strong>Irembo ltd</Typography.Text>
-        </div>
-
-        <div className="flex flex-col">
-          <Typography.Text type="secondary">
-            <div className="text-xs">Representative Title</div>
-          </Typography.Text>
-          <Typography.Text strong>Procurement Manager</Typography.Text>
-        </div>
-
-        <div className="flex flex-col">
-          <Typography.Text type="secondary">
-            <div className="text-xs">Company Representative</div>
-          </Typography.Text>
-          <Typography.Text strong>Manirakiza Edouard</Typography.Text>
-        </div>
-
-        <div className="flex flex-col">
-          <Typography.Text type="secondary">
-            <div className="text-xs">Email</div>
-          </Typography.Text>
-          <Typography.Text strong>e.manirakiza@irembo.com</Typography.Text>
-        </div>
-      </div>
-
-      <Popconfirm title="Confirm PO Signature">
-        <div className="flex flex-row justify-center space-x-5 items-center border-t-2 bg-blue-50 p-5 cursor-pointer hover:opacity-75">
-          <Image width={40} height={40} src="/icons/icons8-signature-80.png" />
-
-          <div className="text-blue-400 text-lg">Sign with one click</div>
-        </div>
-      </Popconfirm>
-    </div>
-  );
-}
-
-function addSingatory() {
-  return (
-    <div className="flex flex-col ring-1 ring-gray-100  rounded pt-5 space-y-3 items-center justify-center p-2">
-      <Image width={60} height={60} src="/icons/icons8-add-file-64.png" />
-    </div>
-  );
-}
-
-function contractParty(companyName, companyAdress, companyTin, partyType) {
-  return (
-    <div className="flex flex-col ring-1 ring-gray-300 rounded p-5 space-y-3">
-      <div className="flex flex-col">
-        <Typography.Text type="secondary">
-          <div className="text-xs">Company Name</div>
-        </Typography.Text>
-        <Typography.Text strong>{companyName}</Typography.Text>
-      </div>
-
-      <div className="flex flex-col">
-        <Typography.Text type="secondary">
-          <div className="text-xs">Company Address</div>
-        </Typography.Text>
-        <Typography.Text strong>{companyAdress}</Typography.Text>
-      </div>
-
-      <div className="flex flex-col">
-        <Typography.Text type="secondary">
-          <div className="text-xs">Company TIN no.</div>
-        </Typography.Text>
-        <Typography.Text strong>{companyTin}</Typography.Text>
-      </div>
-
-      <div className="flex flex-col">
-        <Typography.Text type="secondary">
-          <div className="text-xs">Hereinafter refferd to as</div>
-        </Typography.Text>
-        <Typography.Text strong>{partyType}</Typography.Text>
-      </div>
-    </div>
-  );
-}
-
-function buildTenderForm(
-  setDeadLine,
-  user,
-  docId,
-  submitTenderData,
-  setTendeDocSelected,
-  tenderDocSelected
-) {
-  return (
-    <>
-      <div className="items-center">
-        <Typography.Title level={5}>Create Tender</Typography.Title>
-        <Form.Item
-          name="tenderDocUrl"
-          label={
-            <div>
-              Upload Tender Documents{" "}
-              <i className="text-xs">(expected in PDF format)</i>
-            </div>
-          }
-        >
-          <UploadTenderDoc
-            uuid={docId}
-            setTendeDocSelected={setTendeDocSelected}
-          />
-        </Form.Item>
-        <Form.Item
-          name="deadLine"
-          label="Indicate Bid Submission Deadline"
-          rules={[
-            {
-              required: true,
-              message: "Please enter the submission deadline!",
-            },
-          ]}
-        >
-          <DatePicker
-            format="YYYY-MM-DD HH:mm"
-            showTime
-            disabledDate={(current) =>
-              current.isBefore(moment().subtract(1, "d"))
-            }
-            onChange={(v, str) => setDeadLine(str)}
-          />
-        </Form.Item>
-      </div>
-      <div className="flex flex-row space-x-1 mt-5 items-center">
-        <Form.Item>
-          <Button
-            icon={<FileDoneOutlined />}
-            type="primary"
-            htmlType="submit"
-            onClick={submitTenderData}
-            disabled={
-              !user?.permissions?.canCreateTenders || !tenderDocSelected
-            }
-          >
-            Publish Tender
-          </Button>
-        </Form.Item>
-      </div>
-    </>
-  );
-}
-
-function buildPOForm(
-  setSelectedContract,
-  contracts,
-  user,
-  submitPOData,
-  setVendor,
-  selectedContract
-) {
-  return (
-    <div className="">
-      <Typography.Title level={5}>Select existing contract</Typography.Title>
-      <Form.Item>
-        <Form.Item
-          // label="Contract"
-          name="contract"
-        >
-          <Select
-            allowClear
-            style={{ width: "300px" }}
-            placeholder="search by vendor name, contract #"
-            showSearch
-            onChange={(value, option) => {
-              setSelectedContract(option?.payload);
-              setVendor(option?.payload.vendor);
-            }}
-            filterSort={(optionA, optionB) =>
-              (optionA?.name ?? "")
-                .toLowerCase()
-                .localeCompare((optionB?.name ?? "").toLowerCase())
-            }
-            filterOption={(inputValue, option) =>
-              option?.name.toLowerCase().includes(inputValue.toLowerCase())
-            }
-            // defaultValue="RWF"
-            options={contracts.map((c) => {
-              return {
-                value: c._id,
-                label: (
-                  <div className="flex flex-col">
-                    <div>
-                      <UserOutlined /> {c.vendor?.companyName}
-                    </div>
-                    <div className="text-gray-300">{c?.number}</div>
-                  </div>
-                ),
-                name: c.vendor?.companyName + c?.number,
-
-                payload: c,
-              };
-            })}
-          ></Select>
-        </Form.Item>
-
-        <Button
-          // size="small"
-          type="primary"
-          icon={<FileDoneOutlined />}
-          onClick={submitPOData}
-          disabled={
-            !user?.permissions?.canCreatePurchaseOrders || !selectedContract
-          }
-          htmlType="submit"
-        >
-          Create PO
-        </Button>
-      </Form.Item>
-    </div>
-  );
-}

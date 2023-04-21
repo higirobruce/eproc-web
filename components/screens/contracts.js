@@ -506,34 +506,30 @@ export default function Contracts({ user }) {
                       </Typography.Text>
                     </div>
 
-                    {signing && (
-                      <div className="flex flex-col">
-                        <Typography.Text type="secondary">
-                          <div className="text-xs">IP address</div>
-                        </Typography.Text>
-                        {s.signed && (
-                          <Typography.Text strong>
-                            {s?.ipAddress}
-                          </Typography.Text>
+                    {s.signed && (
+                      <>
+                        {!signing && (
+                          <div className="flex flex-col">
+                            <Typography.Text type="secondary">
+                              <div className="text-xs">IP address</div>
+                            </Typography.Text>
+                            <Typography.Text strong>
+                              {s?.ipAddress}
+                            </Typography.Text>
+                          </div>
                         )}
-                        {!s.signed && (
+                        {signing && (
                           <Spin
                             indicator={
-                              <LoadingOutlined style={{ fontSize: 24 }} spin />
+                              <LoadingOutlined
+                                className="text-gray-500"
+                                style={{ fontSize: 20 }}
+                                spin
+                              />
                             }
-                            size="small"
                           />
                         )}
-                      </div>
-                    )}
-
-                    {s.signed && !signing && (
-                      <div className="flex flex-col">
-                        <Typography.Text type="secondary">
-                          <div className="text-xs">IP address</div>
-                        </Typography.Text>
-                        <Typography.Text strong>{s?.ipAddress}</Typography.Text>
-                      </div>
+                      </>
                     )}
                   </div>
                   {s?.signed && (
@@ -642,10 +638,10 @@ export default function Contracts({ user }) {
     fetch("https://api.ipify.org?format=json")
       .then((res) => res.json())
       .then((res) => {
-        myIpObj = res;
-        signatory.ipAddress = res?.ip;
-        signatory.signedAt = moment();
-        _contract.signatories[index] = signatory;
+        // myIpObj = res;
+        // signatory.ipAddress = res?.ip;
+        // signatory.signedAt = moment();
+        // _contract.signatories[index] = signatory;
         // setContract(_contract);
 
         fetch(`${url}/contracts/${contract?._id}`, {

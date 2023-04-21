@@ -1136,7 +1136,7 @@ const TenderDetails = ({
           <div className="flex flex-col space-y-5">
             {docType === "dDocument_Item" && (
               <div className="flex flex-col">
-                <Typography.Title level={4}>Asset assignment</Typography.Title>
+                <Typography.Title level={4}>Asset assignment</Typography.Title>∏
                 <div className="p-5 rounded ring-1 ring-gray-200 grid md:grid-cols-3 gap-2">
                   {items?.map((i, index) => {
                     return (
@@ -1389,7 +1389,7 @@ const TenderDetails = ({
             messageApi.open({
               type: "error",
               content:
-                "PO can not be submitted. Please specify at least 2 signatories!",
+                "Contract can not be submitted. Please specify at least 2 signatories!",
             });
           } else if (
             signatories?.filter((s) => {
@@ -1399,7 +1399,7 @@ const TenderDetails = ({
             messageApi.open({
               type: "error",
               content:
-                "PO can not be submitted. Please fill in the relevant signatories' details!",
+                "Contract can not be submitted. Please fill in the relevant signatories' details!",
             });
           } else {
             handleCreateContract(
@@ -2778,7 +2778,7 @@ const TenderDetails = ({
                         handleSelectBid={handleSelectBid}
                         handleAwardBid={handleAwardBid}
                         refresh={refresh}
-                        canSelectBid={data?.invitationSent}
+                        canSelectBid={data?.invitationSent && moment(data?.submissionDeadLine).isSameOrBefore(moment())}
                         handleSetBidList={setBidList}
                         comitee={data?.invitees}
                         user={user}

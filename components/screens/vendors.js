@@ -18,6 +18,7 @@ import {
   Popover,
   Popconfirm,
   Rate,
+  Form,
 } from "antd";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
@@ -51,6 +52,7 @@ import moment from "moment";
 import { UserIcon } from "@heroicons/react/24/outline";
 import MyPdfViewer from "../common/pdfViewer";
 export default function Vendors({ user }) {
+  const [passwordForm] = Form.useForm();
   const [dataLoaded, setDataLoaded] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
   let url = process.env.NEXT_PUBLIC_BKEND_URL;
@@ -66,6 +68,9 @@ export default function Vendors({ user }) {
   const [attachmentId, setAttachmentId] = useState(null);
   const [editVendor, setEditVendor] = useState(false);
   let [servCategories, setServCategories] = useState([]);
+  let [submitting, setSubmitting] = useState(false)
+
+  const antIcon = <LoadingOutlined style={{ fontSize: 24 }} spin />;
 
   let [searchStatus, setSearchStatus] = useState("all");
   let [searchText, setSearchText] = useState("");
@@ -357,6 +362,38 @@ export default function Vendors({ user }) {
       });
   }
 
+  function updatePassword(){
+    setSubmitting(true)
+    
+    fetch(`${url}/users/reset/${rowData?.vendor?.email}`, {
+      method: "PUT",
+      headers: {
+        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+        "Content-Type": "application/json",
+      },
+      
+    })
+      .then((res) => res.json())
+      .then((res) => {
+
+        messageApi.open({
+          type: "info",
+          content: "Vendor password was successfully reset",
+        });
+        refresh();
+        
+      })
+      .catch((err) => {
+        alert(JSON.stringify(err))
+        messageApi.open({
+          type: "error",
+          content: "Something happened! Please try again.",
+        });
+      }).finally(()=>{
+        setSubmitting(false)
+      })
+  }
+
   return !rowData ? (
     <>
       {contextHolder}
@@ -516,6 +553,7 @@ export default function Vendors({ user }) {
             {/* Data */}
             <div className="flex flex-col space-y-5">
               <div className="bg-white ring-1 ring-gray-100 rounded shadow p-5">
+                
                 <div className="text-xl font-semibold mb-5 flex flex-row justify-between items-center">
                   <div>General Information</div>
 
@@ -919,6 +957,33 @@ export default function Vendors({ user }) {
                   </div>
                 </div>
               </div>
+
+              {/* Reset password */}
+              {user?.permissions?.canEditVendors && <div className="bg-white ring-1 ring-gray-100 rounded shadow p-5">
+                <div className="text-xl font-semibold mb-5 flex flex-row justify-between items-center">
+                  <div>Reset password</div>
+                </div>
+                <Form
+                  // {...formItemLayout}
+                  form={passwordForm}
+                  name="resetPassword"
+                  onFinish={updatePassword}
+                  scrollToFirstError
+                  style={{ width: "100%" }}
+                >
+                  <Form.Item>
+                    {submitting ? (
+                      <Spin indicator={antIcon} />
+                    ) : (
+                      <div className="flex flex-row items-center justify-between">
+                        <Button type="primary" danger htmlType="submit">
+                          Update vendor password
+                        </Button>
+                      </div>
+                    )}
+                  </Form.Item>
+                </Form>
+              </div>}
             </div>
 
             {/* Transactions */}

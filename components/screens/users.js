@@ -72,6 +72,7 @@ export default function Users({ user }) {
   let [servCategories, setServCategories] = useState([]);
 
   const [form] = Form.useForm();
+  const [passwordForm] = Form.useForm();
   const [rdbCertId, setRdbCertId] = useState(null);
   const [vatCertId, setVatCertId] = useState(null);
   const [rdbSelected, setRDBSelected] = useState(false);
@@ -80,7 +81,10 @@ export default function Users({ user }) {
   let [searchText, setSearchText] = useState("");
   const [openCreateUser, setOpenCreateUser] = useState(false);
   const [editUser, setEditUser] = useState(false);
-  const[basicPermissions, setBasicPermissions] = useState(["canViewRequests", "canCreateRequests"])
+  const [basicPermissions, setBasicPermissions] = useState([
+    "canViewRequests",
+    "canCreateRequests",
+  ]);
 
   const antIcon = <LoadingOutlined style={{ fontSize: 24 }} spin />;
 
@@ -566,6 +570,36 @@ export default function Users({ user }) {
       });
   }
 
+  function updatePassword(){
+    setSubmitting(true)
+    fetch(`${url}/users/reset/${row?.email}`, {
+      method: "PUT",
+      headers: {
+        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+        "Content-Type": "application/json",
+      },
+      
+    })
+      .then((res) => res.json())
+      .then((res) => {
+
+        messageApi.open({
+          type: "info",
+          content: "User password was successfully reset",
+        });
+        refresh();
+        
+      })
+      .catch((err) => {
+        messageApi.open({
+          type: "error",
+          content: "Something happened! Please try again.",
+        });
+      }).finally(()=>{
+        setSubmitting(false)
+      })
+  }
+
   return !row ? (
     <>
       {contextHolder}
@@ -870,6 +904,33 @@ export default function Users({ user }) {
                   </div>
                 </div>
               </div>
+
+              {/* Reset password */}
+              {user?.permissions?.canEditUsers && <div className="bg-white ring-1 ring-gray-100 rounded shadow p-5">
+                <div className="text-xl font-semibold mb-5 flex flex-row justify-between items-center">
+                  <div>Reset password</div>
+                </div>
+                <Form
+                  // {...formItemLayout}
+                  form={passwordForm}
+                  name="resetPassword"
+                  onFinish={updatePassword}
+                  scrollToFirstError
+                  style={{ width: "100%" }}
+                >
+                  <Form.Item>
+                    {submitting ? (
+                      <Spin indicator={antIcon} />
+                    ) : (
+                      <div className="flex flex-row items-center justify-between">
+                        <Button type="primary" danger htmlType="submit">
+                          Update user password
+                        </Button>
+                      </div>
+                    )}
+                  </Form.Item>
+                </Form>
+              </div>}
             </div>
 
             {/* Transactions */}
@@ -986,26 +1047,30 @@ export default function Users({ user }) {
                         className="grid grid-cols-3 ring-1 ring-gray-200 rounded my-3 p-3 text-gray-700"
                       >
                         <div>
-                        <div className="text-gray-500 font-semibold mb-2">Request #</div>
+                          <div className="text-gray-500 font-semibold mb-2">
+                            Request #
+                          </div>
                           <div className="flex-row  flex items-center">
                             <div>
                               <FileTextOutlined className="h-4 w-4" />
                             </div>{" "}
                             <div>{request?.number}</div>
                           </div>
-                          
                         </div>
                         <div>
-                        <div className="text-gray-500 font-semibold mb-2">Title</div>
+                          <div className="text-gray-500 font-semibold mb-2">
+                            Title
+                          </div>
                           <div>{request?.title}</div>
                         </div>
                         <div>
-                          <div className="text-gray-500 font-semibold mb-2">Status</div>
+                          <div className="text-gray-500 font-semibold mb-2">
+                            Status
+                          </div>
                           <div>
                             <Tag color="gold">{request.status}</Tag>
                           </div>
                         </div>
-                       
                       </div>
                     );
                   })}
@@ -1027,7 +1092,6 @@ export default function Users({ user }) {
         onOk={() => {
           form.validateFields().then(
             (value) => {
-              
               createUser(value);
               setOpenCreateUser(false);
             },

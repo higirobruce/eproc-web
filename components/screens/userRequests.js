@@ -402,52 +402,48 @@ export default function UserRequests({ user }) {
 
   function updateStatus(id, status) {
     setLoadingRowData(true);
-    setTimeout(() => {
-      fetch(`${url}/requests/status/${id}`, {
-        method: "PUT",
-        headers: {
-          Authorization:
-            "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          status,
-        }),
-      })
-        .then((res) => res.json())
-        .then((res) => {
-          loadRequests()
-            .then((res) => res.json())
-            .then((res) => {
-              setDataset(res);
-              setTempDataset(res);
-              let r = res.filter((d) => {
-                return d._id === id;
-              });
-              console.log(r);
-              setRowData(r[0]);
-              setLoadingRowData(false);
-            })
-            .catch((err) => {
-              setLoadingRowData(false);
-              messageApi.open({
-                type: "error",
-                content: "Something happened! Please try again.",
-              });
+    fetch(`${url}/requests/status/${id}`, {
+      method: "PUT",
+      headers: {
+        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        status,
+      }),
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        loadRequests()
+          .then((res) => res.json())
+          .then((res) => {
+            setDataset(res);
+            setTempDataset(res);
+            let r = res.filter((d) => {
+              return d._id === id;
             });
-        })
-        .catch((err) => {
-          setLoadingRowData(false);
-          messageApi.open({
-            type: "error",
-            content: "Something happened! Please try again.",
+            console.log(r);
+            setRowData(r[0]);
+            setLoadingRowData(false);
+          })
+          .catch((err) => {
+            setLoadingRowData(false);
+            messageApi.open({
+              type: "error",
+              content: "Something happened! Please try again.",
+            });
           });
+      })
+      .catch((err) => {
+        setLoadingRowData(false);
+        messageApi.open({
+          type: "error",
+          content: "Something happened! Please try again.",
         });
-    }, 2000);
+      });
   }
 
   function updateSourcingMethod(id, sourcingMethod) {
-   
     fetch(`${url}/requests/sourcingMethod/${id}`, {
       method: "PUT",
       headers: {
@@ -470,10 +466,8 @@ export default function UserRequests({ user }) {
             });
             console.log(r);
             setRowData(r[0]);
-           
           })
           .catch((err) => {
-            
             messageApi.open({
               type: "error",
               content: "Something happened! Please try again.",
@@ -481,7 +475,6 @@ export default function UserRequests({ user }) {
           });
       })
       .catch((err) => {
-       
         messageApi.open({
           type: "error",
           content: "Something happened! Please try again.",
@@ -506,8 +499,11 @@ export default function UserRequests({ user }) {
         refresh();
 
         let r = dataset?.filter((d) => {
-          return d._id === id;
+          return d._id === rowData?._id;
         });
+
+        updateStatus(rowData?._id, 'pending')
+        
         console.log(r);
         setRowData(r[0]);
         setLoadingRowData(false);
@@ -542,7 +538,7 @@ export default function UserRequests({ user }) {
       .then((res) => res.json())
       .then((res) => {
         updateStatus(rowData._id, "approved");
-        updateSourcingMethod(rowData._id, sourcingMethod)
+        updateSourcingMethod(rowData._id, sourcingMethod);
       })
       .catch((err) => {
         console.log(err);
@@ -670,7 +666,7 @@ export default function UserRequests({ user }) {
           });
         } else {
           updateStatus(rowData._id, "approved");
-          updateSourcingMethod(rowData._id, sourcingMethod)
+          updateSourcingMethod(rowData._id, sourcingMethod);
           messageApi.open({
             type: "success",
             content: "PO created!",
@@ -718,10 +714,10 @@ export default function UserRequests({ user }) {
       .then((res) => res.json())
       .then((res1) => {
         updateStatus(rowData._id, "approved");
-        updateSourcingMethod(rowData._id, sourcingMethod)
+        updateSourcingMethod(rowData._id, sourcingMethod);
         messageApi.open({
           type: "success",
-          content: "PO created!",
+          content: "Contract created!",
         });
       })
       .catch((err) => {
@@ -1250,8 +1246,8 @@ export default function UserRequests({ user }) {
               </div>
             )}
           </div>
-          {rowData?.level1Approver?._id === user?._id &&
-            rowData?.status === "pending" && (
+          {(rowData?.level1Approver?._id === user?._id || rowData?.createdBy?._id === user?._id) &&
+            rowData?.status !== "approved" && (
               <Switch
                 checkedChildren={<EditOutlined />}
                 unCheckedChildren={<EyeOutlined />}

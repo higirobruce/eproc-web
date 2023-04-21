@@ -73,9 +73,7 @@ const TopMenu = ({ setScreen, screen, handleLogout }) => {
     handleLogout(true);
     localStorage.removeItem("user");
     Router.push("/").then(() => {
-      setTimeout(() => {
-        handleLogout(false);
-      }, 3000);
+      handleLogout(false);
     });
   };
   const onClick = (e) => {

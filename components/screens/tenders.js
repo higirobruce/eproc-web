@@ -124,7 +124,6 @@ export default function Tenders({ user }) {
         return (
           d?.number?.toString().indexOf(searchText) > -1 ||
           d?.purchaseRequest?.number?.toString().indexOf(searchText) > -1
-
         );
       });
       setTempDataset(filtered);
@@ -221,48 +220,45 @@ export default function Tenders({ user }) {
 
   function updateStatus(id, status) {
     setLoadingRowData(true);
-    setTimeout(() => {
-      fetch(`${url}/tenders/status/${id}`, {
-        method: "PUT",
-        headers: {
-          Authorization:
-            "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          status,
-        }),
-      })
-        .then((res) => res.json())
-        .then((res) => {
-          loadTenders()
-            .then((res) => res.json())
-            .then((res) => {
-              setDataset(res);
-              setTempDataset(res);
-              let r = res.filter((d) => {
-                return d._id === id;
-              });
-              console.log(r);
-              setRowData(r[0]);
-              setLoadingRowData(false);
-            })
-            .catch((err) => {
-              setLoadingRowData(false);
-              messageApi.open({
-                type: "error",
-                content: "Something happened! Please try again.",
-              });
+    fetch(`${url}/tenders/status/${id}`, {
+      method: "PUT",
+      headers: {
+        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        status,
+      }),
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        loadTenders()
+          .then((res) => res.json())
+          .then((res) => {
+            setDataset(res);
+            setTempDataset(res);
+            let r = res.filter((d) => {
+              return d._id === id;
             });
-        })
-        .catch((err) => {
-          setLoadingRowData(false);
-          messageApi.open({
-            type: "error",
-            content: "Something happened! Please try again.",
+            console.log(r);
+            setRowData(r[0]);
+            setLoadingRowData(false);
+          })
+          .catch((err) => {
+            setLoadingRowData(false);
+            messageApi.open({
+              type: "error",
+              content: "Something happened! Please try again.",
+            });
           });
+      })
+      .catch((err) => {
+        setLoadingRowData(false);
+        messageApi.open({
+          type: "error",
+          content: "Something happened! Please try again.",
         });
-    }, 2000);
+      });
   }
 
   function loadStats() {
@@ -414,49 +410,46 @@ export default function Tenders({ user }) {
 
   function sendInvitation(tenderUpdate) {
     setLoadingRowData(true);
-    setTimeout(() => {
-      fetch(`${url}/tenders/${tenderUpdate?._id}`, {
-        method: "PUT",
-        headers: {
-          Authorization:
-            "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          sendInvitation: true,
-          newTender: tenderUpdate,
-        }),
-      })
-        .then((res) => res.json())
-        .then((res) => {
-          loadTenders()
-            .then((res) => res.json())
-            .then((res) => {
-              setDataset(res);
-              setTempDataset(res);
-              let r = res.filter((d) => {
-                return d._id === id;
-              });
-              console.log(r);
-              setRowData(r[0]);
-              setLoadingRowData(false);
-            })
-            .catch((err) => {
-              setLoadingRowData(false);
-              // messageApi.open({
-              //   type: "error",
-              //   content: "Something happened! Please try again.",
-              // });
+    fetch(`${url}/tenders/${tenderUpdate?._id}`, {
+      method: "PUT",
+      headers: {
+        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        sendInvitation: true,
+        newTender: tenderUpdate,
+      }),
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        loadTenders()
+          .then((res) => res.json())
+          .then((res) => {
+            setDataset(res);
+            setTempDataset(res);
+            let r = res.filter((d) => {
+              return d._id === id;
             });
-        })
-        .catch((err) => {
-          setLoadingRowData(false);
-          // messageApi.open({
-          //   type: "error",
-          //   content: "Something happened! Please try again.",
-          // });
-        });
-    }, 2000);
+            console.log(r);
+            setRowData(r[0]);
+            setLoadingRowData(false);
+          })
+          .catch((err) => {
+            setLoadingRowData(false);
+            // messageApi.open({
+            //   type: "error",
+            //   content: "Something happened! Please try again.",
+            // });
+          });
+      })
+      .catch((err) => {
+        setLoadingRowData(false);
+        // messageApi.open({
+        //   type: "error",
+        //   content: "Something happened! Please try again.",
+        // });
+      });
   }
 
   function sendEvalApproval(tenderUpdate, invitees) {
@@ -511,11 +504,10 @@ export default function Tenders({ user }) {
           <Row className="flex flex-col space-y-2 bg-white px-10 py-3 shadow">
             <div className="flex flex-row justify-between items-center">
               <div className="text-xl font-semibold">Tenders</div>
-              
             </div>
 
             <Row className="flex flex-row space-x-5 items-center justify-between">
-            <div className="flex-1">
+              <div className="flex-1">
                 <Select
                   // mode="tags"
                   style={{ width: "300px" }}
@@ -582,7 +574,12 @@ export default function Tenders({ user }) {
               onFinish={save}
             >
               <Form.Item label="Due date">
-                <DatePicker onChange={(v, dstr) => setDueDate(dstr)} disabledDate={(current)=> current.isBefore(moment().subtract(1,'d')) } />
+                <DatePicker
+                  onChange={(v, dstr) => setDueDate(dstr)}
+                  disabledDate={(current) =>
+                    current.isBefore(moment().subtract(1, "d"))
+                  }
+                />
               </Form.Item>
               <Row className="flex flex-row justify-between">
                 <Col>
@@ -606,7 +603,15 @@ export default function Tenders({ user }) {
         <Empty />
       ) : (
         <div className="flex items-center justify-center flex-1 h-screen">
-          <Spin indicator={<LoadingOutlined className="text-gray-500" style={{ fontSize: 42 }} spin/>}/>
+          <Spin
+            indicator={
+              <LoadingOutlined
+                className="text-gray-500"
+                style={{ fontSize: 42 }}
+                spin
+              />
+            }
+          />
         </div>
       )}
     </>

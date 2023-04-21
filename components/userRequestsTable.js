@@ -136,7 +136,7 @@ const UsersRequestsTable = ({
       record[dataIndex].toString().toLowerCase().includes(value.toLowerCase()),
     onFilterDropdownOpenChange: (visible) => {
       if (visible) {
-        setTimeout(() => searchInput.current?.select(), 100);
+        searchInput.current?.select()
       }
     },
     render: (text) =>
