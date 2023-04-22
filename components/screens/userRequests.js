@@ -89,6 +89,7 @@ export default function UserRequests({ user }) {
   const [form] = Form.useForm();
   const [onlyMine, setOnlyMine] = useState(true);
   const [sourcingMethod, setSourcingMethod] = useState("");
+  let [files, setFiles] = useState([]);
 
   useEffect(() => {
     // loadRequests()
@@ -257,14 +258,14 @@ export default function UserRequests({ user }) {
     setUpdatingId("");
   }, [dataset]);
 
-  const save = () => {
+  const save = (_fileList) => {
     if (values && values[0]) {
       console.log("Received values of form:", values);
       setConfirmLoading(true);
       let user = JSON.parse(localStorage.getItem("user"));
       let _values = [...values];
       _values.map((v, index) => {
-        v.paths = fileList[index];
+        v.paths = _fileList[index];
         return v;
       });
       fetch(`${url}/requests/`, {
@@ -296,24 +297,25 @@ export default function UserRequests({ user }) {
             setBudgetLine(""),
             setTitle(""),
             setFileList([]);
-            loadRequests()
-              .then((res) => res.json())
-              .then((res) => {
-                setDataLoaded(true);
-                setDataset(res);
-                setTempDataset(res);
-                setConfirmLoading(false);
-                setOpen(false);
-              })
-              .catch((err) => {
-                setConfirmLoading(false);
-                setOpen(false);
-                console.log(err);
-                messageApi.open({
-                  type: "error",
-                  content: "Something happened! Please try again.",
-                });
+          setFiles([]);
+          loadRequests()
+            .then((res) => res.json())
+            .then((res) => {
+              setDataLoaded(true);
+              setDataset(res);
+              setTempDataset(res);
+              setConfirmLoading(false);
+              setOpen(false);
+            })
+            .catch((err) => {
+              setConfirmLoading(false);
+              setOpen(false);
+              console.log(err);
+              messageApi.open({
+                type: "error",
+                content: "Something happened! Please try again.",
               });
+            });
         })
         .catch((err) => {
           setConfirmLoading(false);
@@ -503,8 +505,8 @@ export default function UserRequests({ user }) {
           return d._id === rowData?._id;
         });
 
-        updateStatus(rowData?._id, 'pending')
-        
+        updateStatus(rowData?._id, "pending");
+
         console.log(r);
         setRowData(r[0]);
         setLoadingRowData(false);
@@ -730,9 +732,52 @@ export default function UserRequests({ user }) {
   }
 
   function _setFileList(list) {
-    console.log(list)
+    console.log(list);
     setFileList(list);
   }
+
+  function _setFiles(newFileList) {
+    setFiles(newFileList);
+  }
+
+  const handleUpload = (files) => {
+    files.forEach((filesPerRow, rowIndex) => {
+      filesPerRow.map((rowFile, fileIndex) => {
+        const formData = new FormData();
+        formData.append("files[]", rowFile);
+
+        // You can use any AJAX library you like
+        fetch(`${url}/uploads/termsOfReference/`, {
+          method: "POST",
+          body: formData,
+          headers: {
+            Authorization:
+              "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+            // "Content-Type": "multipart/form-data",
+          },
+        })
+          .then((res) => res.json())
+          .then((savedFiles) => {
+            let _filenames = savedFiles?.map((f) => {
+              return f?.filename;
+            });
+
+            let _files = [...files];
+            _files[rowIndex][fileIndex]=_filenames[0];
+
+            if (rowIndex === files?.length - 1) {
+              save(_files);
+            }
+            
+          })
+          .catch((err) => {
+            console.log(err);
+            messageApi.error("upload failed.");
+          })
+          .finally(() => {});
+      });
+    });
+  };
 
   // function createPO(vendor, tender, createdBy, sections, items) {
   //   fetch(`${url}/purchaseOrders/`, {
@@ -864,7 +909,7 @@ export default function UserRequests({ user }) {
                     v?.estimatedUnitCost === ""
                 );
                 if (invalidValues?.length == 0) {
-                  save();
+                  handleUpload(files);
                 }
               }
             }}
@@ -1136,6 +1181,8 @@ export default function UserRequests({ user }) {
                 dataSource={values}
                 fileList={fileList}
                 setFileList={_setFileList}
+                files={files}
+                setFiles={_setFiles}
               />
             </div>
           </Modal>
@@ -1248,7 +1295,8 @@ export default function UserRequests({ user }) {
               </div>
             )}
           </div>
-          {(rowData?.level1Approver?._id === user?._id || rowData?.createdBy?._id === user?._id) &&
+          {(rowData?.level1Approver?._id === user?._id ||
+            rowData?.createdBy?._id === user?._id) &&
             rowData?.status !== "approved" && (
               <Switch
                 checkedChildren={<EditOutlined />}

@@ -85,7 +85,7 @@ const EditableCell = ({
   return <td {...restProps}>{childNode}</td>;
 };
 
-const ItemsTable = ({ setDataSource, dataSource, setFileList, fileList }) => {
+const ItemsTable = ({ setDataSource, dataSource, setFileList, fileList, files, setFiles }) => {
   const [count, setCount] = useState(1);
   const [rowForm] = Form.useForm();
   const handleDelete = (key) => {
@@ -115,7 +115,7 @@ const ItemsTable = ({ setDataSource, dataSource, setFileList, fileList }) => {
     {
       title: <div>Supporting Docs <i className="text-xs font-thin">(e.g specs, ToR,... expected in PDF format)</i></div>,
       dataIndex: "attachements",
-      render: (_, record) => (dataSource.length >= 1 ? <UploadTORs uuid={record?.id} setFileList={setFileList} fileList={fileList} /> : null),
+      render: (_, record) => (dataSource.length >= 1 ? <UploadTORs uuid={record?.key-1} setFileList={setFileList} fileList={fileList} files={files} setFiles={setFiles} /> : null),
     },
     {
       title: "Action",
