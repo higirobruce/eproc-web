@@ -295,6 +295,7 @@ export default function UserRequests({ user }) {
             setBudgeted(true),
             setBudgetLine(""),
             setTitle(""),
+            setFileList([]);
             loadRequests()
               .then((res) => res.json())
               .then((res) => {
@@ -729,6 +730,7 @@ export default function UserRequests({ user }) {
   }
 
   function _setFileList(list) {
+    console.log(list)
     setFileList(list);
   }
 

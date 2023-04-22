@@ -240,7 +240,6 @@ export default function Tenders({ user }) {
             let r = res.filter((d) => {
               return d._id === id;
             });
-            console.log(r);
             setRowData(r[0]);
             setLoadingRowData(false);
           })
@@ -292,7 +291,6 @@ export default function Tenders({ user }) {
   }
 
   function handleSetRow(row) {
-    console.log(row);
     setLoadingRowData(true);
     setRowData(row);
     setLoadingRowData(false);
@@ -318,7 +316,6 @@ export default function Tenders({ user }) {
             let r = res3.filter((d) => {
               return d._id === rowData._id;
             });
-            console.log("hereeeeeee", r);
             setRowData(r[0]);
             setLoadingRowData(false);
           })

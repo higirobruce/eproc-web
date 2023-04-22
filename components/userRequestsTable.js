@@ -205,6 +205,7 @@ const UsersRequestsTable = ({
     {
       title: "Title",
       dataIndex: "title",
+      // sorter: (a,b)=>moment(a.dueDate).isAfter(moment(b.dueDate)),
       render: (_, record) => (
         <>
           <div className={record?.number === selectedRow ? "font-bold" : ""}>

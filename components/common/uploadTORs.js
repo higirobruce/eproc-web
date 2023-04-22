@@ -28,11 +28,14 @@ function UploadTORs({ label, uuid, fileList, setFileList }) {
     })
       .then((res) => res.json())
       .then((savedFiles) => {
+        console.log(savedFiles)
         let _files = savedFiles?.map(f=>{
           return f?.filename
         })
         let _fileList = [...fileList]
-        _fileList.push(_files)
+        let len = _fileList.length
+        _fileList[len] = [];
+        _fileList[len]=_files
 
         setFileList(_fileList)
         setFiles([]);
@@ -49,14 +52,14 @@ function UploadTORs({ label, uuid, fileList, setFileList }) {
 
   const props = {
     onRemove: (file) => {
-      const index = fileList[uuid]?.indexOf(file);
-      const newFileList = fileList[uuid]?.slice();
-      newFileList?.splice(index, 1);
-      setFileList(newFileList, uuid);
+      // const index = fileList[uuid]?.indexOf(file);
+      // const newFileList = fileList[uuid]?.slice();
+      // newFileList?.splice(index, 1);
+      // setFileList(newFileList);
 
       const _index = files.indexOf(file);
       const _newFileList = files.slice();
-      _newFileList.splice(index, 1);
+      _newFileList.splice(_index, 1);
       setFiles(_newFileList);
 
     },
@@ -70,11 +73,13 @@ function UploadTORs({ label, uuid, fileList, setFileList }) {
         messageApi.error(`${file.name} is not a PDF file`);
         return false || Upload.LIST_IGNORE;
       }
-      // let _fileList = fileList[uuid] ? [...fileList[uuid]] : [];
+      // let _fileList = [...fileList]
+
       
-      // _fileList.push(file);
-      // setFileList(_fileList, uuid);
+      // _fileList[uuid].push(file);
+      // setFileList(_fileList);
       setFiles([...files, file]);
+
       // return isPDF || Upload.LIST_IGNORE;
       return false;
     },
