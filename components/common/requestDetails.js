@@ -102,8 +102,6 @@ let formats = [
   "link",
 ];
 
-
-
 function buildSingatory(onBehalfOf, repTitle, repNames, repEmail) {
   return (
     <div className="flex flex-col ring-1 ring-gray-300 rounded pt-5 space-y-3">
@@ -324,7 +322,6 @@ function buildPOForm(
     </div>
   );
 }
-
 
 const RequestDetails = ({
   data,
@@ -816,7 +813,6 @@ const RequestDetails = ({
     setProgress((value / t) * 100);
   }
 
- 
   function buildApprovalFlow(
     currentCode,
     changeStatus,
@@ -1165,6 +1161,18 @@ const RequestDetails = ({
             </div>
           </div>
           <div>
+            {/* Sourcing Method */}
+            {currentCode !== 2 && (
+              <>
+                <div className="ml-3 text-lg font-bold">Sourcing Method</div>
+                <div className="ml-3">
+                  {(data?.sourcingMethod && (
+                    <Tag>{data?.sourcingMethod}</Tag>
+                  )) ||
+                    "No sourcing method selected at the moment."}
+                </div>
+              </>
+            )}
             {currentCode === 2 &&
               (user?.permissions?.canCreateTenders ||
                 user?.permissions?.canCreatePurchaseOrders ||
@@ -1175,7 +1183,7 @@ const RequestDetails = ({
                       Sourcing Method Selection
                     </div>
                     <div className="mt-5 items-center">
-                      <div>Indicate available reference</div>
+                      <div>Please select a sourcing method</div>
                       <Form.Item name="refDoc">
                         <Select
                           onChange={(value) => setRefDoc(value)}
@@ -2299,7 +2307,6 @@ const RequestDetails = ({
   }
 
   function previewAttachmentModal() {
-    
     return (
       <Modal
         title="Attachment view"
@@ -2314,7 +2321,6 @@ const RequestDetails = ({
       </Modal>
     );
   }
-
 
   return (
     <div className="grid md:grid-cols-5 gap-1">
@@ -2615,15 +2621,6 @@ const RequestDetails = ({
                       })} */}
 
                     <div className="ml-3 text-lg font-bold">
-                      Sourcing Method
-                    </div>
-                    <div className="ml-5">
-                      {(data?.sourcingMethod && (
-                        <Tag>{data?.sourcingMethod}</Tag>
-                      )) ||
-                        "No sourcing method selected yet."}
-                    </div>
-                    <div className="ml-3 text-lg font-bold">
                       Delivery progress
                     </div>
                     {data?.items.map((i, index) => {
@@ -2815,7 +2812,6 @@ const RequestDetails = ({
       </div>
     </div>
   );
-
 };
 
 export default RequestDetails;
