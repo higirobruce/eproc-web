@@ -2299,6 +2299,7 @@ const RequestDetails = ({
   }
 
   function previewAttachmentModal() {
+    
     return (
       <Modal
         title="Attachment view"

@@ -585,7 +585,7 @@ export default function Users({ user }) {
 
         messageApi.open({
           type: "info",
-          content: "User password was successfully reset",
+          content: "User password was successfully reset.",
         });
         refresh();
         
@@ -720,8 +720,10 @@ export default function Users({ user }) {
   );
 
   function buildUser() {
+   
     return (
       <div className="flex flex-col  transition-opacity ease-in-out duration-1000 px-10 py-5 flex-1 space-y-3 overflow-x-scroll">
+         {contextHolder}
         <div className="flex flex-col space-y-5">
           <div className="flex flex-row justify-between">
             <div className="flex flex-row items-center space-x-2">

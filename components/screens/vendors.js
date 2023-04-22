@@ -384,7 +384,6 @@ export default function Vendors({ user }) {
         
       })
       .catch((err) => {
-        alert(JSON.stringify(err))
         messageApi.open({
           type: "error",
           content: "Something happened! Please try again.",

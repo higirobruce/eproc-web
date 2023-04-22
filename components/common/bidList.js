@@ -23,6 +23,7 @@ import UploadFiles from "./uploadFiles";
 import {
   CheckCircleIcon,
   MinusCircleIcon,
+  PaperClipIcon,
   UserCircleIcon,
   UserIcon,
   UsersIcon,
@@ -106,36 +107,11 @@ const BidList = ({
                   //   avatar={<Avatar src={item.picture.large} />}
                   title={<a href="#">{item.number}</a>}
                   description={
-                    <div className="grid md:grid-cols-7">
+                    <div className="grid md:grid-cols-8 ">
                       <div className="self-center">
+                        <div className="text-xs text-gray-400">Vendor</div>
                         <div className="text-xs text-gray-600">
                           {item?.createdBy?.companyName}
-                        </div>
-                        <div>
-                          <a
-                            href="#"
-                            onClick={() => {
-                              setAttachmentId(
-                                `bidDocs/${item?.proposalDocId}.pdf`
-                              );
-                              setPreviewAttachment(true);
-                            }}
-                          >
-                            <FileTextOutlined /> Proposal
-                          </a>
-                        </div>
-                        <div>
-                          <a
-                            href="#"
-                            onClick={() => {
-                              setAttachmentId(
-                                `bidDocs/${item?.otherDocId}.pdf`
-                              );
-                              setPreviewAttachment(true);
-                            }}
-                          >
-                            <FileTextOutlined /> Other Doc
-                          </a>
                         </div>
                       </div>
 
@@ -160,6 +136,44 @@ const BidList = ({
                         <div className="text-xs text-gray-600">
                           {moment(item?.deliveryDate).fromNow()}
                         </div>
+                      </div>
+
+                      <div className="self-center">
+                        <div className="text-xs text-gray-400">Docs</div>
+                        {item?.proposalDocId && <div>
+                          <a
+                            href="#"
+                            onClick={() => {
+                              setAttachmentId(
+                                `bidDocs/${item?.proposalDocId}.pdf`
+                              );
+                              setPreviewAttachment(true);
+                            }}
+                            className="text-xs"
+                          >
+                            Proposal <PaperClipIcon className="h-3 w-3" />
+                          </a>
+                        </div>
+                        }
+                        {
+                          !item?.proposalDocId && <div className="text-xs">No proposal doc found!</div>
+                        }
+                        {item?.otherDocId && (
+                          <div>
+                            <a
+                              href="#"
+                              onClick={() => {
+                                setAttachmentId(
+                                  `bidDocs/${item?.otherDocId}.pdf`
+                                );
+                                setPreviewAttachment(true);
+                              }}
+                              className="text-xs"
+                            >
+                              Other Doc <PaperClipIcon className="h-3 w-3" />
+                            </a>
+                          </div>
+                        )}
                       </div>
 
                       <div className="self-center">
@@ -206,7 +220,10 @@ const BidList = ({
                         <>
                           <Button
                             size="small"
-                            disabled={!documentFullyApproved(data) || !user?.permissions?.canCreateContracts}
+                            disabled={
+                              !documentFullyApproved(data) ||
+                              !user?.permissions?.canCreateContracts
+                            }
                             type="primary"
                             onClick={() => handleAwardBid(item._id)}
                           >

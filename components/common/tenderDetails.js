@@ -215,7 +215,7 @@ const TenderDetails = ({
                         className="flex flex-row items-center space-x-2"
                         onClick={() => {
                           setPreviewAttachment(!previewAttachment);
-                          setAttachmentId(p);
+                          setAttachmentId('termsOfReference/'+p);
                         }}
                       >
                         <div>supporting doc{i + 1} </div>{" "}
@@ -2543,6 +2543,7 @@ const TenderDetails = ({
 
 
   function previewAttachmentModal() {
+    
     return (
       <Modal
         title="Attachment view"
