@@ -742,6 +742,7 @@ export default function UserRequests({ user }) {
 
   const handleUpload = (files) => {
     files.forEach((filesPerRow, rowIndex) => {
+      
       filesPerRow.map((rowFile, fileIndex) => {
         const formData = new FormData();
         formData.append("files[]", rowFile);
@@ -765,7 +766,9 @@ export default function UserRequests({ user }) {
             let _files = [...files];
             _files[rowIndex][fileIndex]=_filenames[0];
 
-            if (rowIndex === files?.length - 1) {
+
+
+            if (rowIndex === files?.length - 1 && fileIndex===filesPerRow.length-1) {
               save(_files);
             }
             
@@ -774,7 +777,9 @@ export default function UserRequests({ user }) {
             console.log(err);
             messageApi.error("upload failed.");
           })
-          .finally(() => {});
+          .finally(() => {
+           
+          });
       });
     });
   };

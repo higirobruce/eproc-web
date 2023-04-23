@@ -230,7 +230,10 @@ function buildTenderForm(
             disabledDate={(current) =>
               current.isBefore(moment().subtract(1, "d"))
             }
-            onChange={(v, str) => setDeadLine(str)}
+            onChange={(v, str) => {
+              // console.log(moment(str).toISOString());
+              setDeadLine(moment(str).toISOString());
+            }}
           />
         </Form.Item>
       </div>
