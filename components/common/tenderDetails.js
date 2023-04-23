@@ -215,7 +215,7 @@ const TenderDetails = ({
                         className="flex flex-row items-center space-x-2"
                         onClick={() => {
                           setPreviewAttachment(!previewAttachment);
-                          setAttachmentId('termsOfReference/'+p);
+                          setAttachmentId("termsOfReference/" + p);
                         }}
                       >
                         <div>supporting doc{i + 1} </div>{" "}
@@ -239,60 +239,60 @@ const TenderDetails = ({
           },
         ]
       : [
-        {
-          title: "Item title",
-          dataIndex: "title",
-          key: "title",
-          render: (_, item) => (
-            <>
-              <Typography.Text className="flex flex-row items-center space-x-2">
-                <div>{item.title}</div>{" "}
-              </Typography.Text>
-            </>
-          ),
-        },
-        {
-          title: "Quantity",
-          dataIndex: "quantity",
-          key: "quantity",
-          render: (_, item) => <>{(item?.quantity).toLocaleString()}</>,
-        },
-        {
-          title: "Supporting docs",
-          dataIndex: "supportingDocs",
-          key: "supportingDocs",
-          render: (_, item) => (
-            <div className="flex flex-col">
-              {item?.paths?.map((p, i) => {
-                return (
-                  <div key={p}>
-                    <Typography.Link
-                      className="flex flex-row items-center space-x-2"
-                      onClick={() => {
-                        setPreviewAttachment(!previewAttachment);
-                        setAttachmentId(p);
-                      }}
-                    >
-                      <div>supporting doc{i + 1} </div>{" "}
-                      <div>
-                        <PaperClipIcon className="h-4 w-4" />
-                      </div>
-                    </Typography.Link>
+          {
+            title: "Item title",
+            dataIndex: "title",
+            key: "title",
+            render: (_, item) => (
+              <>
+                <Typography.Text className="flex flex-row items-center space-x-2">
+                  <div>{item.title}</div>{" "}
+                </Typography.Text>
+              </>
+            ),
+          },
+          {
+            title: "Quantity",
+            dataIndex: "quantity",
+            key: "quantity",
+            render: (_, item) => <>{(item?.quantity).toLocaleString()}</>,
+          },
+          {
+            title: "Supporting docs",
+            dataIndex: "supportingDocs",
+            key: "supportingDocs",
+            render: (_, item) => (
+              <div className="flex flex-col">
+                {item?.paths?.map((p, i) => {
+                  return (
+                    <div key={p}>
+                      <Typography.Link
+                        className="flex flex-row items-center space-x-2"
+                        onClick={() => {
+                          setPreviewAttachment(!previewAttachment);
+                          setAttachmentId("termsOfReference/" + p);
+                        }}
+                      >
+                        <div>supporting doc{i + 1} </div>{" "}
+                        <div>
+                          <PaperClipIcon className="h-4 w-4" />
+                        </div>
+                      </Typography.Link>
+                    </div>
+                  );
+                })}
+                {(item?.paths?.length < 1 || !item?.paths) && (
+                  <div className="items-center justify-center flex flex-col">
+                    <div>
+                      <RectangleStackIcon className="h-5 w-5 text-gray-200" />
+                    </div>
+                    <div className="text-xs text-gray-400">No docs found</div>
                   </div>
-                );
-              })}
-              {(item?.paths?.length < 1 || !item?.paths) && (
-                <div className="items-center justify-center flex flex-col">
-                  <div>
-                    <RectangleStackIcon className="h-5 w-5 text-gray-200" />
-                  </div>
-                  <div className="text-xs text-gray-400">No docs found</div>
-                </div>
-              )}
-            </div>
-          ),
-        },
-      ]
+                )}
+              </div>
+            ),
+          },
+        ];
   const columns = [
     {
       title: "Description",
@@ -2541,9 +2541,7 @@ const TenderDetails = ({
     //call API to sign
   }
 
-
   function previewAttachmentModal() {
-    
     return (
       <Modal
         title="Attachment view"
@@ -2787,7 +2785,12 @@ const TenderDetails = ({
                         handleSelectBid={handleSelectBid}
                         handleAwardBid={handleAwardBid}
                         refresh={refresh}
-                        canSelectBid={data?.invitationSent && moment(data?.submissionDeadLine).isSameOrBefore(moment())}
+                        canSelectBid={
+                          data?.invitationSent &&
+                          moment(data?.submissionDeadLine).isSameOrBefore(
+                            moment()
+                          )
+                        }
                         handleSetBidList={setBidList}
                         comitee={data?.invitees}
                         user={user}
