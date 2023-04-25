@@ -2734,7 +2734,7 @@ const TenderDetails = ({
                       </div>
                     )}
                     {!data?.invitationSent && (
-                      <div className="ml-3 flex self-center">
+                      <div className="ml-3 flex">
                         <div className="">
                           <div>Invite Evaluators</div>
                           <div className="flex flex-row space-x-1">
