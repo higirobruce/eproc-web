@@ -2765,14 +2765,14 @@ const RequestDetails = ({
           // mode="alternate"
           items={[
             {
-              children: <div className="">PR-created</div>,
+              children: <div className="">Purchase Requisition</div>,
               color: data?.status !== "declined" ? "blue" : "red",
               dot: data?.status !== "declined" && (
                 <CheckCircleOutlined className=" text-green-500" />
               ),
             },
             {
-              children: <div className="">PR-approved</div>,
+              children: <div className="">Request approval</div>,
               color:
                 data?.status === "approved (pm)" ||
                 data?.status === "approved" ||
@@ -2786,7 +2786,7 @@ const RequestDetails = ({
               ),
             },
             {
-              children: `Tender-created`,
+              children: `Tendering`,
               color: tender ? "blue" : "gray",
               dot: tender && (
                 <CheckCircleOutlined className=" text-green-500" />
@@ -2794,18 +2794,18 @@ const RequestDetails = ({
             },
             {
               color: contract ? "blue" : "gray",
-              children: "Contract-created",
+              children: "Contracting",
               dot: contract && (
                 <CheckCircleOutlined className=" text-green-500" />
               ),
             },
             {
-              children: "PO-created",
+              children: "Purchase Order",
               color: po ? "blue" : "gray",
               dot: po && <CheckCircleOutlined className=" text-green-500" />,
             },
             {
-              children: "Delivered",
+              children: "Delivery",
               color: progress >= 100 ? "blue" : "gray",
               dot: po && progress >= 100 && (
                 <CheckCircleOutlined className=" text-green-500" />
