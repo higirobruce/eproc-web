@@ -741,47 +741,48 @@ export default function UserRequests({ user }) {
   }
 
   const handleUpload = (files) => {
-    files.forEach((filesPerRow, rowIndex) => {
-      
-      filesPerRow.map((rowFile, fileIndex) => {
-        const formData = new FormData();
-        formData.append("files[]", rowFile);
+    if (files?.length < 1) {
+      messageApi.error("Please add at least one doc.");
+    } else {
+      files.forEach((filesPerRow, rowIndex) => {
+        filesPerRow.map((rowFile, fileIndex) => {
+          const formData = new FormData();
+          formData.append("files[]", rowFile);
 
-        // You can use any AJAX library you like
-        fetch(`${url}/uploads/termsOfReference/`, {
-          method: "POST",
-          body: formData,
-          headers: {
-            Authorization:
-              "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
-            // "Content-Type": "multipart/form-data",
-          },
-        })
-          .then((res) => res.json())
-          .then((savedFiles) => {
-            let _filenames = savedFiles?.map((f) => {
-              return f?.filename;
-            });
-
-            let _files = [...files];
-            _files[rowIndex][fileIndex]=_filenames[0];
-
-
-
-            if (rowIndex === files?.length - 1 && fileIndex===filesPerRow.length-1) {
-              save(_files);
-            }
-            
+          // You can use any AJAX library you like
+          fetch(`${url}/uploads/termsOfReference/`, {
+            method: "POST",
+            body: formData,
+            headers: {
+              Authorization:
+                "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+              // "Content-Type": "multipart/form-data",
+            },
           })
-          .catch((err) => {
-            console.log(err);
-            messageApi.error("upload failed.");
-          })
-          .finally(() => {
-           
-          });
+            .then((res) => res.json())
+            .then((savedFiles) => {
+              let _filenames = savedFiles?.map((f) => {
+                return f?.filename;
+              });
+
+              let _files = [...files];
+              _files[rowIndex][fileIndex] = _filenames[0];
+
+              if (
+                rowIndex === files?.length - 1 &&
+                fileIndex === filesPerRow.length - 1
+              ) {
+                save(_files);
+              }
+            })
+            .catch((err) => {
+              console.log(err);
+              messageApi.error("upload failed.");
+            })
+            .finally(() => {});
+        });
       });
-    });
+    }
   };
 
   // function createPO(vendor, tender, createdBy, sections, items) {

@@ -1746,8 +1746,8 @@ const SignupForm = () => {
                 alt=""
                 className="pt-3"
                 src="/favicon.png"
-                width={40}
-                height={40}
+                width={38}
+                height={50}
               />
             </Row>
             {/* <Form.Item

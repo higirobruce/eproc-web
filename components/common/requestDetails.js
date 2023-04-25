@@ -263,7 +263,8 @@ function buildPOForm(
   user,
   submitPOData,
   setVendor,
-  selectedContract
+  selectedContract,
+  documentFullySigned
 ) {
   return (
     <div className="">
@@ -291,7 +292,7 @@ function buildPOForm(
               option?.name.toLowerCase().includes(inputValue.toLowerCase())
             }
             // defaultValue="RWF"
-            options={contracts.map((c) => {
+            options={contracts.filter(c=>documentFullySigned(c) && moment().isBefore(moment(c.endDate))).map((c) => {
               return {
                 value: c._id,
                 label: (
@@ -1229,7 +1230,8 @@ const RequestDetails = ({
                         user,
                         submitPOData,
                         setVendor,
-                        selectedContract
+                        selectedContract,
+                        documentFullySigned
                       )}
 
                     {refDoc === "Direct Contracting" && (
@@ -2324,6 +2326,13 @@ const RequestDetails = ({
         <MyPdfViewer fileUrl={`${url}/file/termsOfReference/${attachmentId}`} />
       </Modal>
     );
+  }
+
+  function documentFullySigned(document) {
+    let totSignatories = document?.signatories;
+    let signatures = document?.signatories?.filter((s) => s.signed);
+
+    return totSignatories?.length === signatures?.length;
   }
 
   return (
