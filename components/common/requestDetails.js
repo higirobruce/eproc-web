@@ -227,8 +227,9 @@ function buildTenderForm(
           <DatePicker
             format="YYYY-MM-DD HH:mm"
             showTime
+            showNow={false}
             disabledDate={(current) =>
-              current.isBefore(moment().subtract(1, "d"))
+              current.isBefore(moment())
             }
             onChange={(v, str) => {
               // console.log(moment(str).toISOString());
