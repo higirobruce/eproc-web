@@ -460,7 +460,12 @@ export default function Users({ user }) {
   function setCanCreated(canCreate, module) {
     let newUser = { ...row };
     let permissionLable = "canCreate" + module;
+    let editPermissionLable = 'canEdit'+module
+    let viewPermissionLable = 'canView'+module
+
     newUser.permissions[permissionLable] = canCreate;
+    newUser.permissions[editPermissionLable] = canCreate;
+    newUser.permissions[viewPermissionLable] = canCreate;
 
     fetch(`${url}/users/${row?._id}`, {
       method: "PUT",
