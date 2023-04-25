@@ -3,6 +3,8 @@ import { Button, Col, Divider, Empty, Layout, Spin } from "antd";
 import Head from "next/head";
 import Router from "next/router";
 import { useEffect, useState } from "react";
+import LoginForm from "../components/common/loginForm";
+import LoginText from "../components/common/loginText";
 import SideMenu from "../components/common/sideMenu";
 import TopMenu from "../components/common/topMenu";
 import Contracts from "../components/screens/contracts";
@@ -96,27 +98,13 @@ export default function Home() {
         )}
 
         {!loggedInUser && (
-          <div className="flex flex-row items-center justify-center h-screen w-full">
-            <Empty
-              image="https://gw.alipayobjects.com/zos/antfincdn/ZHrcdLPrvN/empty.svg"
-              imageStyle={{
-                height: 60,
-              }}
-              description={
-                <span>Oups! You are not authorized to access the app!</span>
-              }
-            >
-              <Col>
-                <Button type="link" onClick={() => Router.push("/signup")}>
-                  Sign up
-                </Button>
-                <Divider plain>Or</Divider>
-                <Button type="link" onClick={() => Router.push("/")}>
-                  Login
-                </Button>
-              </Col>
-            </Empty>
+          <div className="grid md:grid-cols-3 bg-blue-500 w-screen text-white">
+          <LoginText />
+          <div>
+            {" "}
+            <LoginForm />
           </div>
+        </div>
         )}
         
       </main>
