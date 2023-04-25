@@ -33,6 +33,7 @@ import {
   Popover,
   Popconfirm,
   Switch,
+  Tooltip,
 } from "antd";
 import UploadFiles from "./uploadFiles";
 import {
@@ -56,7 +57,12 @@ import Image from "next/image";
 import ItemsTable from "./itemsTableB1";
 import UploadBidDoc from "./uploadBidDoc";
 import { v4 } from "uuid";
-import { LockClosedIcon, LockOpenIcon } from "@heroicons/react/24/solid";
+import {
+  CalendarDaysIcon,
+  CheckIcon,
+  LockClosedIcon,
+  LockOpenIcon,
+} from "@heroicons/react/24/solid";
 import MyPdfViewer from "./pdfViewer";
 import { PDFDownloadLink } from "@react-pdf/renderer";
 import MyDocument from "./MyDocument";
@@ -339,6 +345,9 @@ const TenderDetails = ({
   const [assetOptions, setAssetOptions] = useState([]);
   const [creatingPo, setCreatingPo] = useState(false);
   const [proposalSelected, setProposalSelected] = useState(false);
+  const [otherDocSelected, setOtherDocSelected] = useState(false);
+  const [extending, setExtending] = useState(false);
+  const [submittingExtensionRe, setSubmittingExtension] = useState(false);
 
   useEffect(() => {
     let statusCode = getRequestStatusCode(data?.status);
@@ -349,6 +358,7 @@ const TenderDetails = ({
     updateBidList();
     setProposalDocId(v4());
     setOtherDocId(v4());
+    setDeadLine(moment(data?.submissionDeadLine))
     getFixedAssets();
   }, [data]);
 
@@ -851,7 +861,10 @@ const TenderDetails = ({
           <div className="flex flex-col">
             <div>Other documents</div>
             <Form.Item name="otherDocs">
-              <UploadBidDoc uuid={otherDocId} />
+              <UploadBidDoc
+                uuid={otherDocId}
+                setSelected={setOtherDocSelected}
+              />
             </Form.Item>
           </div>
         </div>
@@ -2370,6 +2383,42 @@ const TenderDetails = ({
     );
   }
 
+  function extendSubmissionDadeline() {
+    setExtending(true);
+  }
+
+  function submitExtensionRequest() {
+    setSubmittingExtension(true);
+    let newTender = { ...data };
+    newTender.submissionDeadLine = deadLine;
+
+    // alert(JSON.stringify(newTender))
+
+    fetch(`${url}/tenders/${newTender._id}`, {
+      method: "PUT",
+      headers: {
+        Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({newTender}),
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        let statusCode = getRequestStatusCode(data?.status);
+        setCurrentCode(1);
+        setItems(data?.purchaseRequest?.items);
+        getUsers();
+        if (data) checkSubmission();
+        updateBidList();
+        setProposalDocId(v4());
+        setOtherDocId(v4());
+        getFixedAssets();
+
+        setSubmittingExtension(false);
+        setExtending(false);
+      });
+  }
+
   function buildTabHeader() {
     return (
       <div className="flex flex-col space-y-5">
@@ -2414,21 +2463,71 @@ const TenderDetails = ({
           </div>
 
           <div className="flex flex-col space-y-2 items-start">
-            <Statistic.Countdown
-              title="Deadline (days:hrs:min:sec)"
-              className="text-xs text-gray-500"
-              // valueStyle={{ fontSize: "0.75rem", lineHeight: "1rem" }}
-              format="DD:HH:mm:ss"
-              value={moment(data?.submissionDeadLine)}
-            />
+            <div className="flex flex-row space-x-3">
+              {!extending &&
+                (submittingExtensionRe ? (
+                  <Spin size="small" />
+                ) : (
+                  <Statistic.Countdown
+                    title="Deadline (days:hrs:min:sec)"
+                    className="text-xs text-gray-500"
+                    // valueStyle={{ fontSize: "0.75rem", lineHeight: "1rem" }}
+                    format="DD:HH:mm:ss"
+                    value={moment(deadLine)}
+                  />
+                ))}
 
-            <Tag color="magenta">
-              {iSubmitted
-                ? "submitted"
-                : moment().isAfter(moment(data?.submissionDeadLine))
-                ? "closed"
-                : data?.status}
-            </Tag>
+              {extending && (
+                <DatePicker
+                  format="YYYY-MM-DD HH:mm"
+                  showTime
+                  showNow={false}
+                  disabledDate={(current) => current.isBefore(moment())}
+                  onChange={(v, str) => {
+                    // console.log(moment(str).toISOString());
+                    setDeadLine(moment(str).toISOString());
+                  }}
+                />
+              )}
+
+              {user?.permissions?.canEditTenders && !extending && (
+                <Tooltip title="Extend submission deadline">
+                  <div
+                    onClick={extendSubmissionDadeline}
+                    className="px-2 rounded ring-1 ring-red-300 shadow-md flex items-center text-red-500 justify-center cursor-pointer active:shadow-sm active:text-red-300"
+                  >
+                    <CalendarDaysIcon className="h-4 w-4  " />
+                  </div>
+                </Tooltip>
+              )}
+
+              {user?.permissions?.canEditTenders && extending && (
+                <Popconfirm
+                  title="Are you sure?"
+                  onConfirm={() => {
+                    submitExtensionRequest();
+                    // setExtending(false);
+                  }}
+                >
+                  <div
+                    onClick={extendSubmissionDadeline}
+                    className="px-2 rounded ring-1 ring-red-300 shadow-md flex items-center text-red-500 justify-center cursor-pointer active:shadow-sm active:text-red-300"
+                  >
+                    <CheckIcon className="h-4 w-4  " />
+                  </div>
+                </Popconfirm>
+              )}
+            </div>
+
+            {user?.userType !== "VENDOR" && (
+              <Tag color="magenta">
+                {iSubmitted
+                  ? "submitted"
+                  : moment().isAfter(moment(data?.submissionDeadLine))
+                  ? "closed"
+                  : data?.status}
+              </Tag>
+            )}
           </div>
         </div>
       </div>
@@ -3037,6 +3136,146 @@ const TenderDetails = ({
                   </div>
                 </Tabs.TabPane>
               </>
+            )}
+            {user?.userType === "VENDOR" && (
+              <Tabs.TabPane tab="My Bid" key="3">
+                <div className="flex flex-col space-y-5 p-3">
+                  {buildTabHeader()}
+                  {bidList?.filter((d) => d?.createdBy?._id === user?._id)
+                    .length >= 1 ? (
+                    <div>
+                      {bidList
+                        ?.filter((d) => d?.createdBy?._id === user?._id)
+                        ?.map((item) => {
+                          return (
+                            <>
+                              <div className="p-3 grid md:grid-cols-6 ">
+                                <div className="self-center">
+                                  <a href="#">{item.number}</a>
+                                  <div className="text-xs text-gray-400">
+                                    Vendor
+                                  </div>
+                                  <div className="text-xs text-gray-600">
+                                    {item?.createdBy?.companyName}
+                                  </div>
+                                </div>
+
+                                <div className="self-center">
+                                  <div className="text-xs text-gray-400">
+                                    Price
+                                  </div>
+                                  <div className="text-xs text-gray-600">
+                                    {item?.price.toLocaleString() +
+                                      " " +
+                                      item?.currency}
+                                  </div>
+                                </div>
+
+                                <div className="self-center">
+                                  <div className="text-xs text-gray-400">
+                                    Discount
+                                  </div>
+                                  <div className="text-xs text-gray-600">
+                                    {item?.discount}%
+                                  </div>
+                                </div>
+
+                                <div className="self-center">
+                                  <div className="text-xs text-gray-400">
+                                    Delivery date
+                                  </div>
+                                  <div className="text-xs text-gray-600">
+                                    {moment(item?.deliveryDate).fromNow()}
+                                  </div>
+                                </div>
+
+                                <div className="self-center">
+                                  <div className="text-xs text-gray-400">
+                                    Docs
+                                  </div>
+                                  {item?.proposalDocId && (
+                                    <div>
+                                      <a
+                                        href="#"
+                                        onClick={() => {
+                                          setAttachmentId(
+                                            `bidDocs/${item?.proposalDocId}.pdf`
+                                          );
+                                          setPreviewAttachment(true);
+                                        }}
+                                        className="text-xs"
+                                      >
+                                        Proposal{" "}
+                                        <PaperClipIcon className="h-3 w-3" />
+                                      </a>
+                                    </div>
+                                  )}
+                                  {!item?.proposalDocId && (
+                                    <div className="text-xs">
+                                      No proposal doc found!
+                                    </div>
+                                  )}
+                                  {item?.otherDocId && (
+                                    <div>
+                                      <a
+                                        href="#"
+                                        onClick={() => {
+                                          setAttachmentId(
+                                            `bidDocs/${item?.otherDocId}.pdf`
+                                          );
+                                          setPreviewAttachment(true);
+                                        }}
+                                        className="text-xs"
+                                      >
+                                        Other Doc{" "}
+                                        <PaperClipIcon className="h-3 w-3" />
+                                      </a>
+                                    </div>
+                                  )}
+                                </div>
+
+                                <div className="self-center">
+                                  <div>
+                                    {item?.status === "pending" && (
+                                      <Tag color="blue">{item?.status}</Tag>
+                                    )}
+                                    {item?.status === "selected" && (
+                                      <Tag color="green">{item?.status}</Tag>
+                                    )}
+                                    {item?.status === "awarded" && (
+                                      <>
+                                        <Tag color="green">selected</Tag>
+                                        <Tag color="green">{item?.status}</Tag>
+                                      </>
+                                    )}
+                                    {item?.status === "not awarded" && (
+                                      <>
+                                        <Tag color="red">not selected</Tag>
+                                        <Tag color="red">{item?.status}</Tag>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* {(item?.status === "not selected" || item?.status === "not awarded") && (
+                    <Button
+                      size="small"
+                      disabled
+                      //   onClick={() => handleSelectBid(item._id)}
+                    >
+                      Select Bid
+                    </Button>
+                  )} */}
+                              </div>
+                            </>
+                          );
+                        })}
+                    </div>
+                  ) : (
+                    <Empty />
+                  )}
+                </div>
+              </Tabs.TabPane>
             )}
             {user?.userType === "VENDOR" &&
               contract?.vendor?._id === user?._id && (
