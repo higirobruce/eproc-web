@@ -654,7 +654,7 @@ export default function Vendors({ user }) {
                       >
                         {rowData?.vendor?.companyName}
                       </Typography.Text>{" "}
-                      {editVendor && (
+                      {/* {editVendor && (
                         <Typography.Text
                           editable={
                             editVendor && {
@@ -669,8 +669,8 @@ export default function Vendors({ user }) {
                         >
                           {rowData?.vendor?.title}
                         </Typography.Text>
-                      )}
-                      <Rate
+                      )} */}
+                      {!editVendor && <Rate
                         tooltips={[
                           "Very bad",
                           "Bad",
@@ -681,7 +681,7 @@ export default function Vendors({ user }) {
                         count={5}
                         disabled
                         value={rowData?.avgRate}
-                      />
+                      />}
                     </div>
                   </div>
 
