@@ -1659,7 +1659,7 @@ const SignupForm = () => {
       })}
       >
         {countries.map(c=>{
-          return <Option value={c.dial_code}>{c.emoji} {c.name}</Option>
+          return <Option key={c.dial_code} value={c.dial_code}>{c.emoji} {c.name}</Option>
         })}
         {/* <Option value="+250">+250</Option>
         <Option value="+254">+254</Option> */}
