@@ -887,7 +887,8 @@ let countries = [
   {
     "name": "Mauritius",
     "dial_code": "+230",
-    "code": "🇲🇺"
+    "code":"MR",
+    "emoji": "🇲🇺"
   },
   {
     "name": "Mayotte",
@@ -1650,16 +1651,16 @@ const SignupForm = () => {
       style={{ width: 150 }}
       showSearch
       allowClear
-      options={countries.map(c=>{
+      options={countries.map((c,i)=>{
         return {
           value: c.dial_code,
-          key: c.dial_code,
+          key: i,
           label: c.emoji+' '+c.name
         }
       })}
       >
-        {countries.map(c=>{
-          return <Option key={c.dial_code} value={c.dial_code}>{c.emoji} {c.name}</Option>
+        {countries.map((c,i)=>{
+          return <Option key={i} value={c.dial_code}>{c.emoji} {c.name}</Option>
         })}
         {/* <Option value="+250">+250</Option>
         <Option value="+254">+254</Option> */}
@@ -1809,7 +1810,7 @@ const SignupForm = () => {
                                 type: "integer",
                                 message: "Input required",
                               },
-                              { required: true, message: " TIN!" },
+                              { required: true, message: "Input required" },
                             ]}
                           >
                             <InputNumber style={{ width: "100%" }} />
