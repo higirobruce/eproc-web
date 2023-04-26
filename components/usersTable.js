@@ -47,7 +47,10 @@ const UsersTable = ({
         <>
           <div
             className="cursor-pointer space-x-1 flex flex-row items-center text-blue-500 hover:underline"
-            onClick={() => handleSetRow(record)}
+            onClick={() => {
+              if(!record?.permissions) record.permissions={}
+              handleSetRow(record)
+            }}
           >
             <div>{record?.email}</div>
           </div>

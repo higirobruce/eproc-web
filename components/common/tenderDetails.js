@@ -933,6 +933,7 @@ const TenderDetails = ({
   );
 
   function createPOMOdal() {
+
     return (
       <Modal
         title="New Purchase Order"
@@ -1006,7 +1007,7 @@ const TenderDetails = ({
               content:
                 "PO can not be submitted. Please specify at least 3 signatories!",
             });
-            setCreatingPO(false);
+            setCreatingPo(false);
           } else if (
             items?.filter(
               (i) =>
@@ -1020,7 +1021,7 @@ const TenderDetails = ({
               type: "error",
               content: "PO can not be created. Please specify Quantity/Price!",
             });
-            setCreatingPO(false);
+            setCreatingPo(false);
           } else if (
             signatories?.filter((s) => {
               return !s?.onBehalfOf || !s?.title || !s?.names || !s?.email;
@@ -1031,7 +1032,7 @@ const TenderDetails = ({
               content:
                 "PO can not be submitted. Please fill in the relevant signatories' details!",
             });
-            setCreatingPO(false);
+            setCreatingPo(false);
           } else {
             await handleCreatePO(
               vendor?._id,
@@ -1054,6 +1055,7 @@ const TenderDetails = ({
         width={"80%"}
         bodyStyle={{ maxHeight: "700px", overflow: "scroll" }}
       >
+        {contextHolder}
         <div className="space-y-5 px-20 py-5">
           <Typography.Title level={4}>
             PURCHASE ORDER: {vendor?.companyName}
@@ -2482,7 +2484,7 @@ const TenderDetails = ({
                   format="YYYY-MM-DD HH:mm"
                   showTime
                   showNow={false}
-                  disabledDate={(current) => current.isBefore(moment())}
+                  disabledDate={(current) => current.isBefore(moment().subtract(1,'d'))}
                   onChange={(v, str) => {
                     // console.log(moment(str).toISOString());
                     setDeadLine(moment(str).toISOString());
@@ -3137,8 +3139,9 @@ const TenderDetails = ({
                 </Tabs.TabPane>
               </>
             )}
+            
             {user?.userType === "VENDOR" && (
-              <Tabs.TabPane tab="My Bid" key="3">
+              <Tabs.TabPane tab="My Bid" key="2">
                 <div className="flex flex-col space-y-5 p-3">
                   {buildTabHeader()}
                   {bidList?.filter((d) => d?.createdBy?._id === user?._id)
@@ -3277,6 +3280,7 @@ const TenderDetails = ({
                 </div>
               </Tabs.TabPane>
             )}
+
             {user?.userType === "VENDOR" &&
               contract?.vendor?._id === user?._id && (
                 <Tabs.TabPane tab="Tender award" key="3">
