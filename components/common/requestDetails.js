@@ -228,9 +228,7 @@ function buildTenderForm(
             format="YYYY-MM-DD HH:mm"
             showTime
             showNow={false}
-            disabledDate={(current) =>
-              current.isBefore(moment())
-            }
+            disabledDate={(current) => current.isBefore(moment())}
             onChange={(v, str) => {
               // console.log(moment(str).toISOString());
               setDeadLine(moment(str).toISOString());
@@ -292,22 +290,27 @@ function buildPOForm(
               option?.name.toLowerCase().includes(inputValue.toLowerCase())
             }
             // defaultValue="RWF"
-            options={contracts.filter(c=>documentFullySigned(c) && moment().isBefore(moment(c.endDate))).map((c) => {
-              return {
-                value: c._id,
-                label: (
-                  <div className="flex flex-col">
-                    <div>
-                      <UserOutlined /> {c.vendor?.companyName}
+            options={contracts
+              .filter(
+                (c) =>
+                  documentFullySigned(c) && moment().isBefore(moment(c.endDate))
+              )
+              .map((c) => {
+                return {
+                  value: c._id,
+                  label: (
+                    <div className="flex flex-col">
+                      <div>
+                        <UserOutlined /> {c.vendor?.companyName}
+                      </div>
+                      <div className="text-gray-300">{c?.number}</div>
                     </div>
-                    <div className="text-gray-300">{c?.number}</div>
-                  </div>
-                ),
-                name: c.vendor?.companyName + c?.number,
+                  ),
+                  name: c.vendor?.companyName + c?.number,
 
-                payload: c,
-              };
-            })}
+                  payload: c,
+                };
+              })}
           ></Select>
         </Form.Item>
 
@@ -351,6 +354,7 @@ const RequestDetails = ({
   const [currentCode, setCurrentCode] = useState(-1);
   let [deadLine, setDeadLine] = useState(null);
   const [open, setOpen] = useState(false);
+  const [openConfirmDeliv, setOpenConfirmDeliv] = useState([]);
   const [openApprove, setOpenApprove] = useState(false);
   let [reason, setReason] = useState("");
   const [messageApi, contextHolder] = message.useMessage();
@@ -396,6 +400,7 @@ const RequestDetails = ({
 
   let [tendor, setTendor] = useState("");
   const [deliveredQty, setDeliveredQty] = useState(0);
+  const [deliveredQties, setDeliveredQties] = useState([]);
   const [tenderDocSelected, setTendeDocSelected] = useState(false);
   const [attachSelected, setAttachSelected] = useState(false);
 
@@ -488,6 +493,16 @@ const RequestDetails = ({
   let [servCategories, setServCategories] = useState([]);
   useEffect(() => {
     refresh();
+    let _openConfirmDeliv = [...openConfirmDeliv];
+    let _deliveredQties = [...deliveredQties];
+    data.items?.map((d, i) => {
+      _openConfirmDeliv.push(false);
+      _deliveredQties.push(0);
+
+      setOpenConfirmDeliv(_openConfirmDeliv);
+      setDeliveredQties(_deliveredQties);
+    });
+
     fetch(`${url}/serviceCategories`, {
       method: "GET",
       headers: {
@@ -1168,7 +1183,7 @@ const RequestDetails = ({
           <div>
             {/* Sourcing Method */}
             {currentCode !== 2 && (
-              <>
+              <div className="mb-5">
                 <div className="ml-3 text-lg font-bold">Sourcing Method</div>
                 <div className="ml-3">
                   {(data?.sourcingMethod && (
@@ -1176,7 +1191,7 @@ const RequestDetails = ({
                   )) ||
                     "No sourcing method selected at the moment."}
                 </div>
-              </>
+              </div>
             )}
             {currentCode === 2 &&
               (user?.permissions?.canCreateTenders ||
@@ -1328,6 +1343,34 @@ const RequestDetails = ({
                   </Form>
                 </>
               )}
+
+            {tender && data?.sourcingMethod === "Tendering" && (
+              <div className="ml-3">
+                <Typography.Text type="secondary">
+                  Tender reference: {tender?.number}
+                </Typography.Text>
+              </div>
+            )}
+
+            {contract &&
+              (data?.sourcingMethod === "Direct Contracting" ||
+                data?.sourcingMethod === "From Existing Contract") && (
+                <div className="ml-3">
+                  <Typography.Text type="secondary">
+                    Contract reference: {contract?.number}
+                  </Typography.Text>
+                </div>
+              )}
+
+            {po &&
+              (data?.sourcingMethod === "Direct Contracting" ||
+                data?.sourcingMethod === "From Existing Contract") && (
+                <div className="ml-3">
+                  <Typography.Text type="secondary">
+                    PO reference: {po?.number}
+                  </Typography.Text>
+                </div>
+              )}
           </div>
         </div>
       </>
@@ -1411,7 +1454,7 @@ const RequestDetails = ({
     qty
   ) {
     // let [op, setOp] = useState(false);
-    let deliverdQty = po?.items[index].deliveredQty || 0;
+    let _deliverdQty = po?.items[index].deliveredQty || 0;
     return (
       <div className="mt-2 ">
         {
@@ -1454,7 +1497,10 @@ const RequestDetails = ({
                     placeholder="qty delivered"
                     onChange={(value) => {
                       handleGetProgress(value);
-                      setDeliveredQty(deliverdQty + value);
+                      setDeliveredQty(_deliverdQty + value);
+                      let _deliveredQties = [...deliveredQties];
+                      _deliveredQties[index] = _deliverdQty + value;
+                      setDeliveredQties(_deliveredQties);
                     }}
                   />
                 </Form.Item>
@@ -1463,24 +1509,37 @@ const RequestDetails = ({
                   {/* <Popover content="Confirm Quantity approved"> */}
                   <Popconfirm
                     title="Confirm Delivered Quantity"
-                    open={open}
-                    onCancel={() => setOpen(false)}
+                    open={openConfirmDeliv[index]}
+                    onCancel={() => {
+                      let _openConfirmDeliv = [...openConfirmDeliv];
+                      _openConfirmDeliv[index] = false;
+                      setOpenConfirmDeliv(_openConfirmDeliv);
+                    }}
                     onConfirm={() => {
                       handleUpdateProgress(
                         po,
                         parseFloat(progress) + parseFloat(po?.deliveryProgress),
-                        deliveredQty,
+                        deliveredQties[index],
                         index
                       );
 
-                      setOpen(false);
+                      let _openConfirmDeliv = [...openConfirmDeliv];
+                      _openConfirmDeliv[index] = false;
+                      setOpenConfirmDeliv(_openConfirmDeliv);
                     }}
                   >
                     <Button
                       type="primary"
                       icon={<CheckOutlined />}
-                      onClick={() => setOpen(true)}
-                      disabled={po?.status !== "started" || deliveredQty > qty}
+                      onClick={() => {
+                        console.log(deliveredQties);
+                        let _openConfirmDeliv = [...openConfirmDeliv];
+                        _openConfirmDeliv[index] = true;
+                        setOpenConfirmDeliv(_openConfirmDeliv);
+                      }}
+                      disabled={
+                        po?.status !== "started" || deliveredQties[index] > qty
+                      }
                     >
                       Confirm
                     </Button>
@@ -2353,11 +2412,20 @@ const RequestDetails = ({
                       <div className="ml-3 text-lg font-bold">
                         Request Details
                       </div>
-                      <Tag
-                        color={data.status === "declined" ? "red" : "geekblue"}
-                      >
-                        {data.status}
-                      </Tag>
+                      <div className="space-x-3 ">
+                        {!data.status.includes("approved") && (
+                          <Button type="primary" danger>
+                            Withdraw this request
+                          </Button>
+                        )}
+                        <Tag
+                          color={
+                            data.status === "declined" ? "red" : (data.status === "approved"||data.status==='approved (pm)') ? "geekblue" : "orange"
+                          }
+                        >
+                          {data.status === 'declined' || (data.status === "approved"||data.status==='approved (pm)')? data.status : 'pending'}
+                        </Tag>
+                      </div>
                       {/* <div className="">
                         <Tag color={data?.budgeted ? "green" : "blue"}>
                           <Tooltip title={data?.budgetLine} showArrow={false}>
@@ -2671,48 +2739,83 @@ const RequestDetails = ({
                       (tender || po) &&
                       buildWorkflow(currentStep, tender, po)} */}
 
-                    {po && po.deliveryProgress >= 100 && !po.rate && (
-                      <div className="justify-center items-center w-full flex flex-col space-y-3">
-                        <Divider></Divider>
-                        <Typography.Title level={5}>
-                          Supplier & Delivery Rate
-                        </Typography.Title>
-                        <Rate
-                          // allowHalf
-                          disabled={user?._id !== data?.createdBy?._id}
-                          defaultValue={po?.rate || rate}
-                          tooltips={[
-                            "Very bad",
-                            "Bad",
-                            "Good",
-                            "Very good",
-                            "Excellent",
-                          ]}
-                          onChange={(value) => setRate(value)}
-                          // onChange={(value) => handleRateDelivery(po, value)}
-                        />
+                    {po &&
+                      _.round(po?.deliveryProgress, 1) >= 100 &&
+                      !po.rate && (
+                        <div className="justify-center items-center w-full flex flex-col space-y-3">
+                          <Divider></Divider>
+                          <Typography.Title level={5}>
+                            Supplier & Delivery Rate
+                          </Typography.Title>
+                          <Rate
+                            // allowHalf
+                            disabled={user?._id !== data?.createdBy?._id}
+                            defaultValue={po?.rate || rate}
+                            tooltips={[
+                              "Very bad",
+                              "Bad",
+                              "Good",
+                              "Very good",
+                              "Excellent",
+                            ]}
+                            onChange={(value) => setRate(value)}
+                            // onChange={(value) => handleRateDelivery(po, value)}
+                          />
 
-                        <Typography.Title level={5}>
-                          Give a comment on your rating
-                        </Typography.Title>
-                        <Input.TextArea
-                          className="w-1/3"
-                          value={comment}
-                          onChange={(v) => setComment(v.target.value)}
-                        />
+                          <Typography.Title level={5}>
+                            Give a comment on your rating
+                          </Typography.Title>
+                          <Input.TextArea
+                            className="w-1/3"
+                            value={comment}
+                            onChange={(v) => setComment(v.target.value)}
+                          />
 
-                        <div>
-                          <Button
-                            type="primary"
-                            onClick={() =>
-                              handleRateDelivery(po, rate, comment)
-                            }
-                          >
-                            Submit my rate and review
-                          </Button>
+                          <div>
+                            <Button
+                              type="primary"
+                              onClick={() =>
+                                handleRateDelivery(po, rate, comment)
+                              }
+                            >
+                              Submit my rate and review
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
+
+                    {po &&
+                      _.round(po?.deliveryProgress, 1) >= 100 &&
+                      po.rate && (
+                        <div className="w-full flex flex-col space-y-3">
+                          <Divider></Divider>
+                          <Typography.Title level={5}>
+                            Supplier & Delivery Rate
+                          </Typography.Title>
+                          <Rate
+                            // allowHalf
+                            disabled={true}
+                            defaultValue={po?.rate || rate}
+                            tooltips={[
+                              "Very bad",
+                              "Bad",
+                              "Good",
+                              "Very good",
+                              "Excellent",
+                            ]}
+                          />
+
+                          <div className="flex flex-row">
+                            <Typography.Text>
+                              {data?.createdBy?.firstName}{" "}
+                              {data?.createdBy?.lastName} commented:
+                            </Typography.Text>
+                            <Typography.Text code>
+                              {po.rateComment}
+                            </Typography.Text>
+                          </div>
+                        </div>
+                      )}
 
                     {po && po.deliveryProgress >= 100 && po.rate && (
                       <div className="justify-center items-center w-full flex flex-col space-y-3">

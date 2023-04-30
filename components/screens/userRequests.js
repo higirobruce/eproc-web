@@ -420,10 +420,10 @@ export default function UserRequests({ user }) {
         loadRequests()
           .then((res) => res.json())
           .then((res) => {
-            setDataset(res);
+            setDataset(zres);
             setTempDataset(res);
             let r = res.filter((d) => {
-              return d._id === id;
+              return d._id === rowData?._id;
             });
             console.log(r);
             setRowData(r[0]);
@@ -465,7 +465,7 @@ export default function UserRequests({ user }) {
             setDataset(res);
             setTempDataset(res);
             let r = res.filter((d) => {
-              return d._id === id;
+              return d._id === rowData?._id;
             });
             console.log(r);
             setRowData(r[0]);
@@ -555,7 +555,7 @@ export default function UserRequests({ user }) {
   function updateProgress(po, progress, qty, index) {
     let _po = { ...po };
     _po.items[index].deliveredQty = qty;
-    _po.deliveryProgress = Math.round(progress);
+    _po.deliveryProgress = progress;
     fetch(`${url}/purchaseOrders/progress/${po?._id}`, {
       method: "PUT",
       body: JSON.stringify({
@@ -575,7 +575,7 @@ export default function UserRequests({ user }) {
             setDataset(res);
             setTempDataset(res);
             let r = res.filter((d) => {
-              return d._id === id;
+              return d._id === rowData?._id;
             });
             setRowData(r[0]);
             setLoadingRowData(false);
@@ -614,7 +614,7 @@ export default function UserRequests({ user }) {
             setDataset(res);
             setTempDataset(res);
             let r = res.filter((d) => {
-              return d._id === id;
+              return d._id === rowData?._id;
             });
 
             setRowData(r[0]);
