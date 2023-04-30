@@ -420,7 +420,7 @@ export default function Profile({ user }) {
         <div className="flex flex-col space-y-5">
           <div className="flex flex-row justify-between">
             <div className="flex flex-row items-center space-x-2">
-              <div>
+              {/* <div>
                 <Button
                   icon={<ArrowLeftOutlined />}
                   type="primary"
@@ -431,7 +431,7 @@ export default function Profile({ user }) {
                 >
                   Back to vendors
                 </Button>
-              </div>
+              </div> */}
 
               {editVendor && (
                 <div>
