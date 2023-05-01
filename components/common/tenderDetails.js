@@ -358,7 +358,7 @@ const TenderDetails = ({
     updateBidList();
     setProposalDocId(v4());
     setOtherDocId(v4());
-    setDeadLine(moment(data?.submissionDeadLine))
+    setDeadLine(moment(data?.submissionDeadLine));
     getFixedAssets();
   }, [data]);
 
@@ -933,7 +933,6 @@ const TenderDetails = ({
   );
 
   function createPOMOdal() {
-
     return (
       <Modal
         title="New Purchase Order"
@@ -2402,7 +2401,7 @@ const TenderDetails = ({
         Authorization: "Basic " + window.btoa(`${apiUsername}:${apiPassword}`),
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({newTender}),
+      body: JSON.stringify({ newTender }),
     })
       .then((res) => res.json())
       .then((res) => {
@@ -2484,7 +2483,9 @@ const TenderDetails = ({
                   format="YYYY-MM-DD HH:mm"
                   showTime
                   showNow={false}
-                  disabledDate={(current) => current.isBefore(moment().subtract(1,'d'))}
+                  disabledDate={(current) =>
+                    current.isBefore(moment().subtract(1, "d"))
+                  }
                   onChange={(v, str) => {
                     // console.log(moment(str).toISOString());
                     setDeadLine(moment(str).toISOString());
@@ -2756,7 +2757,8 @@ const TenderDetails = ({
                             </div>
                             <div className="flex flex-row space-x-2">
                               {iBelongToEvaluators() &&
-                                !iHaveApprovedEvalReport() && data?.evaluationReportId && (
+                                !iHaveApprovedEvalReport() &&
+                                data?.evaluationReportId && (
                                   <>
                                     <Button
                                       size="small"
@@ -2838,7 +2840,7 @@ const TenderDetails = ({
                       <div className="ml-3 flex">
                         <div className="">
                           <div>Invite Evaluators</div>
-                          
+
                           <div className="flex flex-row space-x-1">
                             <Form
                               onFinish={() => sendInvitation()}
@@ -3140,7 +3142,7 @@ const TenderDetails = ({
                 </Tabs.TabPane>
               </>
             )}
-            
+
             {user?.userType === "VENDOR" && (
               <Tabs.TabPane tab="My Bid" key="2">
                 <div className="flex flex-col space-y-5 p-3">
@@ -3153,7 +3155,7 @@ const TenderDetails = ({
                         ?.map((item) => {
                           return (
                             <>
-                              <div className="p-3 grid md:grid-cols-6 ">
+                              <div className="p-3 grid md:grid-cols-8 ">
                                 <div className="self-center">
                                   <a href="#">{item.number}</a>
                                   <div className="text-xs text-gray-400">
@@ -3161,6 +3163,17 @@ const TenderDetails = ({
                                   </div>
                                   <div className="text-xs text-gray-600">
                                     {item?.createdBy?.companyName}
+                                  </div>
+                                </div>
+
+                                <div className="self-center">
+                                  <div className="text-xs text-gray-400">
+                                    Bank Info
+                                  </div>
+                                  <div className="flex flex-row">
+                                    <div className="text-xs text-gray-600">
+                                      {item?.bankName}-{item?.bankAccountNumber}
+                                    </div>
                                   </div>
                                 </div>
 
@@ -3181,6 +3194,15 @@ const TenderDetails = ({
                                   </div>
                                   <div className="text-xs text-gray-600">
                                     {item?.discount}%
+                                  </div>
+                                </div>
+
+                                <div className="self-center">
+                                  <div className="text-xs text-gray-400">
+                                    Warranty
+                                  </div>
+                                  <div className="text-xs text-gray-600">
+                                    {item?.warranty} {item?.warrantyDuration}
                                   </div>
                                 </div>
 

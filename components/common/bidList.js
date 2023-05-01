@@ -107,11 +107,20 @@ const BidList = ({
                   //   avatar={<Avatar src={item.picture.large} />}
                   title={<a href="#">{item.number}</a>}
                   description={
-                    <div className="grid md:grid-cols-8 ">
+                    <div className="grid md:grid-cols-9 ">
                       <div className="self-center">
                         <div className="text-xs text-gray-400">Vendor</div>
                         <div className="text-xs text-gray-600">
                           {item?.createdBy?.companyName}
+                        </div>
+                      </div>
+
+                      <div className="self-center">
+                        <div className="text-xs text-gray-400">Bank Info</div>
+                        <div className="flex flex-row">
+                          <div className="text-xs text-gray-600">
+                            {item?.bankName}-{item?.bankAccountNumber}
+                          </div>
                         </div>
                       </div>
 
@@ -122,10 +131,19 @@ const BidList = ({
                         </div>
                       </div>
 
-                      <div className="self-center">
+                      <div className="self-center flex flex-col">
                         <div className="text-xs text-gray-400">Discount</div>
                         <div className="text-xs text-gray-600">
                           {item?.discount}%
+                        </div>
+                      </div>
+
+                      <div className="self-center">
+                        <div className="text-xs text-gray-400">
+                          Warranty
+                        </div>
+                        <div className="text-xs text-gray-600">
+                          {item?.warranty} {item?.warrantyDuration}
                         </div>
                       </div>
 
@@ -140,24 +158,25 @@ const BidList = ({
 
                       <div className="self-center">
                         <div className="text-xs text-gray-400">Docs</div>
-                        {item?.proposalDocId && <div>
-                          <a
-                            href="#"
-                            onClick={() => {
-                              setAttachmentId(
-                                `bidDocs/${item?.proposalDocId}.pdf`
-                              );
-                              setPreviewAttachment(true);
-                            }}
-                            className="text-xs"
-                          >
-                            Proposal <PaperClipIcon className="h-3 w-3" />
-                          </a>
-                        </div>
-                        }
-                        {
-                          !item?.proposalDocId && <div className="text-xs">No proposal doc found!</div>
-                        }
+                        {item?.proposalDocId && (
+                          <div>
+                            <a
+                              href="#"
+                              onClick={() => {
+                                setAttachmentId(
+                                  `bidDocs/${item?.proposalDocId}.pdf`
+                                );
+                                setPreviewAttachment(true);
+                              }}
+                              className="text-xs"
+                            >
+                              Proposal <PaperClipIcon className="h-3 w-3" />
+                            </a>
+                          </div>
+                        )}
+                        {!item?.proposalDocId && (
+                          <div className="text-xs">No proposal doc found!</div>
+                        )}
                         {item?.otherDocId && (
                           <div>
                             <a
@@ -199,7 +218,9 @@ const BidList = ({
                         </div>
                       </div>
 
-                      {item?.status === "pending" && (
+                      {
+                      item?.status === "pending" && 
+                      (
                         <Button
                           className="self-center"
                           size="small"
