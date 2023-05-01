@@ -187,6 +187,7 @@ const UsersRequestsTable = ({
     {
       title: "Req Number",
       // dataIndex: "number",
+      sorter: (a,b)=>a>b,
       render: (_, record) => (
         <>
           <div
@@ -205,6 +206,7 @@ const UsersRequestsTable = ({
     {
       title: "Title",
       dataIndex: "title",
+      sorter: (a,b)=>b>a,
       // sorter: (a,b)=>moment(a.dueDate).isAfter(moment(b.dueDate)),
       render: (_, record) => (
         <>
@@ -223,6 +225,7 @@ const UsersRequestsTable = ({
     {
       title: "Initiator",
       key: "initiator",
+      sorter: (a,b)=>b>a,
       render: (_, record) => (
         <>
           <Typography.Text>{record?.createdBy?.firstName}</Typography.Text>
@@ -232,6 +235,7 @@ const UsersRequestsTable = ({
     {
       title: "Department",
       key: "department",
+      sorter: (a,b)=>b>a,
       render: (_, record) => (
         <>
           <Typography.Text>
@@ -243,6 +247,7 @@ const UsersRequestsTable = ({
     {
       title: "Category",
       key: "serviceCategory",
+      sorter: (a,b)=>b>a,
       render: (_, record) => (
         <>
           <Typography.Text>{record?.serviceCategory}</Typography.Text>
@@ -253,6 +258,7 @@ const UsersRequestsTable = ({
     {
       title: "Budgeted?",
       key: "budgeted",
+      sorter: (a,b)=>b>a,
       render: (_, record) => (
         <>
           {record.budgeted && <Typography.Text>Yes</Typography.Text>}
@@ -278,6 +284,7 @@ const UsersRequestsTable = ({
     {
       title: "Status",
       key: "status",
+      sorter: (a,b)=>b>a,
       render: (_, record) => (
         <>
           <Badge

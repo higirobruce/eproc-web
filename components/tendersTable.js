@@ -46,6 +46,7 @@ const TendersTable = ({
     {
       title: "Tender Number",
       dataIndex: "number",
+      sorter: (a,b)=>b>a,
       render: (_, record) => (
         <>
           <div
@@ -63,6 +64,7 @@ const TendersTable = ({
     {
       title: "Request reference",
       key: "request",
+      sorter: (a,b)=>b>a,
       render: (_, record) => (
         <>
           <Typography.Text>{record?.purchaseRequest?.number}</Typography.Text>
@@ -72,6 +74,7 @@ const TendersTable = ({
     {
       title: "Title",
       key: "title",
+      sorter: (a,b)=>b>a,
       render: (_, record) => (
         <>
           <Typography.Text>{record?.purchaseRequest?.title}</Typography.Text>
@@ -81,6 +84,7 @@ const TendersTable = ({
     {
       title: "Department",
       key: "department",
+      sorter: (a,b)=>b>a,
       render: (_, record) => (
         <>
           <Typography.Text>
@@ -93,6 +97,7 @@ const TendersTable = ({
     {
       title: "Category",
       key: "category",
+      sorter: (a,b)=>b>a,
       render: (_, record) => (
         <>
           <Typography.Text>
@@ -130,6 +135,7 @@ const TendersTable = ({
     {
       title: "Status",
       key: "action",
+      sorter: (a,b)=>b>a,
       render: (_, record) => (
         <>
           {moment().isBefore(moment(record?.submissionDeadLine)) && (

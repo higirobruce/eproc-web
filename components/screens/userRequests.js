@@ -420,7 +420,7 @@ export default function UserRequests({ user }) {
         loadRequests()
           .then((res) => res.json())
           .then((res) => {
-            setDataset(zres);
+            setDataset(res);
             setTempDataset(res);
             let r = res.filter((d) => {
               return d._id === rowData?._id;
@@ -428,6 +428,7 @@ export default function UserRequests({ user }) {
             console.log(r);
             setRowData(r[0]);
             setLoadingRowData(false);
+            if(status==='withdrawn') setRowData(null)
           })
           .catch((err) => {
             setLoadingRowData(false);

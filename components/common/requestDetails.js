@@ -356,6 +356,7 @@ const RequestDetails = ({
   const [open, setOpen] = useState(false);
   const [openConfirmDeliv, setOpenConfirmDeliv] = useState([]);
   const [openApprove, setOpenApprove] = useState(false);
+  const [openWithdraw, setOpenWithdraw] = useState(false);
   let [reason, setReason] = useState("");
   const [messageApi, contextHolder] = message.useMessage();
   let user = JSON.parse(localStorage.getItem("user"));
@@ -652,6 +653,8 @@ const RequestDetails = ({
     if (code === 0) return "approved (hod)";
     else if (code === 1) return "approved (fd)";
     else if (code === 2) return "approved (pm)";
+    else if (code === 3) return "approved";
+    else if (code === 4) return "withdrawn";
     else return "pending for approval";
   }
 
@@ -661,6 +664,7 @@ const RequestDetails = ({
     else if (status === "approved (fd)") return 1;
     else if (status === "approved (pm)") return 2;
     else if (status === "approved") return 3;
+    else if (status === "withdrawn") return 4;
     else return -1;
   }
 
@@ -2413,17 +2417,51 @@ const RequestDetails = ({
                         Request Details
                       </div>
                       <div className="space-x-3 ">
-                        {!data.status.includes("approved") && (
-                          <Button type="primary" danger>
-                            Withdraw this request
-                          </Button>
-                        )}
+                        {!data.status.includes("approved") &&
+                          data.status !== "declined" &&
+                          data.status !== "withdrawn" &&
+                          user?._id == data?.createdBy?._id && (
+                            <Popconfirm
+                              title="Are you sure?"
+                              open={openWithdraw}
+                              icon={
+                                <QuestionCircleOutlined
+                                  style={{ color: "red" }}
+                                />
+                              }
+                              onConfirm={() => {
+                                changeStatus(4);
+                                setOpenWithdraw(false);
+                              }}
+                              // okButtonProps={{
+                              //   loading: confirmRejectLoading,
+                              // }}
+                              onCancel={() => setOpenWithdraw(false)}
+                            >
+                              <Button
+                                type="primary"
+                                danger
+                                onClick={() => setOpenWithdraw(true)}
+                              >
+                                Withdraw this request
+                              </Button>
+                            </Popconfirm>
+                          )}
                         <Tag
                           color={
-                            data.status === "declined" ? "red" : (data.status === "approved"||data.status==='approved (pm)') ? "geekblue" : "orange"
+                            data.status === "declined"
+                              ? "red"
+                              : data.status === "approved" ||
+                                data.status === "approved (pm)"
+                              ? "geekblue"
+                              : "orange"
                           }
                         >
-                          {data.status === 'declined' || (data.status === "approved"||data.status==='approved (pm)')? data.status : 'pending'}
+                          {data.status === "declined" ||
+                          data.status === "approved" ||
+                          data.status === "approved (pm)"
+                            ? data.status
+                            : "pending"}
                         </Tag>
                       </div>
                       {/* <div className="">

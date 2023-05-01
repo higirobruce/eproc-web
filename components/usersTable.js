@@ -60,24 +60,30 @@ const UsersTable = ({
     {
       title: "First Name",
       dataIndex: "firstName",
+      sorter: (a, b) => a.firstName.localeCompare(b.firstName),
+      
     },
     {
       title: "Last Name",
       dataIndex: "lastName",
+      sorter: (a, b) => a.lastName.localeCompare(b.lastName),
     },
     {
       title: "Department",
       dataIndex: "department",
+      sorter: (a, b) => a.department?.description.localeCompare(b.department?.description),
       render: (_, record) => <>{record?.department?.description}</>,
     },
     
     {
       title: "Phone",
       dataIndex: "telephone",
+      sorter: (a, b) =>a.telephone>b.telephone,
     },
     {
       title: "Status",
       key: "action",
+      sorter: (a, b) =>a.telephone>b.telephone,
       render: (_, record) => (
         <>
           {record.status === "pending-approval" && (

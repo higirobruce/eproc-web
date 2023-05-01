@@ -2756,7 +2756,7 @@ const TenderDetails = ({
                             </div>
                             <div className="flex flex-row space-x-2">
                               {iBelongToEvaluators() &&
-                                !iHaveApprovedEvalReport() && (
+                                !iHaveApprovedEvalReport() && data?.evaluationReportId && (
                                   <>
                                     <Button
                                       size="small"
@@ -2838,6 +2838,7 @@ const TenderDetails = ({
                       <div className="ml-3 flex">
                         <div className="">
                           <div>Invite Evaluators</div>
+                          
                           <div className="flex flex-row space-x-1">
                             <Form
                               onFinish={() => sendInvitation()}

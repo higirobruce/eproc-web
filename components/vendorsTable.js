@@ -65,7 +65,7 @@ const VendorsTable = ({
     {
       title: "Company Name",
       // dataIndex: "vendor.number",
-      sorter: (a, b) => a.vendor?.companyName.localeCompare(b.companyName),
+      sorter: (a, b) => a.vendor?.companyName.localeCompare(b.vendor?.companyName),
       render: (_, record) => (
         <>
           <div
@@ -82,7 +82,8 @@ const VendorsTable = ({
     },
     {
       title: "TIN",
-      dataIndex: "tin",
+      // dataIndex: "tin",
+      sorter: (a, b) => a.vendor?.tin > b.vendor?.tin,
       render: (_, record) => (
         <>
           <div className="cursor-pointer space-x-1 flex flex-row items-center">
@@ -97,6 +98,7 @@ const VendorsTable = ({
     {
       title: "Contact person email",
       dataIndex: "email",
+      sorter: (a, b) => a.vendor?.email > b.vendor?.email,
       render: (_, record) => (
         <>
           <div className="cursor-pointer space-x-1 flex flex-row items-center">
@@ -111,6 +113,7 @@ const VendorsTable = ({
     {
       title: "Phone",
       dataIndex: "telephone",
+      sorter: (a, b) => a.vendor?.telephone > b.vendor?.telephone,
       render: (_, record) => (
         <>
           <div className="cursor-pointer space-x-1 flex flex-row items-center">
@@ -125,6 +128,7 @@ const VendorsTable = ({
     {
       title: "Status",
       key: "action",
+      sorter: (a, b) => a.vendor?.status > b.vendor?.status,
       render: (_, record) => (
         <>
           {record?.vendor?.status === "pending-approval" && (
