@@ -1496,7 +1496,7 @@ const TenderDetails = ({
                   <div className="text-xs">Company Address</div>
                 </Typography.Text>
                 <Typography.Text strong>
-                  {vendor?.building}-{vendor?.street}-{vendor?.avenue}
+                  {vendor?.hqAddress}-{vendor?.country}
                 </Typography.Text>
               </div>
               <div className="flex flex-col">
@@ -2091,8 +2091,7 @@ const TenderDetails = ({
                   <div className="text-xs">Company Address</div>
                 </Typography.Text>
                 <Typography.Text strong>
-                  {contract?.vendor?.building}-{contract?.vendor?.street}-
-                  {contract?.vendor?.avenue}
+                  {contract?.vendor?.hqAddress}-{contract?.vendor?.country}
                 </Typography.Text>
               </div>
               <div className="flex flex-col">

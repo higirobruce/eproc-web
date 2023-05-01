@@ -2124,7 +2124,7 @@ const RequestDetails = ({
                   <div className="text-xs">Company Address</div>
                 </Typography.Text>
                 <Typography.Text strong>
-                  {vendor?.building}-{vendor?.street}-{vendor?.avenue}
+                  {vendor?.hdAddress}-{vendor?.country}
                 </Typography.Text>
               </div>
               <div className="flex flex-col">

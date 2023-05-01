@@ -347,7 +347,7 @@ export default function Vendors({ user }) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        newUser: rowData,
+        newUser: rowData?.vendor,
       }),
     })
       .then((res) => res.json())
@@ -645,7 +645,7 @@ export default function Vendors({ user }) {
                           editVendor && {
                             onChange: (e) => {
                               let r = { ...rowData };
-                              r.companyName = e;
+                              r.vendor.companyName = e;
                               setRowData(r);
                             },
                             text: rowData?.vendor?.companyName,
@@ -693,7 +693,7 @@ export default function Vendors({ user }) {
                           editVendor && {
                             onChange: (e) => {
                               let r = { ...rowData };
-                              r.contactPersonNames = e;
+                              r.vendor.contactPersonNames = e;
                               setRowData(r);
                             },
                             text: rowData?.vendor?.contactPersonNames,
@@ -715,7 +715,7 @@ export default function Vendors({ user }) {
                             editVendor && {
                               onChange: (e) => {
                                 let r = { ...rowData };
-                                r.title = e;
+                                r.vendor.title = e;
                                 setRowData(r);
                               },
                               text: rowData?.vendor?.title,
@@ -735,7 +735,7 @@ export default function Vendors({ user }) {
                         editVendor && {
                           onChange: (e) => {
                             let r = { ...rowData };
-                            r.email = e;
+                            r.vendor.email = e;
                             setRowData(r);
                           },
                           text: rowData?.vendor?.email,
@@ -754,7 +754,7 @@ export default function Vendors({ user }) {
                         editVendor && {
                           onChange: (e) => {
                             let r = { ...rowData };
-                            r.tin = e;
+                            r.vendor.tin = e;
                             setRowData(r);
                           },
                           text: rowData?.vendor?.tin,
@@ -773,7 +773,7 @@ export default function Vendors({ user }) {
                         editVendor && {
                           onChange: (e) => {
                             let r = { ...rowData };
-                            r.telephone = e;
+                            r.vendor.telephone = e;
                             setRowData(r);
                           },
                           text: rowData?.vendor?.telephone,
@@ -792,7 +792,7 @@ export default function Vendors({ user }) {
                           editVendor && {
                             onChange: (e) => {
                               let r = { ...rowData };
-                              r.website = e;
+                              r.vendor.website = e;
                               setRowData(r);
                             },
                             text: rowData?.vendor?.webSite,
@@ -828,7 +828,7 @@ export default function Vendors({ user }) {
                         placeholder="Please select"
                         onChange={(value) => {
                           let r = { ...rowData };
-                          r.services = value;
+                          r.vendor.services = value;
                           setRowData(r);
                         }}
                       >
@@ -859,7 +859,7 @@ export default function Vendors({ user }) {
                             editVendor && {
                               onChange: (e) => {
                                 let r = { ...rowData };
-                                r.hqAddress = e;
+                                r.vendor.hqAddress = e;
                                 setRowData(r);
                               },
                               tooltip: "Edit Hq Address",
@@ -876,7 +876,7 @@ export default function Vendors({ user }) {
                             editVendor && {
                               onChange: (e) => {
                                 let r = { ...rowData };
-                                r.country = e;
+                                r.vendor.country = e;
                                 setRowData(r);
                               },
                               text: rowData?.vendor?.country,
