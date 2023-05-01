@@ -19,24 +19,15 @@ const TopMenu = ({ setScreen, screen, handleLogout }) => {
   const [items, setItems] = useState([]);
   const [loggedInUser, setLoggedInUser] = useState(null);
 
-  useEffect(() => {
-  }, [screen]);
+  useEffect(() => {}, [screen]);
 
   useEffect(() => {
     let user = JSON.parse(localStorage.getItem("user"));
     let _items = [];
     _items = [
       {
-        label: (
-          <Image
-            alt=""
-            
-            src="/favicon.png"
-            width={30}
-            height={30}
-          />
-        ),
-        key: "dashboard",
+        label: <Image alt="" src="/favicon.png" width={30} height={30} />,
+        key: user?.userType === "VENDOR" ? "tenders" : "dashboard",
         // icon: <LogoutOutlined className="text-red-400" />,
         // style: { marginTop: "5px" },
         // onClick: logout,
@@ -44,14 +35,16 @@ const TopMenu = ({ setScreen, screen, handleLogout }) => {
       {
         // key: "username",
         label: `Hi, ${
-          user.userType === "VENDOR" ? user?.contactPersonNames : user?.firstName
+          user.userType === "VENDOR"
+            ? user?.contactPersonNames
+            : user?.firstName
         } (${user?.userType.toLowerCase()})`,
         icon: <UserOutlined />,
         style: { marginLeft: "auto" },
         children: [
           {
-            label: 'My Profile',
-            key: 'setting:1',
+            label: "My Profile",
+            key: "setting:1",
           },
         ],
         // onClick: logout,
@@ -65,7 +58,6 @@ const TopMenu = ({ setScreen, screen, handleLogout }) => {
         // onClick: logout,
       },
     ];
-
     setItems(_items);
   }, []);
 
@@ -93,7 +85,7 @@ const TopMenu = ({ setScreen, screen, handleLogout }) => {
       mode="horizontal"
       theme="light"
       items={items}
-      style={{ position: 'sticky', zIndex: 1, width: '100%' }}
+      style={{ position: "sticky", zIndex: 1, width: "100%" }}
     />
   );
 };
