@@ -1562,8 +1562,7 @@ export default function Contracts({ user }) {
                         Actions
                       </Dropdown.Button> */}
                       <Button
-                        disabled={!documentFullySigned(contract) || user?.userType =='VENDOR'}
-
+                        disabled={!documentFullySigned(contract) || user?.userType =='VENDOR' || moment(contract?.endDate).isBefore(moment()) }
                         onClick={() => {
                           setContract(contract);
                           let _signatories = [
